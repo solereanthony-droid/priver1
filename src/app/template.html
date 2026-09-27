@@ -1,22 +1,26 @@
-<div class="dc-stage" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;font-family:var(--font-body);color:var(--color-text);font-variant-numeric:tabular-nums;line-height:1.4;-webkit-font-smoothing:antialiased">
+<div class="dc-stage" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:{{ fr.op }};font-family:var(--font-body);color:var(--color-text);font-variant-numeric:tabular-nums;line-height:1.4;-webkit-font-smoothing:antialiased">
   <div class="dc-fit" style="width:{{ fit.w }};height:{{ fit.h }};flex:none;position:relative">
-  <div class="dc-phone" data-screen-label="Téléphone" style="position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;transform:{{ fit.t }};border-radius:56px;background:var(--color-neutral-900);padding:10px;box-shadow:var(--shadow-lg)">
-    <div class="dc-screen" style="--color-neutral-600:{{ sun.n }};--color-neutral-700:{{ sun.n }};--color-neutral-800:{{ sun.n }};--color-divider:{{ sun.div }};--color-bg:{{ sun.bg }};position:relative;width:100%;height:100%;border-radius:46px;overflow:hidden;background:var(--color-bg);display:flex;flex-direction:column">
+  <div class="dc-phone" data-screen-label="Téléphone" style="position:absolute;left:0;top:0;width:{{ fr.w }};height:{{ fr.h }};transform-origin:0 0;transform:{{ fit.t }};border-radius:{{ fr.r }};background:var(--color-neutral-900);padding:{{ fr.p }};box-shadow:var(--shadow-lg)">
+    <div class="dc-screen" data-theme="{{ theme }}" style="--color-neutral-600:{{ sun.n }};--color-neutral-700:{{ sun.n }};--color-neutral-800:{{ sun.n }};--color-divider:{{ sun.div }};--color-bg:{{ sun.bg }};position:relative;width:100%;height:100%;border-radius:{{ fr.ir }};overflow:hidden;background:var(--color-bg);color:var(--color-text);display:flex;flex-direction:{{ fr.dir }}">
 
-      <div class="dc-statusbar" style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 34px;font-weight:700;font-size:16px;position:relative;z-index:3">
+      <sc-if value="{{ fr.phone }}" hint-placeholder-val="{{ true }}"><div class="dc-statusbar" style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 34px;font-weight:700;font-size:16px;position:relative;z-index:3">
         <span>9:41</span>
         <div style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:120px;height:34px;border-radius:999px;background:var(--color-neutral-900)"></div>
         <div style="display:flex;gap:6px;align-items:center">
           <div style="width:18px;height:11px;display:flex;align-items:flex-end;gap:2px"><span style="width:3px;height:4px;background:currentColor;border-radius:1px"></span><span style="width:3px;height:6px;background:currentColor;border-radius:1px"></span><span style="width:3px;height:8px;background:currentColor;border-radius:1px"></span><span style="width:3px;height:11px;background:currentColor;border-radius:1px"></span></div>
           <div style="width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;padding:1.5px"><div style="width:75%;height:100%;background:currentColor;border-radius:1.5px"></div></div>
         </div>
-      </div>
-
-      <div ref="{{ scrollRef }}" onScroll="{{ onMainScroll }}" style="flex:1;overflow-y:auto;overflow-x:hidden;position:relative">
+      </div></sc-if>
+          <div class="dc-scroll" ref="{{ scrollRef }}" onScroll="{{ onMainScroll }}" style="flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;position:relative;padding:{{ fr.sp }}">
+          <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+            <div role="status" style="position:sticky;top:0;z-index:5;display:flex;justify-content:center;padding:8px 20px 0;pointer-events:none">
+              <div style="display:flex;align-items:center;gap:8px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);padding:6px 14px;font-size:13px;font-weight:700;box-shadow:var(--shadow-md)"><span style="width:8px;height:8px;border-radius:50%;background:var(--color-accent-400)"></span>Hors ligne · tes données restent sur le téléphone</div>
+            </div>
+          </sc-if>
 
         <!-- ACCUEIL -->
         <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
-          <div data-screen-label="01 Accueil" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
+          <div data-screen-label="01 Accueil" style="padding:max(20px, calc(env(safe-area-inset-top) + 12px)) 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
               <div style="min-width:0">
                 <div style="font-size:14px;font-weight:600;color:var(--color-neutral-700)">Bonjour Julien</div>
@@ -167,9 +171,10 @@
                 <span class="tag tag-accent" style="font-weight:700">démo en direct</span>
               </div>
               <div style="position:relative">
-                <textarea value="{{ aiInput }}" onInput="{{ onAiInput }}" rows="2" placeholder="Décris le chantier en une phrase…" style="width:100%;resize:none;font:500 16px/1.4 var(--font-body);color:var(--color-text);background:var(--color-neutral-100);border:2px solid transparent;border-radius:22px;padding:13px 60px 13px 16px"></textarea>
+                <textarea value="{{ aiInput }}" onInput="{{ onAiInput }}" maxLength="600" rows="2" placeholder="Décris le chantier en une phrase…" style="width:100%;resize:none;font:500 16px/1.4 var(--font-body);color:var(--color-text);background:var(--color-neutral-100);border:2px solid transparent;border-radius:22px;padding:13px 60px 13px 16px"></textarea>
                 <button onClick="{{ mic.toggle }}" title="{{ mic.title }}" aria-pressed="{{ mic.on }}" style-active="transform:scale(0.94)" style="transition:transform .12s ease;position:absolute;right:8px;top:50%;margin-top:-22px;width:44px;height:44px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;background:{{ mic.bg }};color:{{ mic.fg }};box-shadow:{{ mic.ring }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><rect x="9" y="2" width="6" height="13" rx="3"></rect></svg></button>
               </div>
+                <div style="display:flex;justify-content:flex-end;padding:0 8px;margin-top:-4px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:{{ aiCountFg }}">{{ aiCount }}</div>
               <sc-if value="{{ mic.on }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size:14px;font-weight:600;color:var(--color-accent-800)">J'écoute… parle normalement, touche le micro pour arrêter.</div>
               </sc-if>
@@ -207,7 +212,7 @@
                   </div>
                 </sc-if>
               </div>
-              <button style-active="transform:scale(0.97)" onClick="{{ runAI }}" disabled="{{ aiBusy }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:52px;font-size:17px;width:100%">{{ aiBtn }}</button>
+              <button style-active="transform:scale(0.97)" onClick="{{ runAI }}" disabled="{{ aiDisabled }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:52px;font-size:17px;width:100%">{{ aiBtn }}</button>
               <sc-if value="{{ aiThinking }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--color-neutral-800)">{{ dots }}L'IA lit ton catalogue {{ metierShort }}…</div>
               </sc-if>
@@ -397,6 +402,7 @@
                     <button onClick="{{ newUni }}" class="btn btn-primary" style="min-height:52px;font-size:15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>Unifilaire</button>
                   </sc-if>
                   <label class="btn btn-secondary" style="position:relative;min-height:52px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>Importer un plan<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" onChange="{{ onImport }}" aria-label="Importer un plan" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%"></label>
+              <div style="font-size:13px;color:var(--color-neutral-700);padding:0 4px">PNG, JPEG, WebP ou PDF · 3 Mo maximum</div>
                 </div>
                 <sc-if value="{{ noPlans }}" hint-placeholder-val="{{ false }}">
                   <div style="border:2px dashed var(--color-neutral-400);border-radius:22px;padding:18px;text-align:center;font-size:15px;color:var(--color-neutral-800)">Aucun plan. Génère un schéma unifilaire ou importe un plan.</div>
@@ -719,12 +725,7 @@
                   <button onClick="{{ rdv.mic }}" aria-label="Dicter le rendez-vous" aria-pressed="{{ rdv.micOn }}" title="Dicter" style-active="transform:scale(0.94)" style="transition:transform .12s ease;position:absolute;right:8px;top:50%;margin-top:-22px;width:44px;height:44px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;background:{{ rdv.micBg }};color:{{ rdv.micFg }};box-shadow:{{ rdv.micRing }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><rect x="9" y="2" width="6" height="13" rx="3"></rect></svg></button>
                 </div>
                 <sc-if value="{{ rdv.micOn }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;font-weight:700">J'écoute… dis le jour, l'heure, le client et le lieu.</div></sc-if>
-                <div data-hscroll="" style="display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:none">
-                  <sc-for list="{{ rdv.examples }}" as="x" hint-placeholder-count="3">
-                    <button onClick="{{ x.onPick }}" style="flex:none;min-height:36px;border:1.5px solid var(--color-accent-2-600);background:transparent;border-radius:999px;padding:0 12px;font:600 13px var(--font-body);color:var(--color-accent-2-900);cursor:pointer;white-space:nowrap">{{ x.t }}</button>
-                  </sc-for>
-                </div>
-                <button onClick="{{ rdv.go }}" disabled="{{ rdv.busy }}" class="btn btn-primary" style="min-height:50px;font-size:16px;width:100%">{{ rdv.btn }}</button>
+                <button onClick="{{ rdv.go }}" disabled="{{ rdv.busy }}" class="btn btn-primary" style="min-height:50px;font-size:16px;width:100%;margin-top:-4px">{{ rdv.btn }}</button>
                 <sc-if value="{{ rdv.err }}" hint-placeholder-val="{{ false }}"><div style="border-radius:14px;background:var(--color-accent-200);color:var(--color-accent-900);padding:8px 12px;font-size:14px;font-weight:600">{{ rdv.err }}</div></sc-if>
                 <sc-if value="{{ rdv.has }}" hint-placeholder-val="{{ false }}">
                   <div style="background:var(--color-neutral-100);color:var(--color-text);border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:8px;animation:btpIn .2s ease">
@@ -836,6 +837,9 @@
             <sc-if value="{{ tool.cta }}" hint-placeholder-val="{{ false }}">
               <button style-active="transform:scale(0.97)" onClick="{{ tool.onCta }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:54px;font-size:17px;width:100%">{{ tool.cta }}</button>
             </sc-if>
+            <sc-if value="{{ tool.cta2 }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ tool.onCta2 }}" class="btn btn-ghost" style="min-height:46px;font-size:15px;width:100%;margin-top:-8px">{{ tool.cta2 }}</button>
+            </sc-if>
           </div>
         </sc-if>
 
@@ -847,6 +851,40 @@
               <sc-for list="{{ setNav }}" as="n" hint-placeholder-count="7">
                 <button data-chip="{{ n.id }}" onClick="{{ n.onGo }}" style-active="transform:scale(0.97)" style="transition:transform .12s ease, background-color .2s ease, color .2s ease;scroll-snap-align:start;flex:none;min-height:40px;display:flex;align-items:center;gap:6px;border:none;border-radius:999px;padding:0 14px;font:700 14px var(--font-body);cursor:pointer;white-space:nowrap;background:{{ n.bg }};color:{{ n.fg }}">{{ n.label }}<sc-if value="{{ n.dot }}" hint-placeholder-val="{{ false }}"><span style="min-width:20px;height:20px;border-radius:999px;background:var(--color-accent-700);color:var(--color-neutral-100);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px">{{ n.dot }}</span></sc-if></button>
               </sc-for>
+            </div>
+            <div id="set-compte" style="background:var(--color-neutral-100);border-radius:28px;padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Compte</div>
+              <sc-if value="{{ acc.out }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size:14px;line-height:1.45;color:var(--color-neutral-800)">Connecte-toi pour retrouver tes devis, factures et plans sur ton téléphone, ta tablette et ton ordinateur.</div>
+                <sc-if value="{{ acc.stepMail }}" hint-placeholder-val="{{ true }}">
+                  <input value="{{ acc.email }}" onInput="{{ acc.onEmail }}" type="email" inputMode="email" autoComplete="email" placeholder="ton@email.fr" aria-label="Adresse e-mail" style="width:100%;min-height:52px;border:2px solid transparent;border-radius:999px;background:var(--color-surface);padding:0 18px;font:500 16px var(--font-body);color:var(--color-text)">
+                  <button onClick="{{ acc.sendCode }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">Recevoir un code de connexion</button>
+                </sc-if>
+                <sc-if value="{{ acc.stepCode }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:14px;font-weight:600">Code envoyé à {{ acc.email }}</div>
+                  <input value="{{ acc.code }}" onInput="{{ acc.onCode }}" inputMode="numeric" autoComplete="one-time-code" maxLength="6" placeholder="6 chiffres" aria-label="Code de connexion" style="width:100%;min-height:52px;border:2px solid transparent;border-radius:999px;background:var(--color-surface);padding:0 18px;font:700 20px var(--font-body);letter-spacing:.3em;text-align:center;color:var(--color-text)">
+                  <button onClick="{{ acc.verify }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">Se connecter</button>
+                  <button onClick="{{ acc.back }}" class="btn btn-ghost" style="min-height:44px;font-size:14px">Changer d'adresse</button>
+                </sc-if>
+                <sc-if value="{{ acc.err }}" hint-placeholder-val="{{ false }}"><div style="border-radius:18px;background:var(--color-accent-200);color:var(--color-accent-900);padding:10px 14px;font-size:14px;font-weight:600">{{ acc.err }}</div></sc-if>
+                <div style="font-size:13px;color:var(--color-neutral-700)">Sans compte, tout reste enregistré sur cet appareil.</div>
+              </sc-if>
+              <sc-if value="{{ acc.in }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:48px;height:48px;flex:none;border-radius:50%;background:var(--color-accent-2-300);color:var(--color-accent-2-900);display:flex;align-items:center;justify-content:center;font:800 17px var(--font-body)">{{ acc.ini }}</div>
+                  <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis">{{ acc.email }}</div><div style="font-size:13px;font-weight:600;color:{{ acc.syncFg }}">{{ acc.syncTxt }}</div></div>
+                </div>
+                <div style="display:flex;flex-direction:column">
+                  <div style="font-size:14px;font-weight:700;color:var(--color-neutral-800);padding-bottom:4px">Appareils connectés</div>
+                  <sc-for list="{{ acc.devices }}" as="d" hint-placeholder-count="2">
+                    <div style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--color-divider);font-size:14px"><span style="font-weight:600">{{ d.n }}</span><span style="color:var(--color-neutral-700)">{{ d.w }}</span></div>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <button onClick="{{ acc.sync }}" disabled="{{ acc.offline }}" class="btn btn-secondary" style="min-height:48px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Synchroniser</button>
+                  <button onClick="{{ acc.logout }}" class="btn btn-ghost" style="min-height:48px;font-size:14px;color:var(--color-accent-700)">Se déconnecter</button>
+                </div>
+              </sc-if>
             </div>
             <div id="set-ent" style="background:var(--color-neutral-100);border-radius:28px;padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px">
               <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
@@ -1075,12 +1113,28 @@
             </div>
             <div id="set-aff" style="background:var(--color-neutral-100);border-radius:28px;padding:16px 18px 8px;display:flex;flex-direction:column;gap:8px">
               <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;padding-bottom:4px">Affichage et données</div>
+                <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0 10px;border-top:1px solid var(--color-divider)">
+                  <div style="font-size:15px;font-weight:600;padding-top:4px">Thème</div>
+                  <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                    <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onPick }}" style="flex:1;min-height:40px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0 10px;border-top:1px solid var(--color-divider)">
+                  <div><div style="font-size:15px;font-weight:600;padding-top:4px">Mise en page</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ layoutTxt }}</div></div>
+                  <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                    <sc-for list="{{ layoutOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onPick }}" style="flex:1;min-height:40px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for>
+                  </div>
+                </div>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;border-top:1px solid var(--color-divider)">
                 <div><div style="font-size:15px;font-weight:600">Mode plein soleil</div><div style="font-size:13px;color:var(--color-neutral-700)">Contraste renforcé sur chantier</div></div>
                 <button style-active="transform:scale(0.97)" onClick="{{ toggleSun }}" role="switch" aria-checked="{{ sunOn }}" style="transition:transform .12s ease;width:56px;height:32px;flex:none;border:none;border-radius:999px;padding:3px;cursor:pointer;display:flex;justify-content:{{ sunSw.justify }};background:{{ sunSw.bg }}"><span style="width:26px;height:26px;border-radius:50%;background:var(--color-neutral-100);box-shadow:var(--shadow-sm)"></span></button>
               </div>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;border-top:1px solid var(--color-divider)">
-                <div><div style="font-size:15px;font-weight:600">Sauvegarde automatique</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ savedTxt }}</div></div>
+                <div><div style="font-size:15px;font-weight:600">Installer l'app</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ installTxt }}</div></div>
+                  <button style-active="transform:scale(0.97)" onClick="{{ doInstall }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500);flex:none">{{ installBtn }}</button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;border-top:1px solid var(--color-divider)">
+                  <div><div style="font-size:15px;font-weight:600">Sauvegarde automatique</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ savedTxt }}</div></div>
                 <button style-active="transform:scale(0.97)" onClick="{{ resetDemo }}" class="btn btn-ghost" style="transition:transform .12s ease;min-height:44px;font-size:14px;color:var(--color-accent-700)">Réinitialiser</button>
               </div>
             </div>
@@ -1203,6 +1257,12 @@
             </div>
 
             <sc-if value="{{ pl.isUni }}" hint-placeholder-val="{{ true }}">
+              <div role="tablist" style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                <sc-for list="{{ pl.views }}" as="v" hint-placeholder-count="2">
+                  <button role="tab" onClick="{{ v.on }}" style="flex:1;min-height:44px;border:none;border-radius:999px;background:{{ v.bg }};color:{{ v.fg }};font:700 14px var(--font-body);cursor:pointer">{{ v.l }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ pl.vUni }}" hint-placeholder-val="{{ true }}">
               <div style="border-radius:24px;padding:14px 16px;background:{{ pl.chkBg }};color:{{ pl.chkFg }};display:flex;flex-direction:column;gap:6px">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="font-size:15px;font-weight:800">{{ pl.chkTitle }}</div><button onClick="{{ pl.openRules }}" aria-label="Voir les règles NF C 15-100" title="Voir les règles NF C 15-100" style-hover="color:var(--color-accent-700);background:var(--color-surface)" style-active="transform:scale(0.92)" style="transition:transform .12s ease, color .15s ease, background-color .15s ease;width:32px;height:32px;margin:-6px -4px;flex:none;border:none;border-radius:50%;background:transparent;color:var(--color-neutral-700);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0"><span aria-hidden="true" style="width:20px;height:20px;border-radius:50%;border:1.5px solid currentColor;display:inline-flex;align-items:center;justify-content:center;font:700 12px/1 var(--font-body)">?</span></button></div>
                 <sc-for list="{{ pl.checks }}" as="c" hint-placeholder-count="1">
@@ -1309,13 +1369,39 @@
                   </div>
                   <button onClick="{{ pl.openRules }}" class="btn btn-ghost" style="min-height:44px;font-size:14px;color:var(--color-accent-700);padding-left:0;justify-content:flex-start">Pourquoi ces repères ? Voir les règles NF C 15-100</button>
                 </div>
+                <button onClick="{{ pl.exportPdf }}" class="btn btn-primary" style="margin:6px 4px 0;min-height:50px;font-size:16px;width:calc(100% - 8px)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M12 18v-6"></path><path d="m9 15 3 3 3-3"></path></svg>Exporter en PDF</button>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 4px 4px">
                   <button onClick="{{ pl.exportSvg }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>Télécharger</button>
-                  <button onClick="{{ pl.share }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.59 13.51 6.83 3.98"></path><path d="m15.41 6.51-6.82 3.98"></path></svg>Partager</button>
+                  <button onClick="{{ pl.share }}" disabled="{{ pl.sharing }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.59 13.51 6.83 3.98"></path><path d="m15.41 6.51-6.82 3.98"></path></svg>{{ pl.shareLabel }}</button>
                 </div>
               </div>
 
               <div style="background:var(--color-neutral-100);border-radius:28px;padding:16px 14px 14px;display:flex;flex-direction:column;gap:10px">
+              <div style="border-radius:24px;background:var(--color-surface);padding:4px 16px">
+                <button onClick="{{ pl.rooms.toggle }}" aria-expanded="{{ pl.rooms.open }}" style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;border:none;background:transparent;padding:0;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)">
+                  <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:800">Équipement minimum par pièce</span><span style="display:block;font-size:13px;font-weight:700;color:{{ pl.rooms.sumFg }}">{{ pl.rooms.sum }}</span></span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transition:transform .2s ease;transform:{{ pl.rooms.rot }}"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <sc-if value="{{ pl.rooms.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:12px;animation:btpIn .18s ease">
+                    <sc-for list="{{ pl.rooms.rows }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--color-divider)">
+                        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ r.l }}</div><div style="font-size:12px;color:var(--color-neutral-700)">{{ r.n }}</div></div>
+                        <button onClick="{{ r.dec }}" aria-label="Moins" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;font:700 18px var(--font-body);color:var(--color-text)">−</button>
+                        <span style="min-width:48px;text-align:center;font-size:15px;font-weight:800">{{ r.v }}</span>
+                        <button onClick="{{ r.inc }}" aria-label="Plus" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;font:700 18px var(--font-body);color:var(--color-text)">+</button>
+                      </div>
+                    </sc-for>
+                    <div style="font-size:12px;line-height:1.45;color:var(--color-neutral-700);padding:6px 0 4px;border-top:1px solid var(--color-divider)">{{ pl.rooms.fixed }}</div>
+                    <sc-for list="{{ pl.rooms.res }}" as="x" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:10px;padding:4px 0">
+                        <span style="width:22px;height:22px;flex:none;border-radius:50%;background:{{ x.bg }};color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center;font:800 12px var(--font-body)">{{ x.ico }}</span>
+                        <span style="font-size:14px;font-weight:600;color:{{ x.fg }}">{{ x.t }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
                 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 4px">
                   <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Circuits</div>
                   <div style="font-size:13px;font-weight:700;color:var(--color-neutral-700)">{{ pl.circCount }}</div>
@@ -1386,10 +1472,123 @@
                 <button onClick="{{ pl.sync }}" disabled="{{ pl.inSync }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">{{ pl.syncLabel }}</button>
                 <button onClick="{{ pl.regen }}" class="btn btn-ghost" style="min-height:44px;font-size:15px;color:var(--color-accent-700)">Régénérer le schéma depuis le devis</button>
               </div>
+              </sc-if>
+              <sc-if value="{{ pl.vImpl }}" hint-placeholder-val="{{ false }}">
+              <div data-screen-label="10b Implantation" style="display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <div style="flex:1 1 100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--color-surface);border-radius:999px;padding:3px">
+                    <sc-for list="{{ pl.im.tools }}" as="t" hint-placeholder-count="3">
+                      <button onClick="{{ t.on }}" style="min-width:0;min-height:40px;border:none;border-radius:999px;padding:0 2px;font:700 12.5px var(--font-body);letter-spacing:-.01em;white-space:nowrap;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.l }}</button>
+                    </sc-for>
+                  </div>
+                  <button onClick="{{ pl.im.undo }}" disabled="{{ pl.im.noUndo }}" aria-label="Annuler la dernière action" title="Annuler" style="width:40px;height:40px;flex:none;border:none;border-radius:50%;background:var(--color-surface);color:var(--color-text);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></button>
+                  <button onClick="{{ pl.im.toggleZoom }}" style="min-height:40px;border:none;border-radius:999px;padding:0 14px;font:700 13px var(--font-body);cursor:pointer;background:var(--color-surface);color:var(--color-text)">{{ pl.im.zoomL }}</button>
+                  <button onClick="{{ pl.im.toggleWires }}" aria-pressed="{{ pl.im.showWires }}" style="min-height:40px;border:none;border-radius:999px;padding:0 14px;font:700 13px var(--font-body);cursor:pointer;background:{{ pl.im.wiresBg }};color:{{ pl.im.wiresFg }}">Liaisons</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:13px;font-weight:700;color:{{ pl.im.progress.fg }}">{{ pl.im.progress.t }}</div>
+                  <div style="height:6px;border-radius:999px;background:var(--color-surface);overflow:hidden"><div style="height:100%;width:{{ pl.im.progress.w }};background:{{ pl.im.progress.bar }};border-radius:999px;transition:width .3s ease"></div></div>
+                </div>
+                <div style="background:#ffffff;border-radius:24px;padding:8px;box-shadow:var(--shadow-sm);overflow:auto;max-height:420px">
+                  <svg ref="{{ pl.im.svgRef }}" viewBox="0 0 600 420" onPointerDown="{{ pl.im.down }}" onPointerMove="{{ pl.im.move }}" onPointerUp="{{ pl.im.up }}" onPointerCancel="{{ pl.im.up }}" style="display:block;width:{{ pl.im.zw }};max-width:none;height:auto;touch-action:{{ pl.im.touch }};cursor:crosshair;user-select:none">
+                    <sc-if value="{{ pl.im.hasBg }}" hint-placeholder-val="{{ false }}"><image href="{{ pl.im.bg }}" x="0" y="0" width="600" height="420" preserveAspectRatio="xMidYMid meet" opacity="0.55"></image></sc-if>
+                    <sc-for list="{{ pl.im.rooms }}" as="r" hint-placeholder-count="0">
+                      <rect x="{{ r.x }}" y="{{ r.y }}" width="{{ r.w }}" height="{{ r.h }}" fill="none" stroke="#474238" stroke-width="{{ r.sw }}" stroke-dasharray="{{ r.dash }}"></rect>
+                      <text x="{{ r.tx }}" y="{{ r.ty }}" style="font-family:var(--font-body);font-size:11px;font-weight:700;fill:#82796a">{{ r.lab }}</text>
+                      <text x="{{ r.tx }}" y="{{ r.ty2 }}" style="font-family:var(--font-body);font-size:10px;font-weight:600;fill:#a19786">{{ r.lab2 }}</text>
+                    </sc-for>
+                    <sc-for list="{{ pl.im.wires }}" as="w" hint-placeholder-count="0">
+                      <path d="{{ w.d }}" fill="none" stroke="{{ w.c }}" stroke-width="1.6" stroke-linejoin="round" opacity="0.7"></path>
+                    </sc-for>
+                    <sc-for list="{{ pl.im.selRect }}" as="q" hint-placeholder-count="0">
+                      <rect x="{{ q.x }}" y="{{ q.y }}" width="{{ q.w }}" height="{{ q.h }}" fill="#c67139" fill-opacity="0.12" stroke="#c67139" stroke-width="2" stroke-dasharray="6 4"></rect>
+                    </sc-for>
+                    <sc-for list="{{ pl.im.items }}" as="it" hint-placeholder-count="0">
+                      <g transform="{{ it.tr }}">
+                        <sc-if value="{{ it.sel }}" hint-placeholder-val="{{ false }}"><circle r="17" fill="none" stroke="#c67139" stroke-width="2.5" stroke-dasharray="4 3"></circle></sc-if>
+                        <path d="{{ it.d }}" fill="{{ it.fill }}" stroke="{{ it.c }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <text y="4" style="font-family:var(--font-body);font-size:9px;font-weight:800;text-anchor:middle;fill:{{ it.c }}">{{ it.tx }}</text>
+                      </g>
+                    </sc-for>
+                    <sc-for list="{{ pl.im.handles }}" as="k" hint-placeholder-count="0">
+                      <rect x="{{ k.x }}" y="{{ k.y }}" width="14" height="14" rx="4" fill="{{ k.fill }}" stroke="#c67139" stroke-width="2"></rect>
+                    </sc-for>
+                  </svg>
+                </div>
+                <div style="font-size:13px;font-weight:600;color:var(--color-neutral-800);margin-top:-6px">{{ pl.im.modeHint }}</div>
+                <sc-if value="{{ pl.im.isRooms }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--color-surface);border-radius:24px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+                    <sc-if value="{{ pl.im.roomSel.on }}" hint-placeholder-val="{{ false }}">
+                      <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Nom de la pièce
+                        <input value="{{ pl.im.roomSel.n }}" onChange="{{ pl.im.roomSel.rename }}" class="input" style="min-height:44px;border-radius:999px;font-size:15px"></input>
+                      </label>
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                        <span style="font-size:13px;color:var(--color-neutral-700)">{{ pl.im.roomSel.dim }}</span>
+                        <button onClick="{{ pl.im.roomSel.del }}" style="min-height:40px;border:none;border-radius:999px;background:transparent;color:var(--color-accent-700);font:700 13px var(--font-body);padding:0 10px;cursor:pointer">Supprimer</button>
+                      </div>
+                    </sc-if>
+                    <button onClick="{{ pl.im.addRoom }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">+ Ajouter une pièce</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ pl.im.itemSel.on }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--color-neutral-100);border-radius:24px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 2px var(--color-accent)">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span style="width:12px;height:12px;flex:none;border-radius:50%;background:{{ pl.im.itemSel.col }}"></span>
+                      <span style="flex:1;min-width:0;font-size:14px;font-weight:800">{{ pl.im.itemSel.t }}</span>
+                      <button onClick="{{ pl.im.itemSel.close }}" aria-label="Fermer" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ pl.im.itemSel.syms }}" as="y" hint-placeholder-count="1">
+                        <button onClick="{{ y.on }}" title="{{ y.l }}" aria-label="{{ y.l }}" style="width:44px;height:44px;border:none;border-radius:50%;background:{{ y.bg }};color:{{ y.fg }};cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="-14 -14 28 28"><path d="{{ y.d }}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                      </sc-for>
+                    </div>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Circuit
+                      <select value="{{ pl.im.itemSel.cidVal }}" onChange="{{ pl.im.itemSel.setCirc }}" class="input" style="min-height:44px;border-radius:999px;font-size:15px">
+                        <sc-for list="{{ pl.im.itemSel.circOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+                      </select>
+                    </label>
+                    <button onClick="{{ pl.im.itemSel.del }}" class="btn btn-ghost" style="min-height:44px;font-size:14px;color:var(--color-accent-700)">Supprimer ce symbole</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ pl.im.showPlaceHint }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;font-weight:600;color:var(--color-neutral-800);margin-top:-6px">{{ pl.im.curTxt }}</div></sc-if>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <sc-for list="{{ pl.im.syms }}" as="y" hint-placeholder-count="1">
+                    <button onClick="{{ y.on }}" style="display:flex;align-items:center;gap:6px;min-height:40px;border:none;border-radius:999px;padding:0 14px;font:700 13px var(--font-body);cursor:pointer;background:{{ y.bg }};color:{{ y.fg }}"><svg width="20" height="20" viewBox="-14 -14 28 28" style="flex:none"><path d="{{ y.d }}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{ y.l }}</button>
+                  </sc-for>
+                </div>
+                <div style="background:var(--color-surface);border-radius:24px;padding:6px 8px">
+                  <sc-for list="{{ pl.im.circs }}" as="c" hint-placeholder-count="6">
+                    <button onClick="{{ c.on }}" style="width:100%;min-height:44px;display:flex;align-items:center;gap:10px;border:none;border-radius:16px;background:{{ c.bg }};box-shadow:{{ c.ring }};padding:4px 10px;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)">
+                      <span style="width:12px;height:12px;flex:none;border-radius:50%;background:{{ c.col }}"></span>
+                      <span style="font-size:13px;font-weight:800;width:28px;flex:none">{{ c.q }}</span>
+                      <span style="flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.l }}</span>
+                      <span style="font-size:13px;font-weight:700;color:{{ c.cntFg }}">{{ c.cnt }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ pl.im.wiz.show }}" class="btn btn-primary" style="min-height:50px;font-size:16px;width:100%">Générer le plan du logement</button>
+                <button onClick="{{ pl.im.autoPlace }}" class="btn btn-secondary" style="min-height:48px;font-size:15px;width:100%;border-width:2px;border-color:var(--color-neutral-500)">Placer selon la norme NF C 15-100</button>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <label class="btn btn-secondary" style="position:relative;min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500);cursor:pointer">Fond de plan<input type="file" accept="image/png,image/jpeg,image/webp" onChange="{{ pl.im.importBg }}" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label>
+                  <button onClick="{{ pl.im.regen }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Pièces auto</button>
+                </div>
+                <div style="font-size:12px;color:var(--color-neutral-700);margin-top:-6px">Fond : photo ou scan du plan en PNG, JPEG ou WebP, 3 Mo maximum. « Pièces auto » dessine les pièces de « Équipement minimum par pièce ».</div>
+                <div style="background:var(--color-neutral-100);border-radius:24px;padding:12px 16px;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:14px;font-weight:800">Légende</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px">
+                    <sc-for list="{{ pl.im.legend }}" as="g" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:8px;font-size:13px"><svg width="22" height="22" viewBox="-15 -15 30 30" style="flex:none"><path d="{{ g.d }}" fill="none" stroke="#201e1d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><text y="3.5" style="font-family:var(--font-body);font-size:8px;font-weight:800;text-anchor:middle;fill:#201e1d">{{ g.tx }}</text></svg><span>{{ g.l }}</span></div>
+                    </sc-for>
+                  </div>
+                </div>
+                <button onClick="{{ pl.im.clear }}" class="btn btn-ghost" style="min-height:44px;font-size:14px;color:var(--color-accent-700)">Effacer les symboles</button>
+              </div>
+              </sc-if>
             </sc-if>
 
             <sc-if value="{{ pl.isImg }}" hint-placeholder-val="{{ false }}">
               <div style="border-radius:24px;overflow:hidden;background:var(--color-neutral-100)"><img src="{{ pl.src }}" alt="{{ pl.name }}" style="display:block;width:100%;height:auto"></div>
+              <button onClick="{{ pl.exportPdf }}" class="btn btn-primary" style="min-height:50px;font-size:16px;width:100%">Exporter en PDF avec cartouche</button>
             </sc-if>
             <sc-if value="{{ pl.isPdf }}" hint-placeholder-val="{{ false }}">
               <a href="{{ pl.src }}" target="_blank" rel="noopener" download="{{ pl.fileName }}" style="display:flex;align-items:center;gap:12px;background:var(--color-neutral-100);border-radius:24px;padding:16px;text-decoration:none;color:var(--color-text)">
@@ -1431,6 +1630,7 @@
                   <div style="font-size:15px;font-weight:600;line-height:1.3">{{ c.name }}</div>
                   <div style="font-size:13px;color:var(--color-neutral-700);margin-top:2px"><span style="font-family:ui-monospace,Menlo,monospace">{{ c.ref }}</span> · {{ c.fourn }}</div>
                   <div style="font-size:14px;margin-top:4px"><b>{{ c.vente }}</b> <span style="color:var(--color-neutral-700)">HT{{ c.unitTxt }} · achat {{ c.achatTxt }}</span></div>
+                  <button onClick="{{ c.onCmp }}" style="margin-top:6px;min-height:32px;border:none;border-radius:999px;padding:0 12px;font:700 12px var(--font-body);cursor:pointer;background:{{ c.cmpBg }};color:{{ c.cmpFg }};display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-4"></path></svg>{{ c.cmpTxt }}</button>
                 </div>
                 <button style-active="transform:scale(0.97)" onClick="{{ c.onAdd }}" title="Ajouter au devis" style="transition:transform .12s ease;width:48px;height:48px;flex:none;border:none;border-radius:50%;background:var(--color-accent);color:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
               </div>
@@ -1453,25 +1653,26 @@
       </sc-if>
 
       <!-- Tab bar -->
-      <nav style="flex:none;position:relative;z-index:5;background:var(--color-neutral-100);border-top:1px solid var(--color-divider);padding:8px 6px 26px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px">
-        <button style-active="transform:scale(0.97)" onClick="{{ goHome }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font:700 11px var(--font-body);color:{{ tabs.home.fg }}">
+      <nav style="flex:none;position:relative;z-index:5;background:var(--color-neutral-100);border-top:{{ fr.nbt }};border-right:{{ fr.nbr }};width:{{ fr.nw }};padding:{{ fr.np }};display:grid;grid-template-columns:{{ fr.nc }};align-content:start;gap:{{ fr.ng }}">
+            <sc-if value="{{ fr.wide }}" hint-placeholder-val="{{ false }}"><div style="font-family:var(--font-heading);font-size:22px;line-height:1.1;padding:4px 12px 18px">Chiffrage BTP 974</div></sc-if>
+        <button style-active="transform:scale(0.97)" onClick="{{ goHome }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.home.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.home.bg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></div>Accueil</button>
-        <button style-active="transform:scale(0.97)" onClick="{{ goDevis }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font:700 11px var(--font-body);color:{{ tabs.devis.fg }}">
+        <button style-active="transform:scale(0.97)" onClick="{{ goDevis }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.devis.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.devis.bg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M9 15h6"></path><path d="M12 18v-6"></path></svg></div>Devis</button>
-        <button style-active="transform:scale(0.97)" onClick="{{ goDocs }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font:700 11px var(--font-body);color:{{ tabs.docs.fg }}">
+        <button style-active="transform:scale(0.97)" onClick="{{ goDocs }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.docs.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.docs.bg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3a2 2 0 0 1-2-2V2"></path><path d="M9 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l4 4v10a2 2 0 0 1-2 2Z"></path><path d="M3 7.6v12.8A1.6 1.6 0 0 0 4.6 22h9.8"></path></svg></div>Documents</button>
-        <button style-active="transform:scale(0.97)" onClick="{{ goCat }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font:700 11px var(--font-body);color:{{ tabs.cat.fg }}">
+        <button style-active="transform:scale(0.97)" onClick="{{ goCat }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.cat.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.cat.bg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path></svg></div>Catalogue</button>
-        <button style-active="transform:scale(0.97)" onClick="{{ goSet }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font:700 11px var(--font-body);color:{{ tabs.set.fg }}">
+        <button style-active="transform:scale(0.97)" onClick="{{ goSet }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.set.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.set.bg }};position:relative"><sc-if value="{{ setDot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:0;right:8px;width:10px;height:10px;border-radius:50%;background:var(--color-accent-700);box-shadow:0 0 0 2px var(--color-neutral-100)"></span></sc-if><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>Réglages</button>
-        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-neutral-900)"></div>
+        <sc-if value="{{ fr.phone }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-neutral-900)"></div></sc-if>
       </nav>
 
       <!-- Feuille récap + jauge -->
       <sc-if value="{{ recapOpen }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ closeRecap }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
-          <div data-screen-label="02b Récap devis" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:16px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
+          <div data-screen-label="02b Récap devis" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:16px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="display:flex;justify-content:space-between;align-items:center">
               <div style="font-family:var(--font-heading);font-size:24px">Récapitulatif</div>
@@ -1534,7 +1735,7 @@
       <sc-if value="{{ metierOpen }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ closeMetier }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
-          <div data-screen-label="Réglages métier" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow-y:auto">
+          <div data-screen-label="Réglages métier" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="font-family:var(--font-heading);font-size:24px">Ton métier</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -1556,7 +1757,7 @@
       <sc-if value="{{ mail.open }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:26;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ mail.close }}" aria-hidden="true" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
-          <div role="dialog" aria-modal="true" aria-label="Aperçu de l'e-mail" data-screen-label="Aperçu e-mail comptable" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:12px;animation:btpUp .3s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
+          <div role="dialog" aria-modal="true" aria-label="Aperçu de l'e-mail" data-screen-label="Aperçu e-mail comptable" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:12px;animation:btpUp .3s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
               <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Aperçu de l'e-mail</div>
@@ -1596,7 +1797,7 @@
       <sc-if value="{{ help.open }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:24;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ help.close }}" aria-hidden="true" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent);animation:btpIn .2s ease"></div>
-          <div role="dialog" aria-modal="true" aria-label="{{ help.title }}" data-screen-label="Aide saisie" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:12px;animation:btpUp .3s cubic-bezier(.2,.8,.2,1);max-height:80%;overflow-y:auto">
+          <div role="dialog" aria-modal="true" aria-label="{{ help.title }}" data-screen-label="Aide saisie" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:12px;animation:btpUp .3s cubic-bezier(.2,.8,.2,1);max-height:80%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
               <div style="min-width:0">
@@ -1622,10 +1823,24 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ confirmProv }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ provCancel }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div role="dialog" aria-modal="true" aria-label="Envoyer un devis provisoire" data-screen-label="Confirmation devis provisoire" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1)">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Envoyer un devis provisoire ?</div>
+            <div style="font-size:15px;line-height:1.45;color:var(--color-neutral-800)">{{ provNo }} n'a pas d'acompte. Il partira avec la mention « Document provisoire, non définitif ».</div>
+            <button onClick="{{ provAdd }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">{{ provDef }}</button>
+            <button onClick="{{ provSend }}" class="btn btn-secondary" style="min-height:52px;font-size:16px;width:100%;border-width:2px;border-color:var(--color-neutral-500)">Envoyer quand même</button>
+            <button onClick="{{ provCancel }}" class="btn btn-ghost" style="min-height:44px;font-size:15px">Annuler</button>
+          </div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ rulesOpen }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:22;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ closeRules }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
-          <div data-screen-label="Règles NF C 15-100" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:12px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow-y:auto">
+          <div data-screen-label="Règles NF C 15-100" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:12px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
               <div>
@@ -1728,7 +1943,7 @@
       <sc-if value="{{ facOpen }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ fe.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
-          <div data-screen-label="Facture" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
+          <div data-screen-label="Facture" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
               <div>
@@ -1783,6 +1998,246 @@
             </div>
             <button style-active="transform:scale(0.97)" onClick="{{ fe.save }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:54px;font-size:17px;width:100%">{{ fe.saveLabel }}</button>
           </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ cmp.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:32;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ cmp.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div data-screen-label="Comparer les prix" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:12px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:88%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div style="min-width:0"><div style="font-size:13px;font-weight:700;color:var(--color-neutral-700)">Comparer les prix d'achat · {{ cmp.unit }}</div><div style="font-family:var(--font-heading);font-size:22px;line-height:1.15">{{ cmp.name }}</div><div style="font-size:13px;color:var(--color-neutral-700);font-family:ui-monospace,Menlo,monospace">{{ cmp.ref }}</div></div>
+              <button onClick="{{ cmp.close }}" aria-label="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+            <sc-for list="{{ cmp.rows }}" as="r" hint-placeholder-count="3">
+              <div style="background:var(--color-neutral-100);border-radius:22px;padding:12px 12px 12px 16px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">{{ r.fourn }}</div><div style="font-size:12px;color:var(--color-neutral-700)">Délai : {{ r.delai }} · vente {{ r.vente }}</div></div>
+                  <div style="text-align:right"><div style="font-size:17px;font-weight:800">{{ r.price }}</div><div style="font-size:12px;font-weight:700;color:{{ r.diffFg }}">{{ r.diff }}</div></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="flex:1;height:6px;border-radius:999px;background:var(--color-surface);overflow:hidden"><div style="height:100%;width:{{ r.w }};background:{{ r.bar }};border-radius:999px"></div></div>
+                  <button onClick="{{ r.on }}" style="min-height:36px;min-width:78px;border:none;border-radius:999px;padding:0 14px;font:700 13px var(--font-body);cursor:pointer;background:{{ r.btnBg }};color:{{ r.btnFg }}">{{ r.btn }}</button>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ cmp.hasDevis }}" hint-placeholder-val="{{ false }}"><div style="border-radius:18px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);padding:10px 14px;font-size:14px;font-weight:600;line-height:1.4">{{ cmp.devisTxt }}</div></sc-if>
+            <div style="font-size:12px;color:var(--color-neutral-700)">{{ cmp.note }} Choisir un fournisseur met à jour le catalogue et les lignes du devis en cours.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ od.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:32;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ od.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div data-screen-label="Commande" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:90%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div style="min-width:0"><div style="font-size:13px;font-weight:700;color:var(--color-neutral-700);font-family:ui-monospace,Menlo,monospace">{{ od.no }}</div><div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">{{ od.fourn }}</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ od.meta }}</div></div>
+              <button onClick="{{ od.close }}" aria-label="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+            <div role="tablist" style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+              <sc-for list="{{ od.steps }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.on }}" style="flex:1;min-height:42px;border:none;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};font:700 13px var(--font-body);cursor:pointer">{{ t.l }}</button></sc-for>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:6px 16px">
+              <sc-for list="{{ od.lines }}" as="l" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-divider)">
+                  <span style="min-width:40px;font-size:14px;font-weight:800">{{ l.q }}</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;line-height:1.3">{{ l.t }}</div><div style="font-size:12px;color:var(--color-neutral-700)">{{ l.m }}</div></div>
+                  <span style="font-size:14px;font-weight:700;white-space:nowrap">{{ l.tot }}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;justify-content:space-between;padding:10px 0 6px;font-size:15px;font-weight:800"><span>Total estimé</span><span>{{ od.total }}</span></div>
+            </div>
+            <button onClick="{{ od.mail }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">Envoyer par e-mail</button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button onClick="{{ od.wa }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">WhatsApp</button>
+              <button onClick="{{ od.copy }}" class="btn btn-secondary" style="min-height:46px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Partager / copier</button>
+            </div>
+            <button onClick="{{ od.del }}" class="btn btn-ghost" style="min-height:44px;font-size:14px;color:{{ od.delFg }};background:{{ od.delBg }}">{{ od.delL }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ nc.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:31;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ nc.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div data-screen-label="Nouvelle commande" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div><div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Nouvelle commande</div><div style="font-size:13px;color:var(--color-neutral-700)">Depuis un devis et le catalogue</div></div>
+              <button onClick="{{ nc.close }}" aria-label="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">1 · DEVIS LIÉ</div>
+              <div data-hscroll="" style="display:flex;gap:6px;overflow-x:auto;margin:0 -20px;padding:0 20px;scrollbar-width:none">
+                <sc-for list="{{ nc.srcs }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.on }}" style="flex:none;min-height:40px;border:none;border-radius:999px;padding:0 14px;font:700 13px var(--font-body);cursor:pointer;white-space:nowrap;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">2 · AJOUTER DEPUIS LE CATALOGUE</div>
+              <input value="{{ nc.q }}" onChange="{{ nc.onQ }}" placeholder="Rechercher : disjoncteur, gaine, câble…" class="input" style="min-height:48px;border-radius:999px;font-size:15px"></input>
+              <sc-for list="{{ nc.res }}" as="r" hint-placeholder-count="0">
+                <div style="display:flex;align-items:center;gap:10px;background:var(--color-neutral-100);border-radius:18px;padding:8px 8px 8px 14px">
+                  <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;line-height:1.3">{{ r.name }}</div><div style="font-size:12px;color:var(--color-neutral-700)">{{ r.meta }}</div></div>
+                  <button onClick="{{ r.add }}" aria-label="Ajouter" style="width:40px;height:40px;flex:none;border:none;border-radius:50%;background:var(--color-neutral-900);color:var(--color-neutral-100);cursor:pointer;font:700 20px var(--font-body)">+</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ nc.noRes }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700)">Aucun article trouvé dans le catalogue.</div></sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">3 · ARTICLES À COMMANDER</div>
+              <sc-if value="{{ nc.noItems }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:var(--color-neutral-700);background:var(--color-neutral-100);border-radius:18px;padding:14px">Choisis un devis ou ajoute des articles du catalogue.</div></sc-if>
+              <sc-for list="{{ nc.items }}" as="i" hint-placeholder-count="0">
+                <div style="display:flex;align-items:center;gap:10px;background:var(--color-neutral-100);border-radius:18px;padding:8px 10px;opacity:{{ i.op }}">
+                  <button onClick="{{ i.toggle }}" aria-pressed="{{ i.on }}" aria-label="Inclure" style="width:28px;height:28px;flex:none;border-radius:9px;border:2.5px solid var(--color-accent-2-700);background:{{ i.boxBg }};color:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></button>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600;line-height:1.3">{{ i.lbl }}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700;background:{{ i.tagBg }};color:{{ i.tagFg }}">{{ i.tag }}</span><span style="font-size:12px;color:var(--color-neutral-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.meta }}</span></div>
+                  </div>
+                  <button onClick="{{ i.dec }}" aria-label="Moins" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;font:700 17px var(--font-body);color:var(--color-text)">−</button>
+                  <span style="min-width:34px;text-align:center;font-size:14px;font-weight:800">{{ i.qtyTxt }}</span>
+                  <button onClick="{{ i.inc }}" aria-label="Plus" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;font:700 17px var(--font-body);color:var(--color-text)">+</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="border-radius:24px;border:2px dashed var(--color-neutral-400);padding:12px 16px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:14px;font-weight:800">{{ nc.sum }}</div>
+              <sc-for list="{{ nc.fourns }}" as="x" hint-placeholder-count="0"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px"><span style="font-weight:700">{{ x.n }}</span><span>{{ x.t }}</span></div></sc-for>
+              <div style="font-size:12px;color:var(--color-neutral-700)">Une commande est créée par fournisseur, prête à envoyer par e-mail ou WhatsApp.</div>
+            </div>
+            <button onClick="{{ nc.create }}" class="btn btn-primary" style="min-height:54px;font-size:17px;width:100%;opacity:{{ nc.btnOp }}">Créer la commande</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ np.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:31;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ np.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div data-screen-label="Nouveau projet" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div><div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Nouveau projet</div><div style="font-size:13px;color:var(--color-neutral-700)">Client, chantier, étapes et documents liés</div></div>
+              <button onClick="{{ np.close }}" aria-label="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">CLIENT</div>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Nom du client *<input value="{{ np.f.client }}" onChange="{{ np.set.client }}" placeholder="Ex. M. et Mme Técher" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Téléphone<input type="tel" value="{{ np.f.tel }}" onChange="{{ np.set.tel }}" placeholder="0692 00 00 00" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">CHANTIER</div>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Adresse<input value="{{ np.f.addr }}" onChange="{{ np.set.addr }}" placeholder="12 rue des Letchis, 97460 Saint-Paul" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Type de travaux<input value="{{ np.f.type }}" onChange="{{ np.set.type }}" placeholder="Rénovation électrique villa T4" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Début<input type="date" value="{{ np.f.debut }}" onChange="{{ np.set.debut }}" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Fin prévue<input type="date" value="{{ np.f.fin }}" onChange="{{ np.set.fin }}" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+              </div>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Note d'accès<input value="{{ np.f.note }}" onChange="{{ np.set.note }}" placeholder="Code portail, clé, stationnement…" class="input" style="min-height:48px;border-radius:999px;font-size:15px;width:100%"></input></label>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">ÉTAPES DU CHANTIER</div>
+              <sc-for list="{{ np.steps }}" as="t" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px;min-height:40px;border-top:1px solid var(--color-divider)">
+                  <span style="width:20px;height:20px;flex:none;border-radius:7px;border:2.5px solid var(--color-accent-2-700)"></span>
+                  <span style="flex:1;min-width:0;font-size:14px;font-weight:600">{{ t.t }}</span>
+                  <button onClick="{{ t.del }}" aria-label="Retirer l'étape" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:transparent;cursor:pointer;color:var(--color-neutral-700);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </div>
+              </sc-for>
+              <div style="display:flex;gap:8px;padding-top:4px">
+                <input value="{{ np.stepTxt }}" onChange="{{ np.onStep }}" placeholder="Ajouter une étape" class="input" style="flex:1;min-width:0;min-height:44px;border-radius:999px;font-size:14px"></input>
+                <button onClick="{{ np.addStep }}" aria-label="Ajouter l'étape" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-neutral-900);color:var(--color-neutral-100);cursor:pointer;font:700 20px var(--font-body)">+</button>
+              </div>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:8px 16px">
+              <sc-for list="{{ np.opts }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.toggle }}" aria-pressed="{{ o.on }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:56px;border:none;background:transparent;padding:6px 0;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)">
+                  <span style="width:26px;height:26px;flex:none;border-radius:9px;border:2.5px solid var(--color-accent-2-700);background:{{ o.bg }};color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                  <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:700">{{ o.l }}</span><span style="display:block;font-size:12px;color:var(--color-neutral-700)">{{ o.sub }}</span></span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ np.err }}" hint-placeholder-val="{{ false }}"><div role="alert" style="font-size:14px;font-weight:700;color:var(--color-accent-800)">{{ np.err }}</div></sc-if>
+            <button onClick="{{ np.create }}" class="btn btn-primary" style="min-height:54px;font-size:17px;width:100%;opacity:{{ np.btnOp }}">Créer le projet</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pl.im.wiz.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:31;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ pl.im.wiz.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div data-screen-label="Assistant plan" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:90%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div><div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Plan du logement</div><div style="font-size:13px;color:var(--color-neutral-700)">Quelques questions pour dessiner les pièces</div></div>
+              <button onClick="{{ pl.im.wiz.close }}" aria-label="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:12px 16px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">1 · SURFACE</div>
+              <div style="display:flex;align-items:center;gap:10px;min-height:48px">
+                <span style="flex:1;font-size:15px;font-weight:700">Surface habitable</span>
+                <button onClick="{{ pl.im.wiz.Sdec }}" aria-label="Moins 5 m²" style="width:40px;height:40px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;font:700 18px var(--font-body);color:var(--color-text)">−</button>
+                <span style="min-width:70px;text-align:center;font-size:16px;font-weight:800">{{ pl.im.wiz.S }}</span>
+                <button onClick="{{ pl.im.wiz.Sinc }}" aria-label="Plus 5 m²" style="width:40px;height:40px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;font:700 18px var(--font-body);color:var(--color-text)">+</button>
+              </div>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:12px 16px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">2 · PIÈCES</div>
+              <sc-for list="{{ pl.im.wiz.nums }}" as="n" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;min-height:48px">
+                  <span style="flex:1;font-size:15px;font-weight:700">{{ n.l }}</span>
+                  <button onClick="{{ n.dec }}" aria-label="Moins" style="width:40px;height:40px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;font:700 18px var(--font-body);color:var(--color-text)">−</button>
+                  <span style="min-width:36px;text-align:center;font-size:16px;font-weight:800">{{ n.v }}</span>
+                  <button onClick="{{ n.inc }}" aria-label="Plus" style="width:40px;height:40px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;font:700 18px var(--font-body);color:var(--color-text)">+</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:12px 16px;display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:12px;font-weight:800;color:var(--color-accent-700)">3 · CARACTÉRISTIQUES</div>
+              <sc-for list="{{ pl.im.wiz.yns }}" as="q" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;min-height:50px">
+                  <span style="flex:1;min-width:0;font-size:15px;font-weight:600">{{ q.l }}</span>
+                  <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:3px">
+                    <sc-for list="{{ q.opts }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.on }}" style="min-height:40px;min-width:64px;border:none;border-radius:999px;padding:0 14px;font:700 13px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="border-radius:24px;border:2px dashed var(--color-neutral-400);padding:12px 16px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:14px;font-weight:800">{{ pl.im.wiz.sum }}</div>
+              <div style="display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:13px">
+                <sc-for list="{{ pl.im.wiz.rooms }}" as="r" hint-placeholder-count="6"><span>{{ r.n }}</span><span style="text-align:right;font-weight:700">{{ r.m2 }}</span></sc-for>
+              </div>
+              <div style="font-size:12px;color:var(--color-neutral-700)">Surfaces réparties automatiquement. Ajustez ensuite avec l'outil « Pièces ».</div>
+            </div>
+            <button onClick="{{ pl.im.wiz.gen }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">Générer et placer les symboles</button>
+            <button onClick="{{ pl.im.wiz.genOnly }}" class="btn btn-ghost" style="min-height:44px;font-size:15px;margin-top:-6px">Générer les pièces seules</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ shFb.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:32;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ shFb.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div data-screen-label="Partager le plan" style="position:relative;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:12px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1)">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">PDF téléchargé</div>
+            <div style="font-size:14px;line-height:1.5;color:var(--color-neutral-800)">Ce navigateur ne permet pas d'envoyer directement un fichier. Le PDF <b style="font-family:ui-monospace,Menlo,monospace;font-size:13px">{{ shFb.name }}</b> est dans tes téléchargements : ouvre la conversation, puis joins-le avec le trombone.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <a href="{{ shFb.wa }}" target="_blank" rel="noopener" class="btn btn-primary" style="min-height:50px;font-size:15px;text-decoration:none">WhatsApp</a>
+              <a href="{{ shFb.mail }}" class="btn btn-secondary" style="min-height:50px;font-size:15px;border-width:2px;text-decoration:none">E-mail</a>
+            </div>
+            <button onClick="{{ shFb.close }}" class="btn btn-ghost" style="min-height:44px;font-size:15px">Fermer</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ updReady }}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="position:absolute;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:10px;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);padding:6px 6px 6px 18px;box-shadow:var(--shadow-lg);animation:btpIn .28s ease">
+          <span style="flex:1;min-width:0;font-size:14px;font-weight:600">Nouvelle version disponible</span>
+          <button onClick="{{ updLater }}" style="min-height:44px;border:none;background:transparent;color:var(--color-neutral-300);font:600 14px var(--font-body);padding:0 8px;cursor:pointer">Plus tard</button>
+          <button onClick="{{ updReload }}" style-active="transform:scale(0.96)" style="transition:transform .12s ease;min-height:44px;border:none;border-radius:999px;background:var(--color-accent);color:var(--color-neutral-900);font:700 14px var(--font-body);padding:0 16px;cursor:pointer">Recharger</button>
         </div>
       </sc-if>
 

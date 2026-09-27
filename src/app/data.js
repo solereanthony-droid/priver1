@@ -1,4 +1,4 @@
-// Données de démo partagées entre l'app et le serveur (prompts IA).
+// Données de démo partagées entre l'app et le serveur (prompts IA). Généré par scripts/import-handoff.py.
 // Catalogues par métier : [désignation, réf, famille, fournisseur, achat HT, unité]
 export const CAT_RAW = {
   elec: [

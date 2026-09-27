@@ -35,11 +35,11 @@ describe('totals()', () => {
 });
 
 describe('numérotation', () => {
-  const d = new Date(2027, 0, 5);
-  it('trois chiffres minimum, sans « 0 » en trop au-delà de 99', () => {
-    expect(docNo('DEV', 42, d)).toBe('DEV-2027-042');
-    expect(docNo('FAC', 7, d)).toBe('FAC-2027-007');
-    expect(docNo('DEV', 100, d)).toBe('DEV-2027-100');
+  const y = new Date().getFullYear();
+  it('trois chiffres minimum, année en cours, sans « 0 » en trop au-delà de 99', () => {
+    expect(docNo('DEV', 42)).toBe(`DEV-${y}-042`);
+    expect(docNo('FAC', 7)).toBe(`FAC-${y}-007`);
+    expect(docNo('DEV', 100)).toBe(`DEV-${y}-100`);
   });
 });
 

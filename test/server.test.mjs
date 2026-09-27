@@ -15,6 +15,10 @@ test('seules les tâches connues sont acceptées', () => {
   assert.match(t.system, /Disjoncteur ph\+N 16 A/);
   const today = new Date().toISOString().slice(0, 10);
   assert.match(buildTask('rdv', { text: 'demain 14 h', today }).system, new RegExp(today));
+  const withClients = buildTask('rdv', { text: 'x', today, clients: ['Mme Test (Saint-Leu)', 'a;b"{c}', 42] }).system;
+  assert.match(withClients, /Clients connus : Mme Test \(Saint-Leu\); a b  c\./);
+  assert.doesNotMatch(withClients, /SCI Les Filaos/);                                    // liste fournie → pas les clients de démo
+  assert.match(buildTask('rdv', { text: 'x', today, clients: 'pas une liste' }).system, /SCI Les Filaos/);
 });
 
 test('serveur : en-têtes, origine, type de contenu, chemins', async t => {

@@ -4,7 +4,21 @@ Application mobile (PWA) de chiffrage pour artisans du BTP à La Réunion : devi
 contrôle de marge, factures et suivi de la facturation électronique, planning, projets, plans unifilaires
 NF C 15-100 et informations légales de l'entreprise.
 
-Le design vient du handoff `docs/design-handoff/` (prototype haute fidélité + système Organic).
+Le design vient du handoff `docs/design-handoff/` (prototype haute fidélité + système Organic),
+mis à jour en v11 (`MISES_A_JOUR.md`) : plans d'implantation et assistant « Plan du logement », partage du plan en PDF,
+création de projets et de commandes fournisseurs, comparateur de prix, thème sombre, mise en page ordinateur.
+
+## Intégrer un nouveau handoff Claude Design
+
+```bash
+python3 scripts/import-handoff.py "chemin/Chiffrage BTP 974 Mobile.dc.html"
+npm test
+```
+
+Le script reprend le gabarit et la classe `Component` tels quels et réapplique les adaptations de l'app
+(IA côté serveur, sauvegarde locale filtrée, images revalidées, plein écran, correctifs connus). Si le prototype
+a changé à l'un de ces endroits, il s'arrête et indique lequel. Ne pas modifier `src/app/logic.js`,
+`template.html`, `data.js` ni `styles/handoff.css` à la main : ils sont régénérés.
 
 ## Démarrer
 
@@ -67,7 +81,8 @@ Configurés dans `.claude/settings.json` (scripts dans `.claude/hooks/`) :
 | `src/app/template.html` | Gabarit des écrans, repris du prototype (`<x-dc>`) |
 | `src/app/App.jsx` | Composant racine (fonction) : assemble la logique et les hooks |
 | `src/app/logic.js` | Logique métier du prototype (totaux, TVA DOM, NF C 15-100, DTU, planning…), sous forme de contrôleur |
-| `src/hooks/` | Hooks React : `useLogic` (état + cycle de vie du contrôleur), `usePersistence` (sauvegarde locale), `useFitScale` (cadre téléphone), `useEscapeKey`, `useOnlineStatus` |
+| `src/hooks/` | Hooks React : `useLogic` (état + cycle de vie du contrôleur), `usePersistence` (sauvegarde locale filtrée), `useServiceWorker` (hors ligne et « Nouvelle version disponible ») |
+| `scripts/import-handoff.py` | Import d'un nouveau prototype Claude Design |
 | `src/dc/runtime.js` | Moteur qui rend le gabarit en React (`{{ }}`, `sc-if`, `sc-for`, `style-active`…) ; remplace `support.js`, absent du handoff |
 | `src/styles/organic.css` | Jetons et composants du système Organic |
 | `src/styles/app.css` | Styles globaux et mode plein écran sur téléphone |

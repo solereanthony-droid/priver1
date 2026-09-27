@@ -4,7 +4,12 @@ const CACHE = 'btp974-__VERSION__';
 const PRECACHE = __PRECACHE__;
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+  // Pas de skipWaiting ici : une nouvelle version attend que l'utilisateur choisisse « Recharger ».
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
+});
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {

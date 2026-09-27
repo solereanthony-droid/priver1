@@ -134,3 +134,36 @@ Pour que le prochain prototype s'intègre **sans retouche** :
 2. Garde-t-on le **cadre téléphone** sur ordinateur, ou faut-il une mise en page tablette ou ordinateur ?
 3. Faut-il une **confirmation** avant d'envoyer un devis sans acompte (statut « provisoire ») ?
 4. Faut-il un espace **compte et connexion**, pour une future synchronisation entre appareils ?
+
+---
+
+## 7. Retour sur la mise à jour v11 (intégrée le 2026-09-27)
+
+Tout le contenu de `MISES_A_JOUR.md` est intégré : v5 à v11, les points d'intégration (mise à jour disponible,
+partage PDF, liens externes) et les nouvelles clés persistées. `totals()` est inchangé et les tests de calcul
+passent sans modification. La liste « Tests à passer » est automatisée (`test/handoff.spec.js`) ou vérifiée dans le
+navigateur.
+
+### 7.1 Corrigé côté app (à reporter dans le prototype)
+1. **Thème sombre inopérant.** Quand le « Mode plein soleil » est désactivé, `sun` vaut
+   `{ n: 'inherit', div: 'inherit', bg: 'inherit' }`. Or le gabarit écrit `--color-bg:{{ sun.bg }}` **en ligne**,
+   sur l'élément qui porte `data-theme`. `--color-bg: inherit` en ligne l'emporte sur `[data-theme="dark"]` :
+   le fond restait clair. **Correction :** valeurs vides (`''`) quand le mode est désactivé, pour ne rien écrire en ligne.
+2. **Police du PDF.** Le canvas utilise `Figtree`. Dans l'app, la police embarquée s'appelle `Figtree Variable` :
+   un alias a été ajouté, et les graisses sont préchargées avant le dessin. Sans ce correctif, le texte débordait
+   (« Disjoncteur de branchement » sortait de son cadre, titre tronqué « villa P… »).
+
+### 7.2 Écarts avec la fiche de tests
+- **Assistant plan** : avec 90 m², 3 chambres, cuisine fermée et cellier (autres réglages par défaut : WC séparé,
+  1 salle de bain, pas de bureau ni de garage), le calcul donne **9 pièces + terrasse** (10 éléments), pas
+  « 10 pièces + terrasse ». Détail : Entrée, Séjour (26 m²), Cuisine, Cellier, WC, 3 chambres, Salle de bain.
+  Est-ce la fiche ou le calcul qui doit changer ?
+
+### 7.3 Détails visuels relevés dans le PDF (à designer)
+- Colonne « Points » du tableau de repérage : « 4 points lumi… » est coupé par une ellipse, alors que la règle v6
+  interdit les ellipses. Élargir la colonne, ou passer à la ligne.
+- Schéma : l'étiquette de l'ID affiche « 30 mA A » (sensibilité + type). Proposer « 30 mA · type A ».
+- Schéma : la section verticale (« 1,5 mm² ») chevauche légèrement le début du nom du circuit.
+
+### 7.4 Toujours attendu
+- L'**icône définitive** 512 × 512 + maskable.
