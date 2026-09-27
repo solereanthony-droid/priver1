@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import vm from 'node:vm';
 import { buildTask, TaskError } from '../server/prompts.mjs';
 
 test('seules les tâches connues sont acceptées', () => {
@@ -35,4 +36,14 @@ test('serveur : en-têtes, origine, type de contenu, chemins', async t => {
   assert.equal((await post(JSON.stringify({ task: 'libre', params: {} }))).status, 400);
   assert.equal((await post('x'.repeat(9000))).status, 413);
   assert.equal((await fetch(base + '/')).status, home.status);          // toujours en vie
+
+  const js = (await home.text()).match(/\/assets\/index-[\w-]+\.js/)[0];
+  const br = await fetch(base + js, { headers: { 'Accept-Encoding': 'br' } });
+  assert.equal(br.headers.get('content-encoding'), 'br');                // compression
+  assert.match(br.headers.get('cache-control'), /immutable/);
+  const sw = await fetch(base + '/sw.js');
+  assert.equal(sw.headers.get('cache-control'), 'no-cache');             // service worker toujours revalidé
+  const swSrc = await sw.text();
+  assert.doesNotThrow(() => new vm.Script(swSrc));                         // script valide
+  assert.match(swSrc, new RegExp(js.replace(/\./g, '\\.')));             // le bundle est précaché
 });

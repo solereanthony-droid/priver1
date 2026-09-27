@@ -41,7 +41,8 @@ expressions régulières pour les rendez-vous).
   délais d'expiration sur l'appel Claude et sur les requêtes HTTP.
 - En-têtes : CSP stricte (scripts du site seulement, pas d'iframe), `nosniff`, `no-referrer`, COOP/CORP,
   `Permissions-Policy` (micro autorisé pour la dictée, le reste coupé).
-- Fichiers statiques : chemins normalisés et confinés à `dist/`, URL mal formées refusées sans planter le serveur.
+- Fichiers statiques : chemins normalisés et confinés à `dist/`, URL mal formées refusées sans planter le serveur ;
+  compression brotli/gzip, cache long pour les fichiers versionnés.
 - Import de plans : PNG, JPEG, WebP, GIF ou PDF uniquement (pas de SVG/HTML), 3 Mo max ; les sources
   restaurées sont revalidées avant affichage.
 - Sauvegarde locale : seules les clés attendues sont restaurées.
@@ -60,6 +61,7 @@ expressions régulières pour les rendez-vous).
 | `src/styles/app.css` | Styles globaux et mode plein écran sur téléphone |
 | `src/claude.js` | `window.btpAI(tâche, paramètres)` → `POST /api/ai` |
 | `server/index.mjs` | Sert `dist/` et exécute les tâches IA (la clé reste côté serveur) |
+| `src/sw-template.js` | Service worker (mode hors ligne) |
 | `server/prompts.mjs` | Prompts IA et validation des paramètres |
 | `src/app/data.js` | Données de démo partagées (catalogues, DTU, métiers, projets) |
 | `docs/design-handoff/` | Handoff de design d'origine (référence) |
@@ -68,6 +70,20 @@ Sur ordinateur, l'app s'affiche dans le cadre téléphone 390 × 844 du prototyp
 Sur téléphone (≤ 520 px) ou installée en PWA, elle occupe tout l'écran, sans cadre ni fausse barre d'état.
 
 Les données (devis, factures, réglages) sont gardées sur l'appareil (`localStorage`, clé `btp974-mobile-v1`).
+
+**Hors ligne** : après une première visite, l'app fonctionne sans réseau (service worker `dist/sw.js`,
+généré au build avec la liste des fichiers). Seule l'IA a besoin du réseau ; sans elle, les replis locaux prennent le relais.
+Les polices (Caprasimo, Figtree) sont embarquées : aucun appel à Google Fonts.
+
+## Tests
+
+```bash
+npm test   # build, puis tests serveur (node:test) et tests métier + rendu des écrans (Vitest)
+```
+
+Les tests couvrent les totaux (TVA DOM 8,5 / 2,1 %, remise, acompte, micro-entreprise), la numérotation,
+le rendu de chaque écran, la sécurité du serveur, la compression et le service worker. La CI GitHub
+(`.github/workflows/ci.yml`) les lance à chaque push.
 
 ## Avant la mise en production
 

@@ -191,6 +191,8 @@ function metierRules(key, lines) {
 
 
 let COEF = 1.35;
+// Numérotation continue : DEV-2026-042, … DEV-2026-100 (3 chiffres minimum, année en cours).
+export const docNo = (prefix, seq, d = new Date()) => `${prefix}-${d.getFullYear()}-${String(seq).padStart(3, '0')}`;
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const DF_LONG = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 const NF2 = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), NF0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
@@ -365,7 +367,7 @@ class Component extends DCLogic {
   }
 
   newDevis() {
-    const s = this.state, T = this.totals(), no = `DEV-2026-0${s.devisSeq}`;
+    const s = this.state, T = this.totals(), no = docNo('DEV', s.devisSeq);
     const docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), ttc: T.ttc, marge: Math.round(T.pct) } : x);
     this.setState({ docs: [{ no, type: 'devis', live: true, client: 'Nouveau client', date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0 }, ...docs],
       devisSeq: s.devisSeq + 1, lines: [], client: '', chantier: '', acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' });
@@ -430,7 +432,7 @@ class Component extends DCLogic {
             this.setState(st => ({ facEdit: null, docs: st.docs.map(x => x.no === e.no ? { ...x, client: e.client, lines, ttc } : x) }));
             this.flash(`${e.no} mise à jour`);
           } else {
-            const nno = `FAC-2026-0${s.facSeq}`;
+            const nno = docNo('FAC', s.facSeq);
             this.setState(st => ({ facEdit: null, facSeq: st.facSeq + 1, docs: [{ no: nno, type: 'fac', client: e.client, date: '26/09', st: 0, ttc, lines }, ...st.docs] }));
             this.flash(`Avoir + ${nno} créés, à transmettre`);
           }
@@ -1290,7 +1292,7 @@ class Component extends DCLogic {
       saveDevis: () => { this.setState({ recapOpen: false }); this.flash(`Devis ${s.editNo || 'DEV-2026-041'} enregistré`); },
       toFacture: () => {
         if (!s.lines.length) { this.flash('Ajoute au moins une ligne avant de facturer'); return; }
-        const no = `FAC-2026-0${s.facSeq}`;
+        const no = docNo('FAC', s.facSeq);
         this.setState(st => ({ facSeq: st.facSeq + 1, docTab: 'fac', recapOpen: false, plans: (st.plans ?? this.defaultPlans()).map(p => p.devisNo === (st.editNo || 'DEV-2026-041') ? { ...p, facNo: no } : p),
           docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: '24/09', st: 0, ttc: T.ttc - T.ac }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
         this.go('docs'); this.flash(`Facture ${no} créée, acompte reporté`);

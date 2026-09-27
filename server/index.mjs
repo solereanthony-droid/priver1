@@ -3,6 +3,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildTask, TaskError } from './prompts.mjs';
@@ -16,14 +17,15 @@ const RATE_MAX = +process.env.AI_RATE_LIMIT || 20; // requêtes IA par minute et
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 const MAX_BODY = 8 * 1024;
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff' };
 
 const SECURITY_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
+    "worker-src 'self'",
     "img-src 'self' data: blob:",
     "connect-src 'self'",
     "manifest-src 'self'",
@@ -126,9 +128,40 @@ function serveStatic(req, res) {
     if (!st) return send(res, 404, 'Lancer « npm run build » d’abord.', 'text/plain; charset=utf-8');
   }
   const immutable = file.startsWith(path.join(DIST, 'assets') + path.sep);
-  res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Content-Length': st.size, 'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache' });
+  const type = MIME[path.extname(file)] || 'application/octet-stream';
+  const headers = { ...SECURITY_HEADERS, 'Content-Type': type, 'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache' };
+  const enc = COMPRESSIBLE.test(type) && negotiate(req.headers['accept-encoding']);
+  if (enc) {
+    const body = compressed(file, st, enc);
+    res.writeHead(200, { ...headers, 'Content-Encoding': enc, 'Content-Length': body.length, Vary: 'Accept-Encoding' });
+    return res.end(req.method === 'HEAD' ? undefined : body);
+  }
+  res.writeHead(200, { ...headers, 'Content-Length': st.size, ...(COMPRESSIBLE.test(type) ? { Vary: 'Accept-Encoding' } : {}) });
   if (req.method === 'HEAD') return res.end();
   fs.createReadStream(file).on('error', () => res.destroy()).pipe(res);
+}
+
+// ── Compression (brotli ou gzip), calculée une fois par fichier puis gardée en mémoire ──
+const COMPRESSIBLE = /^(text\/|application\/(json|manifest\+json)|image\/svg)/;
+const ZCACHE = new Map();
+function negotiate(accept = '') {
+  const q = {};
+  for (const part of String(accept).split(',')) {
+    const [name, ...params] = part.trim().toLowerCase().split(';');
+    const qp = params.map(x => x.trim()).find(x => x.startsWith('q='));
+    q[name] = qp ? parseFloat(qp.slice(2)) || 0 : 1;
+  }
+  return q.br > 0 ? 'br' : q.gzip > 0 ? 'gzip' : null;
+}
+function compressed(file, st, enc) {
+  const key = file + '|' + enc, hit = ZCACHE.get(key);
+  if (hit && hit.mtime === st.mtimeMs) return hit.body;
+  const raw = fs.readFileSync(file);
+  const body = enc === 'br'
+    ? zlib.brotliCompressSync(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9, [zlib.constants.BROTLI_PARAM_SIZE_HINT]: raw.length } })
+    : zlib.gzipSync(raw, { level: 9 });
+  ZCACHE.set(key, { mtime: st.mtimeMs, body });
+  return body;
 }
 
 const server = http.createServer((req, res) => {
