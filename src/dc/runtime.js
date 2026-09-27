@@ -205,10 +205,13 @@ export function renderTemplate(tree, vals) {
 }
 
 // Classe de base de la logique du prototype (« class Component extends DCLogic »).
+// Ce n'est plus un composant React : c'est un contrôleur piloté par le hook useLogic
+// (src/hooks/useLogic.js), qui lui fournit state, setState et les appels de cycle de vie.
 export function makeDCLogic(templateSource, defaultProps = {}) {
   const tree = parse(templateSource);
-  return class DCLogic extends React.Component {
-    static defaultProps = defaultProps;
+  return class DCLogic {
+    constructor(props = {}) { this.props = { ...defaultProps, ...props }; }
+    setState() { throw new Error('DCLogic : setState n\u2019est disponible qu\u2019à travers useLogic()'); }
     render() { return renderTemplate(tree, this.renderVals()); }
   };
 }

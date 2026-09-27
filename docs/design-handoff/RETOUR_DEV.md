@@ -77,7 +77,7 @@ depuis le catalogue. » Le serveur distingue pourtant plusieurs situations :
 
 | Cas | Code | Message proposé (à valider) |
 | --- | --- | --- |
-| Pas de réseau | — | « Pas de connexion : ajoute les lignes depuis le catalogue. » |
+| Pas de réseau | — | « Pas de connexion : ajoute les lignes depuis le catalogue. » (**déjà en place**, texte provisoire) |
 | Trop de demandes (plus de 20 par minute) | 429 | « Trop de demandes d'un coup. Réessaie dans une minute. » |
 | Texte trop long (plus de 600 caractères) | 400 | « Décris le chantier en une ou deux phrases. » |
 | Service IA en panne ou refus | 502 | message actuel |

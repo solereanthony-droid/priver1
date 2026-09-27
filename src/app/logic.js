@@ -243,31 +243,13 @@ class Component extends DCLogic {
 
   static KEY = 'btp974-mobile-v1';
   static KEEP = ['lines','client','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo'];
+  // Échap, mise à l'échelle et sauvegarde locale sont gérés par des hooks React (src/hooks/, src/app/App.jsx).
   componentDidMount() {
-    this._esc = e => { if (e.key !== 'Escape') return; if (this.state.help) this.setState({ help: null }); else if (this.state.mailDraft) this.setState({ mailDraft: null }); }; window.addEventListener('keydown', this._esc);
-    this._fitN = 0; this._fitT = Date.now();
-    this._fit = () => { cancelAnimationFrame(this._fitRaf); this._fitRaf = requestAnimationFrame(() => {
-      const now = Date.now(); if (now - this._fitT > 1000) { this._fitT = now; this._fitN = 0; } if (++this._fitN > 4) return;
-      const H = window.innerHeight, W = window.innerWidth; if (H < 300 || W < 200) return;
-      const k = Math.round(Math.min(1, (H - 32) / 844, (W - 32) / 390) * 50) / 50;
-      if (k !== (this.state.fitK || 1)) this.setState({ fitK: k }); }); };
-    this._fit(); window.addEventListener('resize', this._fit);
     setTimeout(() => this.initDrag(), 0);
-    try {
-      const raw = localStorage.getItem(Component.KEY); if (!raw) return;
-      const d = JSON.parse(raw), ids = [];
-      (d.lines || []).forEach(l => ids.push(l.id)); (d.docs || []).forEach(x => (x.lines || []).forEach(l => ids.push(l.id || 0))); (d.plans || []).forEach(p => (p.circuits || []).forEach(c => ids.push(+c.id || 0)));
-      UID = Math.max(UID, ...ids.filter(Number.isFinite)) + 1;
-      // Ne restaure que les clés attendues : une sauvegarde altérée ne doit pas piloter l'état d'interface.
-      const keep = {}; Component.KEEP.forEach(k => { if (d && Object.hasOwn(d, k)) keep[k] = d[k]; });
-      this.setState({ ...keep, savedAt: Date.now() });
-    } catch (e) {}
   }
   componentDidUpdate(pp, ps) {
     if (ps && (ps.activeSet !== this.state.activeSet || (ps.tab !== 'set' && this.state.tab === 'set'))) this.centerChip();
     if (!this._dragInit && (this._dragTry = (this._dragTry || 0) + 1) < 5) this.initDrag();
-    clearTimeout(this._sv);
-    this._sv = setTimeout(() => { try { const o = {}; Component.KEEP.forEach(k => { if (this.state[k] !== undefined) o[k] = this.state[k]; }); localStorage.setItem(Component.KEY, JSON.stringify(o)); } catch (e) {} }, 400);
   }
   spy() {
     if (this.state.tab !== 'set' || Date.now() - (this._lockSpy || 0) < 700) return;
@@ -302,10 +284,22 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
-    cancelAnimationFrame(this._fitRaf);
-    window.removeEventListener('keydown', this._esc);
-    window.removeEventListener('resize', this._fit);
-    window.removeEventListener('pointermove', this._pm); window.removeEventListener('pointerup', this._pu); cancelAnimationFrame(this._spyRaf); clearTimeout(this._sv); clearTimeout(this._t); if (this._rec) this._rec.abort(); }
+    window.removeEventListener('pointermove', this._pm); window.removeEventListener('pointerup', this._pu); cancelAnimationFrame(this._spyRaf); clearTimeout(this._t); if (this._rec) this._rec.abort(); }
+
+  // Fermeture des feuilles au clavier (appelé par useEscapeKey).
+  onEscape() { if (this.state.help) this.setState({ help: null }); else if (this.state.mailDraft) this.setState({ mailDraft: null }); }
+
+  // Sauvegarde locale : ce qui est gardé, et comment le recharger (utilisé par usePersistence).
+  snapshot(state = this.state) { const o = {}; Component.KEEP.forEach(k => { if (state[k] !== undefined) o[k] = state[k]; }); return o; }
+  restore(d) {
+    if (!d || typeof d !== 'object') return;
+    // Recale le compteur d'identifiants sur les lignes et circuits enregistrés (évite les collisions).
+    const ids = [];
+    (d.lines || []).forEach(l => ids.push(l.id)); (d.docs || []).forEach(x => (x.lines || []).forEach(l => ids.push(l.id || 0))); (d.plans || []).forEach(p => (p.circuits || []).forEach(c => ids.push(+c.id || 0)));
+    UID = Math.max(UID, ...ids.filter(Number.isFinite)) + 1;
+    // Ne restaure que les clés attendues : une sauvegarde altérée ne doit pas piloter l'état d'interface.
+    this.setState({ ...this.snapshot(d), savedAt: Date.now() });
+  }
 
   go = tab => { this.setState(st => ({ rulesOpen: false, tab, prevTab: st.tab !== tab ? st.tab : st.prevTab, recapOpen: false })); const el = this.scrollRef.current; if (el) el.scrollTop = 0; };
   flash = msg => { clearTimeout(this._t); this.setState({ toast: msg }); this._t = setTimeout(() => this.setState({ toast: '' }), 2400); };
@@ -353,7 +347,7 @@ class Component extends DCLogic {
       if (!found.length) throw new Error('vide');
       this.setState({ lines, aiState: 'idle', aiOk: true, aiMsg: `${lines.length} lignes proposées — vérifie et ajuste.` });
     } catch (e) {
-      this.setState({ aiState: 'idle', aiOk: false, aiMsg: "L'IA est indisponible pour l'instant. Ajoute les lignes depuis le catalogue." });
+      this.setState({ aiState: 'idle', aiOk: false, aiMsg: this.props.online === false ? 'Pas de connexion : ajoute les lignes depuis le catalogue.' : "L'IA est indisponible pour l'instant. Ajoute les lignes depuis le catalogue." });
     }
   }
 

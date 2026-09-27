@@ -32,6 +32,16 @@ expressions régulières pour les rendez-vous).
 | `AI_RATE_LIMIT` | `20` | Requêtes IA par minute et par IP |
 | `TRUST_PROXY` | — | `1` pour lire l'IP client dans `X-Forwarded-For` (seulement derrière un proxy de confiance) |
 
+## Hooks Claude Code
+
+Configurés dans `.claude/settings.json` (scripts dans `.claude/hooks/`) :
+
+| Hook | Rôle |
+| --- | --- |
+| `SessionStart` | Sur Claude Code web : `npm install` au démarrage de la session, pour que build et tests marchent tout de suite |
+| `PreToolUse` | Bloque l'écriture d'une clé secrète (Anthropic, GitHub, AWS, clé privée) dans un fichier, ou son commit/push |
+| `Stop` | Si le code a changé, lance `npm test` avant que Claude ne rende la main ; en cas d'échec, il doit corriger |
+
 ## Sécurité
 
 - **Pas de relais IA générique** : le client envoie une tâche (`devis` ou `rdv`) et un texte court ;
@@ -55,7 +65,9 @@ expressions régulières pour les rendez-vous).
 | Chemin | Rôle |
 | --- | --- |
 | `src/app/template.html` | Gabarit des écrans, repris du prototype (`<x-dc>`) |
-| `src/app/logic.js` | Logique métier du prototype (totaux, TVA DOM, NF C 15-100, DTU, planning…) |
+| `src/app/App.jsx` | Composant racine (fonction) : assemble la logique et les hooks |
+| `src/app/logic.js` | Logique métier du prototype (totaux, TVA DOM, NF C 15-100, DTU, planning…), sous forme de contrôleur |
+| `src/hooks/` | Hooks React : `useLogic` (état + cycle de vie du contrôleur), `usePersistence` (sauvegarde locale), `useFitScale` (cadre téléphone), `useEscapeKey`, `useOnlineStatus` |
 | `src/dc/runtime.js` | Moteur qui rend le gabarit en React (`{{ }}`, `sc-if`, `sc-for`, `style-active`…) ; remplace `support.js`, absent du handoff |
 | `src/styles/organic.css` | Jetons et composants du système Organic |
 | `src/styles/app.css` | Styles globaux et mode plein écran sur téléphone |

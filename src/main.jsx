@@ -5,7 +5,7 @@ import '@fontsource-variable/figtree';
 import './styles/organic.css';
 import './styles/app.css';
 import './claude.js';
-import App from './app/logic.js';
+import App from './app/App.jsx';
 
 createRoot(document.getElementById('root')).render(<App />);
 
