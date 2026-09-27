@@ -2,130 +2,15 @@
 import React from 'react';
 import template from './template.html?raw';
 import { makeDCLogic } from '../dc/runtime.js';
+import { CAT_RAW, PROJETS, DTU, METIERS } from './data.js';
 
 const DCLogic = makeDCLogic(template, { regime: 'assujetti', acompte: 30, paName: 'FactuPro 974' });
 
-// Données de démo — catalogues par métier : [désignation, réf, famille, fournisseur, achat HT, unité]
-const CAT_RAW = {
-  elec: [
-    ['Différentiel 30 mA type A 40 A','HAG-CDA742F','Tableau','CGED',38,'u'],
-    ['Interrupteur diff. type AC 63 A','LEG-411617','Tableau','Rexel Réunion',32,'u'],
-    ['Disjoncteur ph+N 16 A','SCH-A9N21024','Tableau','Rexel Réunion',6.2,'u'],
-    ['Disjoncteur ph+N 20 A','SCH-A9N21025','Tableau','Rexel Réunion',6.5,'u'],
-    ['Disjoncteur ph+N 32 A','SCH-A9N21027','Tableau','Rexel Réunion',7.8,'u'],
-    ['Tableau 3 rangées 39 modules','HAG-VF313','Tableau','COREDIME',45,'u'],
-    ['Coffret 13 modules','LEG-401211','Tableau','Ravate Pro',18,'u'],
-    ['Peigne 13 modules','HAG-KB163P','Tableau','CGED',9,'u'],
-    ['Parafoudre type 2','HAG-SPN215D','Tableau','CGED',75,'u'],
-    ['Télérupteur 16 A','LEG-412408','Tableau','Rexel Réunion',14,'u'],
-    ['Contacteur jour/nuit','HAG-ETC225','Tableau','COREDIME',28,'u'],
-    ['Câble R2V 3G1,5','NEX-R2V3G15','Câbles','Rexel Réunion',1.1,'m'],
-    ['Câble R2V 3G2,5','NEX-R2V3G25','Câbles','Rexel Réunion',1.6,'m'],
-    ['Câble R2V 5G6','NEX-R2V5G6','Câbles','CGED',5.8,'m'],
-    ['Gaine ICTA Ø20','ICTA-20','Câbles','COREDIME',0.55,'m'],
-    ['Goulotte 40×40 2 m','LEG-GOU4040','Câbles','Ravate Pro',7.5,'u'],
-    ['Prise 2P+T','LEG-MOS2PT','Appareillage','Ravate Pro',4.5,'u'],
-    ['Interrupteur va-et-vient','LEG-MOSVV','Appareillage','Ravate Pro',4,'u'],
-    ['Variateur LED','LEG-VARLED','Appareillage','Rexel Réunion',24,'u'],
-    ['Prise RJ45 cat.6','LEG-RJ45C6','Appareillage','CGED',9,'u'],
-    ['Spot LED 7 W','ARL-SPOT7','Éclairage','Ravate Pro',6,'u'],
-    ['Hublot IP65','ARL-HUB65','Éclairage','Ravate',14,'u'],
-    ['Détecteur de mouvement 360°','LEG-DET360','Éclairage','Rexel Réunion',26,'u'],
-    ['Chauffe-eau 200 L stéatite','ATL-STEA200','Chauffe-eau & VMC','Téréva Réunion',290,'u'],
-    ['VMC hygroréglable','ALD-VMCHY','Chauffe-eau & VMC','Téréva Réunion',95,'u'],
-    ["Brasseur d'air + variateur",'RAV-BRAS132','Spécifique 974','Ravate',85,'u'],
-    ['Coffret IP65 8 modules','HAG-IP658','Spécifique 974','CGED',24,'u'],
-    ['Prise dédiée clim 20 A','LEG-CLIM20','Spécifique 974','Rexel Réunion',7,'u'],
-    ["Boîte d'encastrement Ø67",'LEG-BE67','Accessoires','COREDIME',0.9,'u'],
-    ['Piquet de terre + barrette','PIQ-TERRE','Accessoires','Ravate Pro',19,'u'],
-  ],
-  plomb: [
-    ['WC suspendu + bâti','GEB-DUOFIX','Sanitaire','Téréva Réunion',240,'u'],
-    ['Lavabo céramique 60 cm','JAC-ODEON60','Sanitaire','Téréva Réunion',65,'u'],
-    ['Receveur de douche 90×90','KIN-REC90','Sanitaire','Ravate Pro',120,'u'],
-    ['Mitigeur lavabo','GRO-EUROS','Robinetterie','Téréva Réunion',45,'u'],
-    ['Mitigeur douche thermostatique','GRO-GROTH','Robinetterie','Téréva Réunion',110,'u'],
-    ['Tube multicouche Ø16','HEN-MC16','Tuyauterie','Ravate Pro',2.4,'m'],
-    ['Tube PER Ø16','PER-16','Tuyauterie','Ravate Pro',0.9,'m'],
-    ['Raccord à sertir Ø16','HEN-RS16','Tuyauterie','Téréva Réunion',3.2,'u'],
-    ['Chauffe-eau 200 L stéatite','ATL-STEA200','Chauffe-eau','Téréva Réunion',290,'u'],
-    ['Tube PVC évacuation Ø40','PVC-40','Évacuation','Ravate',2.2,'m'],
-    ['Siphon lavabo','NIC-SIPH32','Évacuation','Ravate',8,'u'],
-    ['Groupe de sécurité','WAT-GS34','Sécurité','Téréva Réunion',22,'u'],
-    ['Réducteur de pression','WAT-RDP34','Sécurité','Téréva Réunion',38,'u'],
-    ['Bonde de douche Ø90','NIC-BON90','Évacuation','Ravate',18,'u'],
-  ],
-  macon: [
-    ['Ciment CEM II 35 kg','LAF-CEM35','Liants','Ravate',11.5,'sac'],
-    ['Chaux hydraulique 25 kg','LAF-NHL25','Liants','Ravate',14,'sac'],
-    ['Parpaing 20×20×50','BLC-P20','Blocs','Négoce Sud',1.85,'u'],
-    ['Brique creuse 20','BRI-C20','Blocs','Négoce Sud',2.6,'u'],
-    ['Fer à béton HA10 12 m','FER-HA10','Ferraillage','Ravate',9.5,'u'],
-    ['Treillis soudé ST25','TRE-ST25','Ferraillage','Ravate',38,'u'],
-    ['Film polyane 150 µm','POL-150','Étanchéité','Ravate',1.2,'m²'],
-    ['Sable 0/4 big-bag','GRA-S04','Granulats','Négoce Sud',65,'u'],
-    ['Gravillon 6/10 big-bag','GRA-G610','Granulats','Négoce Sud',70,'u'],
-    ['Hourdis béton 16','HOU-16','Hourdis','Négoce Sud',3.2,'u'],
-    ["Étanchéité SEL 20 kg",'ETA-SEL20','Étanchéité','Ravate Pro',78,'u'],
-  ],
-  peintre: [
-    ['Peinture acrylique mat 10 L','SEI-ACRM10','Peintures','Ravate Pro',62,'u'],
-    ['Glycéro satin 2,5 L','SEI-GLY25','Peintures','Ravate Pro',38,'u'],
-    ['Sous-couche 10 L','SEI-SC10','Sous-couches','Ravate',48,'u'],
-    ['Enduit de rebouchage 5 kg','TOU-REB5','Sous-couches','Ravate',18,'u'],
-    ['Bande à joint','PLA-BJ','Préparation','Ravate',3.5,'u'],
-    ['Ruban de masquage','TES-RM50','Préparation','Ravate',3.2,'u'],
-    ['Bâche de protection 4×5 m','BAC-45','Préparation','Ravate',4.5,'u'],
-    ['Rouleau 180 mm','ROU-180','Consommables','Ravate Pro',7.5,'u'],
-    ['Pinceau 50 mm','PIN-50','Consommables','Ravate Pro',5,'u'],
-  ],
-  menuis: [
-    ['Porte intérieure 83 cm','PIN-P83','Portes','Ravate Pro',145,'u'],
-    ['Bloc-porte isoplane','PIN-BP83','Portes','Ravate Pro',190,'u'],
-    ['Tasseau 27×40','BOI-T2740','Bois','Négoce Bois',1.9,'m'],
-    ['Contreplaqué 18 mm','BOI-CP18','Bois','Négoce Bois',28,'m²'],
-    ['Lame de terrasse bois','BOI-LT21','Bois','Négoce Bois',42,'m²'],
-    ['Lambourde bois classe 4','BOI-LAMB4','Bois','Négoce Bois',4.8,'m'],
-    ['Fenêtre alu cyclonique 1 200 Pa','ALU-F1200','Menuiseries ext.','Ravate Pro',420,'u'],
-    ['Paumelles (lot de 3)','QUI-PAUM','Quincaillerie','Ravate',6,'u'],
-    ['Vis inox (boîte 200)','QUI-VIS','Quincaillerie','Ravate',14,'u'],
-    ['Lasure 2,5 L','SIK-LAS25','Finition','Ravate Pro',32,'u'],
-  ],
-  carrel: [
-    ['Grès cérame 60×60','CAR-GC60','Carreaux','Ravate Pro',24,'m²'],
-    ['Faïence 20×40','CAR-FA2040','Carreaux','Ravate Pro',18,'m²'],
-    ['Colle C2 25 kg','WEB-C225','Mortiers','Ravate',16,'sac'],
-    ['Joint 5 kg','WEB-J5','Mortiers','Ravate',12,'u'],
-    ['Croisillons 3 mm','ACC-CR3','Accessoires','Ravate',3,'u'],
-    ['Primaire 5 L','WEB-PRIM5','Préparation','Ravate',22,'u'],
-    ["Système d'étanchéité SPEC",'WEB-SPEC','Préparation','Ravate Pro',30,'u'],
-    ["Bande d'angle SPEC",'WEB-BANDE','Préparation','Ravate Pro',14,'u'],
-    ['Plinthe assortie','CAR-PL','Carreaux','Ravate Pro',4,'m'],
-  ],
-  couvr: [
-    ['Tôle bac acier 0,75 mm S320GD','TOL-BAC','Couverture','Ravate Pro',18,'m²'],
-    ['Faîtage','TOL-FAIT','Couverture','Ravate Pro',12,'m'],
-    ['Gouttière alu','ZIN-GOU','Évacuation','Ravate',9,'m'],
-    ['Descente EP Ø80','ZIN-DEP80','Évacuation','Ravate',7,'m'],
-    ['Vis autoforeuses (100)','VIS-AF','Fixation','Ravate',15,'u'],
-    ['Closoir mousse','TOL-CLOS','Couverture','Ravate',2.5,'u'],
-    ['Membrane sous-toiture','MEM-ST','Couverture','Ravate Pro',3.5,'m²'],
-    ['Crochet de sécurité','SEC-CRO','Fixation','Ravate Pro',1.2,'u'],
-    ['Tôle aluminium bord de mer','TOL-ALU','Couverture','Ravate Pro',26,'m²'],
-    ['Vis inox + rondelle EPDM (100)','VIS-INOX','Fixation','Ravate',32,'u'],
-  ],
-};
-CAT_RAW.multi = [...CAT_RAW.elec.slice(16, 22), ...CAT_RAW.plomb.slice(3, 8), ...CAT_RAW.peintre.slice(0, 5)];
 
-const PROJETS = {
-  filaos: { client: 'SCI Les Filaos', contact: 'M. Payet (gérant)', tel: '0692 45 12 78', addr: '18 rue du Four à Chaux, 97410 Saint-Pierre', type: 'Mise aux normes électrique · 6 logements', pct: 60, debut: '15/09/2026', fin: '10/10/2026', devis: ['DEV-2026-039'], facs: ['FAC-2026-028'], key: 'Filaos',
-    etapes: [['Passage de gaines', true], ['Tableaux divisionnaires', true], ['Appareillage', false], ['Consuel et mise en service', false]], note: 'Accès par le portail côté parking. Clé chez le gardien.' },
-  hoarau: { client: 'Mme Hoarau', contact: 'Mme Hoarau', tel: '0693 88 21 04', addr: '7 chemin Isautier, 97430 Le Tampon', type: 'Rénovation électrique cuisine', pct: 0, debut: '28/09/2026', fin: '29/09/2026', devis: ['DEV-2026-040'], facs: [], key: 'Hoarau',
-    etapes: [['Dépose ancienne installation', false], ['Nouvelles prises et éclairage', false], ['Essais', false]], note: 'Prévoir la protection du plan de travail neuf.' },
-  grondin: { client: 'M. Grondin', contact: 'M. Grondin', tel: '0692 30 67 15', addr: '22 rue Hubert Delisle, 97438 Sainte-Marie', type: 'Remplacement tableau', pct: 95, debut: '02/09/2026', fin: '05/10/2026', devis: ['DEV-2026-038'], facs: ['FAC-2026-027'], key: 'Grondin',
-    etapes: [['Nouveau tableau posé', true], ['Raccordements', true], ['Réception client et PV', false]], note: 'Reste la signature du PV de réception.' },
-};
 
+// Imports de plans : types autorisés (pas de SVG ni de HTML, qui peuvent embarquer du script).
+const PLAN_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf'];
+const safePlanSrc = src => typeof src === 'string' && /^data:(image\/(png|jpeg|webp|gif)|application\/pdf);base64,[a-z0-9+/=]+$/i.test(src) ? src : '';
 const PLAN_REF = { 16: 'SCH-A9N21024', 20: 'SCH-A9N21025', 32: 'SCH-A9N21027' };
 const SECTION = { 10: '1,5', 16: '1,5', 20: '2,5', 32: '6' };
 const planIdNote = p0 => 'Calibre des ID à justifier (règle de l\u2019amont ou de l\u2019aval) : ' + p0.diffs.map((d, i) => `ID${i + 1} ${d.cal} A pour ${p0.circuits.filter(c => c.diff === d.id).reduce((a, c) => a + c.cal, 0)} A en aval`).join(', ') + '.';
@@ -247,16 +132,6 @@ function planDiagram(p, sel, mode, errs = {}) {
   return { L, R, T, B, P: Pp, used, H: Hh, h: Math.ceil(maxY + 10) };
 }
 
-const DTU = {
-  elec: [['NF C 15-100', 'Installations électriques basse tension (série 2024)']],
-  plomb: [['NF DTU 60.1', 'Plomberie sanitaire'], ['NF DTU 60.11', 'Calcul des réseaux'], ['Arrêté 30/11/2005', 'Eau chaude à 50 °C max. aux points de toilette']],
-  macon: [['NF DTU 20.1', 'Maçonnerie de petits éléments'], ['NF DTU 13.3', 'Dallages'], ['Eurocode 8', 'Sismicité : La Réunion en zone 2']],
-  peintre: [['NF DTU 59.1', 'Revêtements de peinture en feuil mince']],
-  menuis: [['NF DTU 36.5', 'Mise en œuvre des fenêtres et portes extérieures'], ['NF DTU 51.4', 'Platelages extérieurs en bois'], ['Guide CSTB Réunion', 'Menuiseries : 1 200 Pa minimum en zone cyclonique']],
-  carrel: [['NF DTU 52.2', 'Carrelage collé'], ['SPEC', 'Protection à l\u2019eau sous carrelage en pièces humides']],
-  couvr: [['NF DTU 40.35', 'Couverture en tôles d\u2019acier nervurées'], ['Fiche paracyclonique CSTB', 'Tôle ≥ 0,75 mm, acier S320GD minimum']],
-  multi: [['Règles de l\u2019art', 'DTU du corps d\u2019état concerné']],
-};
 function metierRules(key, lines) {
   const q = re => lines.filter(l => l.kind === 'mat' && (re.test(l.ref) || re.test(l.name))).reduce((a, l) => a + l.qty, 0);
   const has = re => q(re) > 0, R = [];
@@ -314,16 +189,6 @@ function metierRules(key, lines) {
   return R;
 }
 
-const METIERS = [
-  { key: 'elec', label: 'Électricien', short: 'électricité', taux: 48, ex: ['Rénovation tableau villa T4 à Saint-Paul', '4 prises + 2 points lumineux cuisine', "Brasseur d'air et prise clim chambre"] },
-  { key: 'plomb', label: 'Plombier', short: 'plomberie', taux: 50, ex: ['Remplacement chauffe-eau 200 L', 'Salle de bain : WC suspendu + lavabo', 'Douche à l\u2019italienne 90×90 avec mitigeur', 'Réseau eau froide PER cuisine 8 m'] },
-  { key: 'macon', label: 'Maçon', short: 'maçonnerie', taux: 42, ex: ['Mur de clôture parpaing 12 m²', 'Dalle béton 20 m² garage', 'Muret de soutènement 6 m', 'Étanchéité toiture-terrasse 25 m²'] },
-  { key: 'peintre', label: 'Peintre', short: 'peinture', taux: 38, ex: ['Séjour 40 m² murs + plafond', 'Rebouchage et 2 couches chambre', 'Boiseries et portes en satin', 'Varangue 30 m² peinture façade'] },
-  { key: 'menuis', label: 'Menuisier', short: 'menuiserie', taux: 45, ex: ['Pose de 3 portes intérieures', 'Terrasse bois 15 m²', 'Remplacement 2 fenêtres alu cycloniques', 'Placard sur mesure chambre'] },
-  { key: 'carrel', label: 'Carreleur', short: 'carrelage', taux: 42, ex: ['Salle de bain 8 m² sol + faïence', 'Carrelage séjour grès cérame 35 m²', 'Douche à l\u2019italienne faïence 6 m²', 'Crédence cuisine 3 m²'] },
-  { key: 'couvr', label: 'Couvreur', short: 'couverture', taux: 46, ex: ['Réfection toiture tôle 60 m²', 'Gouttières 24 m', 'Toiture bord de mer 40 m² à Saint-Leu', 'Remplacement faîtage et closoirs 12 m'] },
-  { key: 'multi', label: 'Multi-services', short: 'multi-services', taux: 40, ex: ['Prise, mitigeur et retouche peinture', 'Remplacement lavabo et siphon', 'Rafraîchissement peinture studio 25 m²'] },
-];
 
 let COEF = 1.35;
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -391,7 +256,9 @@ class Component extends DCLogic {
       const d = JSON.parse(raw), ids = [];
       (d.lines || []).forEach(l => ids.push(l.id)); (d.docs || []).forEach(x => (x.lines || []).forEach(l => ids.push(l.id || 0))); (d.plans || []).forEach(p => (p.circuits || []).forEach(c => ids.push(+c.id || 0)));
       UID = Math.max(UID, ...ids.filter(Number.isFinite)) + 1;
-      this.setState({ ...d, savedAt: Date.now() });
+      // Ne restaure que les clés attendues : une sauvegarde altérée ne doit pas piloter l'état d'interface.
+      const keep = {}; Component.KEEP.forEach(k => { if (d && Object.hasOwn(d, k)) keep[k] = d[k]; });
+      this.setState({ ...keep, savedAt: Date.now() });
     } catch (e) {}
   }
   componentDidUpdate(pp, ps) {
@@ -465,10 +332,10 @@ class Component extends DCLogic {
     if (!txt) { this.setState({ aiMsg: "Écris d'abord une phrase sur le chantier.", aiOk: false }); return; }
     const m = this.metierObj(), cat = catOf(m.key);
     this.setState(st => ({ aiState: 'busy', aiMsg: '', aiHistory: [txt, ...(st.aiHistory || []).filter(x => x !== txt)].slice(0, 8) }));
-    const system = `Tu es l'assistant de chiffrage d'un artisan ${m.label.toLowerCase()} à La Réunion. Réponds UNIQUEMENT par un objet JSON strict, sans texte ni Markdown : {"lignes":[{"designation":string,"quantite":number}],"mo_heures":number}. Utilise UNIQUEMENT des désignations exactes de ce catalogue : ${cat.map(c => c.name + ' (' + c.unit + ')').join('; ')}. Quantités réalistes pour le chantier décrit. Respecte les règles de l'art : ${(DTU[m.key] || []).map(d => d[0] + ' (' + d[1] + ')').join('; ')} ; inclus le matériel obligatoire (ex. groupe de sécurité, sous-couche, chaînages, colle C2, SPEC, closoirs et fixations de rive).`;
     try {
-      if (!window.claude || !window.claude.complete) throw new Error('indispo');
-      const raw = await window.claude.complete({ model: 'claude-sonnet-4-5', max_tokens: 1000, system, messages: [{ role: 'user', content: txt }] });
+      // Le prompt système est construit côté serveur (server/prompts.mjs) : le client n'envoie que la demande.
+      if (!window.btpAI) throw new Error('indispo');
+      const raw = await window.btpAI('devis', { metier: m.key, text: txt });
       const clean = String(raw).replace(/```json|```/g, '').trim();
       const data = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}') + 1));
       const found = [];
@@ -693,13 +560,11 @@ class Component extends DCLogic {
     if (!txt) return this.flash('Dicte ou écris ton rendez-vous');
     if (this._rec) this._rec.stop();
     const now = new Date(), today = this.iso(now);
-    const clients = Object.values(PROJETS).map(p => p.client + ' (' + p.addr.split(',').pop().trim() + ')').join('; ');
     this.setState({ rdvBusy: true, rdvErr: '' });
-    const system = `Tu extrais un rendez-vous pour un artisan à La Réunion. Aujourd'hui : ${today} (${now.toLocaleDateString('fr-FR', { weekday: 'long' })}). Clients connus : ${clients}. Réponds UNIQUEMENT par un JSON strict : {"date":"AAAA-MM-JJ","time":"HH:MM","duree":minutes,"title":"court, ex. Mme Hoarau — visite cuisine","place":"commune","kind":"chantier|visite|fourn"}. "demain", "lundi prochain", "le 3" sont relatifs à aujourd'hui. Heure par défaut 08:00 si absente.`;
     let r = null;
     try {
-      if (!window.claude || !window.claude.complete) throw new Error('x');
-      const raw = await window.claude.complete({ model: 'claude-sonnet-4-5', max_tokens: 300, system, messages: [{ role: 'user', content: txt }] });
+      if (!window.btpAI) throw new Error('x');
+      const raw = await window.btpAI('rdv', { text: txt, today });
       const s = String(raw); r = JSON.parse(s.slice(s.indexOf('{'), s.lastIndexOf('}') + 1));
     } catch (e) { r = this.rdvFallback(txt); }
     if (!r || !/^\d{4}-\d{2}-\d{2}$/.test(r.date || '')) { this.setState({ rdvBusy: false, rdvErr: 'Je n\u2019ai pas compris la date. Précise par ex. « jeudi 14 h ».' }); return; }
@@ -939,6 +804,7 @@ class Component extends DCLogic {
   importPlan(e) {
     const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
     if (f.size > 3 * 1024 * 1024) return this.flash('Fichier trop lourd : 3 Mo maximum');
+    if (!PLAN_MIME.includes(f.type)) return this.flash('Format accepté : image PNG, JPEG, WebP ou PDF');
     const rd = new FileReader();
     rd.onload = () => { const id = 'p' + Date.now(), cur = this.curNo();
       this.setState(st => ({ plans: [{ id, name: f.name.replace(/\.[^.]+$/, ''), kind: 'import', mime: f.type, src: rd.result, fileName: f.name, devisNo: cur, facNo: null, date: new Date().toLocaleDateString('fr-FR') }, ...(st.plans ?? this.defaultPlans())] }));
@@ -1116,7 +982,7 @@ class Component extends DCLogic {
         prev: () => pick(i - 1), next: () => pick(i + 1), close: () => this.setState({ planSel: null }),
         edit: () => { const sc = this.scrollRef.current, el = sc && sc.querySelector('[data-circ="' + c.id + '"]'); if (el) sc.scrollTo({ top: el.offsetTop - 120, behavior: 'smooth' }); } } : { cals: [], errs: [] };
     }
-    return { ...base, isPlan: true, pl: { ...extra, name: p.name, isUni, isImg: !isUni && !isPdf, isPdf, src: p.src || '', fileName: p.fileName || '',
+    return { ...base, isPlan: true, pl: { ...extra, name: p.name, isUni, isImg: !isUni && !isPdf, isPdf, src: safePlanSrc(p.src), fileName: p.fileName || '',
       kindLabel: isUni ? 'Schéma unifilaire' : 'Plan importé', onName: e => { const v = e.target.value; upd(() => ({ name: v })); },
       facNo: p.facNo || '', openFac: () => { if (p.facNo) this.openFac(p.facNo); },
       openDevis: () => { if (s.docs.find(d => d.no === p.devisNo)) this.openDevis(p.devisNo); else this.flash('Choisis d\u2019abord un devis'); },
