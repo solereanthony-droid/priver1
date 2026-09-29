@@ -5,8 +5,9 @@ contrôle de marge, factures et suivi de la facturation électronique, planning,
 NF C 15-100 et informations légales de l'entreprise.
 
 Le design vient du handoff `docs/design-handoff/` (prototype haute fidélité + système Organic),
-mis à jour en v11 (`MISES_A_JOUR.md`) : plans d'implantation et assistant « Plan du logement », partage du plan en PDF,
-création de projets et de commandes fournisseurs, comparateur de prix, thème sombre, mise en page ordinateur.
+mis à jour jusqu'à la v13 (`MISES_A_JOUR.md`) : plans d'implantation et assistant « Plan du logement », partage du plan en PDF,
+création de projets et de commandes fournisseurs, comparateur de prix, thème sombre, mise en page ordinateur,
+encaissements, panier moyen, transformation des devis, vérification avant facture, aperçu des messages avant envoi.
 
 ## Intégrer un nouveau handoff Claude Design
 

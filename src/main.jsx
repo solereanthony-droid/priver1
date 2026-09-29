@@ -9,6 +9,3 @@ import './claude.js';
 import App from './app/App.jsx';
 
 createRoot(document.getElementById('root')).render(<App />);
-
-// Le canvas du PDF n'attend pas les polices : on les charge dès le démarrage.
-if (document.fonts) ['400', '600', '700', '800'].forEach(w => document.fonts.load(`${w} 16px Figtree`).catch(() => {}));

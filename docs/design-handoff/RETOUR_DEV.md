@@ -167,3 +167,30 @@ navigateur.
 
 ### 7.4 Toujours attendu
 - L'**icône définitive** 512 × 512 + maskable.
+
+---
+
+## 8. Retour sur les mises à jour v12 et v13 (intégrées le 2026-09-29)
+
+Les corrections v12 (thème sombre, police du PDF, tableau de repérage, cadre des ID, sections) sont reprises.
+Le catalogue électricien est complété. Toute la v13 est intégrée : encaissements, panier moyen, transformation
+des devis, marge globale, vérification avant facture, aperçu des messages, recherche dans Documents,
+« Implanter mes circuits », boutons retour, barre récap en mode ordinateur.
+Les 12 « Tests v13 » sont automatisés (`test/v13.spec.js`) ou vérifiés dans le navigateur. Tous passent.
+
+### 8.1 Corrigé côté app (à reporter dans le prototype)
+- **Liens externes** : `window.open(href, '_blank')` ouvre `wa.me` ou le client mail sans `noopener`. La page
+  ouverte pourrait alors rediriger l'onglet de l'app (« reverse tabnabbing »). L'app passe
+  `'noopener,noreferrer'` en troisième argument (2 appels, dans `draft()` et l'aperçu e-mail du comptable).
+
+### 8.2 À signaler avant la mise en production
+- **Export CSV pour le comptable** : la TVA est **répartie par des ratios fixes** (`hh × 0,085 × 0,92` et
+  `hh × 0,021 × 0,08`), et le HT est déduit du TTC par `/ 1,085`. Ce sont des données de démo. Le vrai
+  export devra sommer la TVA des lignes de factures, taux par taux (et 0 en micro-entreprise), sinon les
+  montants transmis au comptable seront faux.
+- **Panier moyen et transformation** : les tables `TY`, `ART`, `CLI`, `MG`, `TR`, `QTY`, `SUG` et les délais
+  (2 j, 9 j, 1,6) sont fixes. À calculer depuis les documents réels.
+
+### 8.3 Détail visuel (mode ordinateur)
+- La barre récap du devis ne passe plus sous le menu. En revanche, elle est plus large que la colonne de
+  contenu : de 396 à 1 132 px pour une colonne de 528 à 1 000 px, sur un écran de 1 280 px. Est-ce voulu ?

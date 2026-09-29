@@ -344,3 +344,32 @@ Les RJ45 ne sont rattachés à aucun circuit (réseau de communication) et s'aff
 - « Choisir » enregistre le fournisseur préféré (`catPref[ref] = { fourn, achat }`, persisté). Le catalogue et les lignes du devis en cours ayant cette référence sont mis à jour : fournisseur, achat, et PU = achat × coefficient.
 - Si l'article est dans le devis en cours, un encart indique l'économie possible (quantité × écart).
 - **Données de démo** : `offersOf(c)` génère 2 à 3 offres par référence (écart de −12 % à +12 %, délais Stock / 24 h / 48 h / 3 à 5 j) parmi `FOURNS_974`. En production, remplacer par les tarifs fournisseurs (fichiers de prix, EDI ou API) et les remises négociées.
+
+## Mise à jour v12 : réponse au retour v11 (RETOUR_DEV §7)
+**7.1 Corrections reportées dans le prototype**
+1. **Thème sombre** : `sun` vaut maintenant `{ n: '', div: '', bg: '' }` quand le « Mode plein soleil » est désactivé. Rien n'est écrit en ligne, et `[data-theme="dark"]` s'applique.
+2. **Police du PDF** : la pile de polices du canvas et du SVG exporté est `'Figtree Variable', Figtree, system-ui, sans-serif`. Les graisses 400 à 800 des deux noms sont préchargées, puis `document.fonts.ready` est attendu avant le dessin.
+
+**7.2 Assistant plan** : **c'est la fiche de tests qui change.** Le calcul est correct : 9 pièces + terrasse (Entrée, Séjour 26 m², Cuisine, Cellier, WC, 3 chambres, Salle de bain). Test corrigé : « 90 m², 3 chambres, cuisine fermée, cellier → 9 pièces + terrasse (10 éléments) ».
+
+**7.3 Détails visuels**
+- Tableau de repérage (PDF) : colonnes redistribuées `[0, 14, 72, 98, 116, 138]` mm. La colonne « Points » passe de 26 à 48 mm, et « 4 points lumineux » tient sans ellipse.
+- Cadre des ID sur le schéma : trois lignes, « 40 A », « 30 mA », « type A » (au lieu de « 30 mA A » qui débordait du cadre de 48 unités).
+- Section verticale : décalée à `x + 16.5` (`x + 17` quand le nom tient sur deux lignes), au lieu de `x + 12`. Plus de chevauchement avec le nom du circuit.
+
+**7.4** L'icône définitive reste à produire par un graphiste (je ne génère pas d'image).
+
+### v12.1 : catalogue électricien complété
+27 articles ajoutés à la **fin** de `CAT_RAW.elec`, pour ne pas décaler `CAT_RAW.multi = elec.slice(16, 22)`. Deux nouvelles familles de filtre : « Conduits » et « Connexion ».
+- **Goulottes et moulures** : goulottes 60×40 et 80×60, moulures 20×10 et 32×12,5, angles et embouts.
+- **Tubes IRL rigides** (type Tubiro) : Ø16, Ø20 et Ø25 en 3 m, manchons et coudes, colliers.
+- **Gaines ICTA** : Ø16 et Ø25, gaines préfilées 3G1,5 et 3G2,5.
+- **Wago** : 221-412, 221-413, 221-415, 2273-203, 2273-205.
+- **Boîtes** : boîte de dérivation IP55, boîte d'encastrement placo.
+- **Fils et câbles** : H07V-U 1,5 et 2,5 mm², H07V-R 10 mm² vert/jaune, R2V 3G6.
+- **Petites fournitures** : embouts de câblage, colliers de serrage.
+
+Les prix d'achat sont indicatifs (démo).
+
+### v12.2 : famille « Petit matériel »
+Nouveau filtre du catalogue électricien. 12 articles ajoutés à la fin de `CAT_RAW.elec` : chevilles à frapper et Molly, vis, cavaliers, ruban isolant, gaine thermorétractable, repères de câbles, étiquettes de tableau, bornier de terre, mastic coupe-feu, foret SDS Ø6, scie cloche Ø68. Trois articles changent de famille : embouts de câblage, colliers de serrage, colliers IRL.

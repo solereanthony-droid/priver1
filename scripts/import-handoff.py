@@ -99,7 +99,11 @@ js = sub(js, "bg: I.bg || '', hasBg: !!I.bg,", "bg: safeSrc(I.bg, false), hasBg:
 
 # Mode plein soleil désactivé : ne pas écrire « --color-bg: inherit » en ligne, sinon il écrase le thème sombre
 # ([data-theme="dark"] sur le même élément). Une valeur vide n'émet aucune déclaration.
-js = sub(js, "{ n: 'inherit', div: 'inherit', bg: 'inherit' }", "{ n: '', div: '', bg: '' }", label='mode plein soleil')
+# (corrigé dans le prototype à partir de la v12 : le remplacement ne s'applique qu'aux anciennes versions)
+js = js.replace("{ n: 'inherit', div: 'inherit', bg: 'inherit' }", "{ n: '', div: '', bg: '' }")
+
+# Liens externes (mailto:, wa.me) : noopener, pour que la page ouverte ne puisse pas rediriger l'onglet de l'app.
+js = js.replace("window.open(href, '_blank')", "window.open(href, '_blank', 'noopener,noreferrer')")
 
 # Exports.
 js = sub(js, "\nconst docNo = ", "\nexport const docNo = ", label='docNo')

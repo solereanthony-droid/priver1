@@ -8,7 +8,7 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="ds/styles.css">
+<link rel="stylesheet" href="_ds/organic-95c97ffa-7511-4114-bb8a-1416fe0004c5/styles.css">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--color-neutral-300)}
@@ -48,8 +48,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
           <div data-screen-label="01 Accueil" style="padding:max(20px, calc(env(safe-area-inset-top) + 12px)) 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
               <div style="min-width:0">
-                <div style="font-size:14px;font-weight:600;color:var(--color-neutral-700)">Bonjour Julien</div>
-                <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Mon entreprise</div>
+                <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em;text-wrap:balance">{{ coName }}</div>
+                <div role="status" aria-live="polite" style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;font-weight:600;color:var(--color-neutral-700)"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ net.dot }}"></span>{{ net.txt }}</div>
               </div>
               <button style-active="transform:scale(0.97)" onClick="{{ openMetier }}" style="transition:transform .12s ease;min-height:44px;display:flex;align-items:center;gap:6px;border:none;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);font:600 14px var(--font-body);padding:0 14px 0 16px;cursor:pointer">{{ metierLabel }}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
             </div>
@@ -182,9 +182,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
         <sc-if value="{{ isDevis }}" hint-placeholder-val="{{ false }}">
           <div data-screen-label="02 Nouveau devis" style="padding:12px 20px 110px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
             <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px">
-              <div>
-                <div style="font-size:14px;color:var(--color-neutral-700);font-family:ui-monospace,Menlo,monospace">{{ devisNo }}</div>
-                <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Nouveau devis</div>
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <button style-active="transform:scale(0.97)" onClick="{{ goBack }}" title="{{ backTitle }}" aria-label="{{ backTitle }}" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+                <div style="min-width:0">
+                  <div style="font-size:14px;color:var(--color-neutral-700);font-family:ui-monospace,Menlo,monospace">{{ devisNo }}</div>
+                  <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Nouveau devis</div>
+                </div>
               </div>
               <button style-active="transform:scale(0.97)" onClick="{{ openMetier }}" style="transition:transform .12s ease;min-height:44px;display:flex;align-items:center;gap:6px;border:none;border-radius:999px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);font:600 14px var(--font-body);padding:0 14px 0 16px;cursor:pointer">{{ metierLabel }}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
             </div>
@@ -389,12 +392,36 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
         <!-- DOCUMENTS -->
         <sc-if value="{{ isDocs }}" hint-placeholder-val="{{ false }}">
           <div data-screen-label="03 Documents" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
-            <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Documents</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button style-active="transform:scale(0.97)" onClick="{{ goBack }}" title="{{ backTitle }}" aria-label="{{ backTitle }}" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Documents</div>
+            </div>
             <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
               <sc-for list="{{ docTabs }}" as="t" hint-placeholder-count="2">
                 <button style-active="transform:scale(0.97)" onClick="{{ t.onPick }}" style="transition:transform .12s ease;flex:1;min-height:44px;border:none;border-radius:999px;font:700 15px var(--font-body);cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
               </sc-for>
             </div>
+            <sc-if value="{{ notPlansTab }}" hint-placeholder-val="{{ true }}">
+              <label style="display:flex;align-items:center;gap:10px;min-height:50px;border-radius:999px;background:var(--color-neutral-100);padding:0 8px 0 16px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--color-neutral-700)"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                <input value="{{ docQ }}" onInput="{{ onDocQ }}" placeholder="Client, n° ou adresse" aria-label="Rechercher un document" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;font:600 16px var(--font-body);color:var(--color-text);outline:none">
+                <sc-if value="{{ docQOn }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ clearDocQ }}" aria-label="Effacer la recherche" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </sc-if>
+              </label>
+              <div role="group" aria-label="Filtrer par statut" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:var(--color-surface);border-radius:24px;padding:6px">
+                <sc-for list="{{ docChips }}" as="c" hint-placeholder-count="4">
+                  <button style-active="transform:scale(0.97)" onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="transition:transform .12s ease,background .15s ease;min-width:0;min-height:64px;border:none;border-radius:18px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:{{ c.bg }};color:{{ c.fg }}">
+                    <span style="font-family:var(--font-heading);font-size:24px;line-height:1;font-variant-numeric:tabular-nums">{{ c.n }}</span>
+                    <span style="display:flex;align-items:center;gap:5px;max-width:100%;font:700 12px var(--font-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="width:7px;height:7px;flex:none;border-radius:50%;background:{{ c.dot }}"></span>{{ c.l }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:0 4px">
+                <span style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--color-neutral-800)">{{ docSum.n }}<sc-if value="{{ docSum.filtered }}" hint-placeholder-val="{{ false }}"><button onClick="{{ docSum.clear }}" style="min-height:32px;border:none;border-radius:999px;padding:0 10px;background:var(--color-neutral-100);font:700 13px var(--font-body);color:var(--color-accent-700);cursor:pointer">Tout afficher</button></sc-if></span>
+                <span style="font-size:15px;font-weight:800;white-space:nowrap">{{ docSum.tot }}</span>
+              </div>
+            </sc-if>
             <sc-if value="{{ docFilter.on }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;gap:10px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-900);padding:6px 6px 6px 16px">
                 <span style="flex:1;font-size:14px;font-weight:700">Filtre : {{ docFilter.label }} · {{ docFilter.count }}</span>
@@ -402,7 +429,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
               </div>
             </sc-if>
             <sc-if value="{{ docFilter.empty }}" hint-placeholder-val="{{ false }}">
-              <div style="border:2px dashed var(--color-neutral-400);border-radius:22px;padding:18px;text-align:center;font-size:15px;color:var(--color-neutral-800)">Aucun document pour ce filtre.</div>
+              <div style="border:2px dashed var(--color-neutral-400);border-radius:22px;padding:18px;text-align:center;font-size:15px;color:var(--color-neutral-800)">{{ docEmptyTxt }}</div>
             </sc-if>
             <sc-for list="{{ docList }}" as="d" hint-placeholder-count="4">
               <div onClick="{{ d.onOpen }}" role="button" style="cursor:pointer;background:var(--color-neutral-100);border-radius:24px;padding:14px 14px 14px 18px;display:flex;flex-direction:column;gap:8px">
@@ -414,7 +441,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                   <div style="font-size:15px;font-weight:600;line-height:1.3;min-width:0">{{ d.client }}</div>
                   <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;white-space:nowrap">{{ d.amount }}</div>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--color-neutral-700)">{{ d.hint }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:{{ d.hintFg }}">{{ d.hint2 }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div>
+                  <sc-if value="{{ d.hasAct }}" hint-placeholder-val="{{ false }}">
+                    <button style-active="transform:scale(0.97)" onClick="{{ d.onAct }}" class="btn btn-primary" style="transition:transform .12s ease;flex:none;min-height:44px;font-size:14px;padding:0 16px">{{ d.act }}</button>
+                  </sc-if>
+                </div>
               </div>
             </sc-for>
             <sc-if value="{{ notPlansTab }}" hint-placeholder-val="{{ true }}">
@@ -427,8 +459,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                     <button onClick="{{ newUni }}" class="btn btn-primary" style="min-height:52px;font-size:15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>Unifilaire</button>
                   </sc-if>
                   <label class="btn btn-secondary" style="position:relative;min-height:52px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>Importer un plan<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" onChange="{{ onImport }}" aria-label="Importer un plan" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%"></label>
-              <div style="font-size:13px;color:var(--color-neutral-700);padding:0 4px">PNG, JPEG, WebP ou PDF · 3 Mo maximum</div>
                 </div>
+                <div style="font-size:13px;color:var(--color-neutral-700);padding:0 4px;margin-top:-4px;text-align:center">PNG, JPEG, WebP ou PDF · 3 Mo maximum</div>
                 <sc-if value="{{ noPlans }}" hint-placeholder-val="{{ false }}">
                   <div style="border:2px dashed var(--color-neutral-400);border-radius:22px;padding:18px;text-align:center;font-size:15px;color:var(--color-neutral-800)">Aucun plan. Génère un schéma unifilaire ou importe un plan.</div>
                 </sc-if>
@@ -448,6 +480,307 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                 </sc-for>
               </div>
             </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ENCAISSEMENTS -->
+        <sc-if value="{{ isEnc }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="05b Encaissements" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button style-active="transform:scale(0.97)" onClick="{{ goHome }}" title="Retour" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Encaissements</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+                <div style="background:var(--color-accent-2-700);color:var(--color-neutral-100);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:4px">
+                  <div style="font-size:14px;font-weight:700">Encaissé</div>
+                  <div style="font-family:var(--font-heading);font-size:28px;line-height:1.05">{{ enc.paidTot }}</div>
+                  <div style="font-size:13px">{{ enc.paidN }}</div>
+                </div>
+                <div style="background:var(--color-accent-200);color:var(--color-accent-900);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:4px">
+                  <div style="font-size:14px;font-weight:700">À encaisser</div>
+                  <div style="font-family:var(--font-heading);font-size:28px;line-height:1.05">{{ enc.dueTot }}</div>
+                  <div style="font-size:13px">{{ enc.dueN }}</div>
+                </div>
+              </div>
+              <div style="font-size:14px;color:var(--color-neutral-700);padding:0 4px">CA facturé TTC {{ enc.caTot }} · {{ enc.caN }}</div>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Relevé des encaissements</div>
+                <div style="font-size:13px;color:var(--color-neutral-700)">{{ enc.month }}</div>
+              </div>
+              <sc-if value="{{ enc.noPaid }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;color:var(--color-neutral-700)">Aucune facture encaissée pour l’instant.</div>
+              </sc-if>
+              <sc-for list="{{ enc.paid }}" as="p" hint-placeholder-count="2">
+                <div onClick="{{ p.onOpen }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--color-divider)">
+                  <div style="width:48px;flex:none;font-size:14px;font-weight:700">{{ p.date }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.client }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700)">{{ p.no }} · {{ p.mode }}</div>
+                  </div>
+                  <div style="font-weight:700;font-size:15px;white-space:nowrap">{{ p.amount }}</div>
+                </div>
+              </sc-for>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;border-top:1.5px solid var(--color-neutral-900)">
+                <span style="font-weight:700">Total encaissé</span><span style="font-family:var(--font-heading);font-size:22px">{{ enc.paidTot }}</span>
+              </div>
+              <button onClick="{{ enc.seeUnpaid }}" class="btn btn-secondary" style="min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Voir les non payées</button>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">À encaisser</div>
+                <div style="font-size:13px;font-weight:700;color:var(--color-accent-800)">{{ enc.lateN }}</div>
+              </div>
+              <sc-if value="{{ enc.noDue }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;color:var(--color-neutral-700)">Tout est encaissé.</div>
+              </sc-if>
+              <sc-for list="{{ enc.due }}" as="u" hint-placeholder-count="1">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid var(--color-divider)">
+                  <div onClick="{{ u.onOpen }}" role="button" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px">
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:15px;font-weight:700">{{ u.client }}</div>
+                      <div style="font-size:13px;color:var(--color-neutral-700)">{{ u.no }} · {{ u.status }}</div>
+                    </div>
+                    <div style="text-align:right">
+                      <div style="font-weight:700;font-size:15px;white-space:nowrap">{{ u.amount }}</div>
+                      <div style="font-size:13px;font-weight:700;color:{{ u.dueFg }}">{{ u.dueTxt }}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button onClick="{{ u.mail }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Relancer · e-mail</button>
+                    <button onClick="{{ u.wa }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">WhatsApp</button>
+                    <button onClick="{{ u.markPaid }}" class="btn btn-secondary" style="flex:1 1 100%;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-2-700);color:var(--color-accent-2-800)">Marquer encaissée</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Par client et chantier</div>
+              <sc-for list="{{ enc.clients }}" as="c" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--color-divider)">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                    <div style="font-size:16px;font-weight:800">{{ c.name }}</div>
+                    <div style="font-size:14px;font-weight:700;white-space:nowrap">{{ c.paid }} encaissé</div>
+                  </div>
+                  <sc-for list="{{ c.rows }}" as="r" hint-placeholder-count="2">
+                    <div onClick="{{ r.onOpen }}" role="button" style="cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-size:14px">
+                      <span style="color:var(--color-neutral-800)">{{ r.k }}</span><span style="font-weight:600;white-space:nowrap">{{ r.v }}</span>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ c.hasDevis }}" hint-placeholder-val="{{ true }}">
+                    <div style="height:8px;border-radius:999px;background:var(--color-surface);overflow:hidden;display:flex">
+                      <div style="width:{{ c.wPaid }};background:var(--color-accent-2-700)"></div>
+                      <div style="width:{{ c.wBilled }};background:var(--color-accent-400)"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px">
+                      <span style="font-weight:700">Reste à facturer</span><span style="font-weight:800;white-space:nowrap;color:{{ c.resteFg }}">{{ c.reste }}</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- PANIER MOYEN -->
+        <sc-if value="{{ isPanier }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="05c Panier moyen" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button style-active="transform:scale(0.97)" onClick="{{ goBack }}" title="{{ backTitle }}" aria-label="{{ backTitle }}" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Panier moyen</div>
+            </div>
+
+            <div style="background:var(--color-accent-2-700);color:var(--color-neutral-100);border-radius:28px;padding:18px 20px;display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:14px;font-weight:700">TTC par facture · {{ pan.period }}</div>
+              <div style="font-family:var(--font-heading);font-size:40px;line-height:1.05">{{ pan.avg }}</div>
+              <div style="font-size:14px">{{ pan.sub }}</div>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Par type d’intervention</div>
+              <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;gap:3px">
+                <sc-for list="{{ pan.types }}" as="t" hint-placeholder-count="3">
+                  <div style="flex:{{ t.share }};background:{{ t.c }}"></div>
+                </sc-for>
+              </div>
+              <sc-for list="{{ pan.types }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--color-divider)">
+                  <span style="width:12px;height:12px;flex:none;border-radius:4px;background:{{ t.c }}"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:15px;font-weight:700">{{ t.l }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700)">{{ t.range }} · {{ t.n }}</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:15px;font-weight:700;white-space:nowrap">{{ t.avg }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700)">{{ t.pct }} du CA</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Composition d’un panier</div>
+              <div style="display:flex;height:14px;border-radius:999px;overflow:hidden;gap:3px">
+                <div style="flex:{{ pan.matPct }};background:var(--color-accent-600)"></div>
+                <div style="flex:{{ pan.moPct }};background:var(--color-accent-2-600)"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:700;color:var(--color-neutral-800)">Matériel · {{ pan.matPctTxt }}</span><span style="font-size:18px;font-weight:700">{{ pan.mat }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:700;color:var(--color-neutral-800)">Main d’œuvre · {{ pan.moPctTxt }}</span><span style="font-size:18px;font-weight:700">{{ pan.mo }}</span></div>
+              </div>
+              <div style="font-size:13px;color:var(--color-neutral-700)">{{ pan.lines }} lignes par facture en moyenne</div>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Articles les plus vendus</div>
+              <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                <sc-for list="{{ pan.artSort }}" as="o" hint-placeholder-count="3">
+                  <button style-active="transform:scale(0.97)" onClick="{{ o.onPick }}" style="transition:transform .12s ease;flex:1;min-height:40px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button>
+                </sc-for>
+              </div>
+              <sc-for list="{{ pan.top }}" as="a" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--color-divider)">
+                  <div style="width:32px;height:32px;flex:none;border-radius:50%;background:{{ a.rkBg }};color:{{ a.rkFg }};display:flex;align-items:center;justify-content:center;font:800 14px var(--font-body)">{{ a.rank }}</div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:15px;font-weight:700;min-width:0">{{ a.name }}</span><span style="font-size:15px;font-weight:800;white-space:nowrap">{{ a.main }}</span></div>
+                    <div style="height:8px;border-radius:999px;background:var(--color-surface)"><div style="height:100%;border-radius:999px;background:var(--color-accent-600);width:{{ a.w }}"></div></div>
+                    <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--color-neutral-700)"><span>{{ a.meta }}</span><span style="font-weight:700;white-space:nowrap;color:{{ a.trFg }}">{{ a.trend }}</span></div>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="font-size:13px;color:var(--color-neutral-700)">{{ pan.artNote }}</div>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Par client</div>
+              <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                <sc-for list="{{ pan.clSort }}" as="o" hint-placeholder-count="3">
+                  <button style-active="transform:scale(0.97)" onClick="{{ o.onPick }}" style="transition:transform .12s ease;flex:1;min-height:40px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button>
+                </sc-for>
+              </div>
+              <sc-for list="{{ pan.clients }}" as="c" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid var(--color-divider)">
+                  <div onClick="{{ c.onTap }}" role="button" style="cursor:pointer;display:flex;align-items:center;gap:12px">
+                    <div style="width:44px;height:44px;flex:none;border-radius:50%;background:var(--color-accent-2-200);color:var(--color-accent-2-900);display:flex;align-items:center;justify-content:center;font:800 15px var(--font-body)">{{ c.ini }}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:16px;font-weight:800">{{ c.name }}</div>
+                      <div style="font-size:13px;color:var(--color-neutral-700)">{{ c.n }} · dernier achat {{ c.last }}</div>
+                    </div>
+                    <div style="text-align:right">
+                      <div style="font-size:16px;font-weight:700;white-space:nowrap">{{ c.main }}</div>
+                      <div style="font-size:13px;font-weight:700;color:{{ c.vsFg }}">{{ c.vs }}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;border-radius:18px;background:var(--color-surface);padding:10px 14px">
+                    <sc-for list="{{ c.items }}" as="it" hint-placeholder-count="3">
+                      <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px"><span style="min-width:0">{{ it.n }}</span><span style="font-weight:700;white-space:nowrap">{{ it.q }}</span></div>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span class="tag tag-accent-2" style="flex:none">À proposer</span>
+                    <span style="flex:1;min-width:0;font-size:14px;font-weight:600">{{ c.sug }}</span>
+                    <button onClick="{{ c.onSug }}" class="btn btn-ghost" style="min-height:44px;font-size:14px;color:var(--color-accent-700);padding:0 8px">Noter</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- TRANSFORMATION DEVIS -->
+        <sc-if value="{{ isTr }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="05d Transformation" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button style-active="transform:scale(0.97)" onClick="{{ goBack }}" title="{{ backTitle }}" aria-label="{{ backTitle }}" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Transformation des devis</div>
+            </div>
+
+            <div style="background:var(--color-accent-700);color:var(--color-neutral-100);border-radius:28px;padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700;color:var(--color-accent-200)">En nombre</span><span style="font-family:var(--font-heading);font-size:40px;line-height:1.05">{{ tr.pctN }}</span><span style="font-size:13px;color:var(--color-accent-200)">{{ tr.subN }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:700;color:var(--color-accent-200)">En valeur</span><span style="font-family:var(--font-heading);font-size:40px;line-height:1.05">{{ tr.pctV }}</span><span style="font-size:13px;color:var(--color-accent-200)">{{ tr.subV }}</span></div>
+              </div>
+              <div style="font-size:14px;padding-top:10px;border-top:1px solid var(--color-accent-500)">{{ tr.bench }}</div>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Du devis à la facture</div>
+              <sc-for list="{{ tr.funnel }}" as="f" hint-placeholder-count="4">
+                <div onClick="{{ f.onTap }}" role="button" style="cursor:pointer;display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:15px"><span style="font-weight:700">{{ f.l }}</span><span style="font-weight:700;white-space:nowrap">{{ f.n }} · {{ f.amount }}</span></div>
+                  <div style="height:22px;border-radius:999px;background:var(--color-surface);overflow:hidden"><div style="height:100%;border-radius:999px;width:{{ f.w }};background:{{ f.c }}"></div></div>
+                  <div style="font-size:13px;color:var(--color-neutral-700)">{{ f.conv }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">En attente de réponse</div>
+                <div style="font-size:15px;font-weight:800;white-space:nowrap">{{ tr.waitTot }}</div>
+              </div>
+              <div style="font-size:14px;line-height:1.45;color:var(--color-neutral-800)">Relance conseillée à J+3, J+7 puis J+15. Chaque relance apporte un élément : précision, date de disponibilité, variante moins chère.</div>
+              <sc-if value="{{ tr.noWait }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;color:var(--color-neutral-700)">Aucun devis envoyé en attente.</div>
+              </sc-if>
+              <sc-for list="{{ tr.wait }}" as="w" hint-placeholder-count="1">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid var(--color-divider)">
+                  <div onClick="{{ w.onOpen }}" role="button" style="cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+                    <div style="min-width:0"><div style="font-size:15px;font-weight:700">{{ w.client }}</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ w.no }} · envoyé il y a {{ w.days }}</div></div>
+                    <div style="font-size:15px;font-weight:700;white-space:nowrap">{{ w.amount }}</div>
+                  </div>
+                  <div style="display:flex;gap:6px">
+                    <sc-for list="{{ w.steps }}" as="p" hint-placeholder-count="3">
+                      <span style="flex:1;text-align:center;border-radius:999px;padding:6px 0;font-size:13px;font-weight:700;background:{{ p.bg }};color:{{ p.fg }}">{{ p.l }}</span>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;gap:8px">
+                    <button onClick="{{ w.mail }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">{{ w.cta }}</button>
+                    <button onClick="{{ w.wa }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">WhatsApp</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ tr.hasToBill }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--color-accent-2-200);color:var(--color-accent-2-900);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Acceptés, à facturer</div>
+                  <div style="font-size:15px;font-weight:800;white-space:nowrap">{{ tr.billTot }}</div>
+                </div>
+                <sc-for list="{{ tr.toBill }}" as="b" hint-placeholder-count="1">
+                  <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--color-accent-2-300)">
+                    <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">{{ b.client }}</div><div style="font-size:13px">{{ b.no }} · {{ b.amount }}</div></div>
+                    <button onClick="{{ b.onOpen }}" class="btn btn-primary" style="min-height:44px;font-size:14px;padding:0 16px">Vérifier et facturer</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Qui signe le plus</div>
+              <sc-for list="{{ tr.segs }}" as="g" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;gap:5px;padding:4px 0">
+                  <div style="display:flex;justify-content:space-between;gap:10px;font-size:15px"><span style="font-weight:600">{{ g.l }}</span><span style="font-weight:800;white-space:nowrap;color:{{ g.ink }}">{{ g.pct }}</span></div>
+                  <div style="height:8px;border-radius:999px;background:var(--color-surface)"><div style="height:100%;border-radius:999px;background:{{ g.fill }};width:{{ g.w }}"></div></div>
+                  <div style="font-size:13px;color:var(--color-neutral-700)">{{ g.sub }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="background:var(--color-surface);border-radius:28px;padding:16px 18px;display:grid;grid-template-columns:1fr auto;row-gap:8px;font-size:15px">
+              <div style="grid-column:1 / -1;font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;margin-bottom:2px">Délais</div>
+              <span style="color:var(--color-neutral-800)">Demande → envoi du devis</span><span style="font-weight:700;text-align:right">{{ tr.dSend }}</span>
+              <span style="color:var(--color-neutral-800)">Envoi → décision du client</span><span style="font-weight:700;text-align:right">{{ tr.dDec }}</span>
+              <span style="color:var(--color-neutral-800)">Relances avant signature</span><span style="font-weight:700;text-align:right">{{ tr.nRel }}</span>
+              <span style="grid-column:1 / -1;font-size:13px;color:var(--color-neutral-700)">Envoyer vite compte : le client qui consulte 3 artisans signe souvent avec le plus réactif.</span>
+            </div>
           </div>
         </sc-if>
 
@@ -476,6 +809,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
               <div style="font-size:14px;font-weight:700;color:var(--color-accent-200)">CA facturé TTC · {{ st.periodLabel }}</div>
               <div style="font-family:var(--font-heading);font-size:40px;line-height:1.05">{{ st.total }}</div>
               <div style="font-size:14px;color:var(--color-accent-200)">{{ st.evo }}</div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px;padding-top:12px;border-top:1px solid var(--color-accent-500)">
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13px;font-weight:700;color:var(--color-accent-200)">HT</span><span style="font-size:16px;font-weight:700">{{ st.htTxt }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13px;font-weight:700;color:var(--color-accent-200)">Encaissé</span><span style="font-size:16px;font-weight:700">{{ st.encTxt }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13px;font-weight:700;color:var(--color-accent-200)">En attente</span><span style="font-size:16px;font-weight:700">{{ st.waitTxt }}</span></div>
+              </div>
+              <button style-active="transform:scale(0.97)" onClick="{{ st.goEnc }}" style="transition:transform .12s ease;margin-top:10px;min-height:44px;border:none;border-radius:999px;background:var(--color-neutral-100);color:var(--color-accent-800);font:700 14px var(--font-body);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">Voir les encaissements<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></button>
             </div>
 
             <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px 16px 14px;display:flex;flex-direction:column;gap:10px">
@@ -515,33 +854,6 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                 </sc-for>
               </div>
               <div style="font-size:13px;color:var(--color-neutral-700)">{{ lc.selLabel }} · touche un mois pour le détail</div>
-            </div>
-
-            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px 16px 14px">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Par mois</div>
-                <div style="font-size:13px;color:var(--color-neutral-700)">k€ TTC</div>
-              </div>
-              <div style="display:flex;gap:14px;font-size:13px;font-weight:600;margin-bottom:12px">
-                <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--color-accent-2-700)"></span>Encaissé</span>
-                <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--color-accent-400)"></span>En attente</span>
-              </div>
-              <div style="display:flex;align-items:flex-end;gap:{{ st.gap }};height:150px">
-                <sc-for list="{{ st.months }}" as="m" hint-placeholder-count="6">
-                  <div onClick="{{ m.onPick }}" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;cursor:pointer;opacity:{{ m.op }}">
-                    <div style="font-size:11px;font-weight:700;color:var(--color-neutral-800)">{{ m.k }}</div>
-                    <div style="width:100%;height:{{ m.h }};display:flex;flex-direction:column;border-radius:8px;overflow:hidden">
-                      <div style="flex:{{ m.wait }};background:var(--color-accent-400)"></div>
-                      <div style="flex:{{ m.paid }};background:var(--color-accent-2-700)"></div>
-                    </div>
-                  </div>
-                </sc-for>
-              </div>
-              <div style="display:flex;gap:{{ st.gap }};margin-top:6px">
-                <sc-for list="{{ st.months }}" as="m" hint-placeholder-count="6">
-                  <div style="flex:1;min-width:0;text-align:center;font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ m.m }}</div>
-                </sc-for>
-              </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -592,6 +904,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
               <span style="color:var(--color-neutral-800)">Taux 8,5 %</span><span style="font-weight:700;text-align:right">{{ st.tva85 }}</span>
               <span style="color:var(--color-neutral-800)">Taux 2,1 %</span><span style="font-weight:700;text-align:right">{{ st.tva21 }}</span>
               <span style="font-weight:700">Total à reverser</span><span style="font-family:var(--font-heading);font-size:20px;text-align:right">{{ st.tvaTot }}</span>
+              <span style="grid-column:1 / -1;font-size:13px;color:var(--color-neutral-700)">{{ st.periodLabel }} · estimation, à valider avec ton expert-comptable</span>
+              <button style-active="transform:scale(0.97)" onClick="{{ st.exportCsv }}" class="btn btn-primary" style="grid-column:1 / -1;transition:transform .12s ease;min-height:48px;font-size:15px;margin-top:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>Exporter pour le comptable (CSV)</button>
             </div>
 
             <button style-active="transform:scale(0.97)" onClick="{{ st.toFacs }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:52px;font-size:16px;border-width:2px;border-color:var(--color-neutral-600)">Voir toutes les factures</button>
@@ -602,7 +916,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
         <sc-if value="{{ isMarge }}" hint-placeholder-val="{{ false }}">
           <div data-screen-label="06 Marge" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
             <div style="display:flex;align-items:center;gap:10px">
-              <button style-active="transform:scale(0.97)" onClick="{{ goHome }}" title="Retour" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <button style-active="transform:scale(0.97)" onClick="{{ goBack }}" title="{{ backTitle }}" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
               <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Calcul de marge</div>
             </div>
 
@@ -620,6 +934,39 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                   <button style-active="transform:scale(0.97)" onClick="{{ seuilPlus }}" title="Monter le seuil" style="transition:transform .12s ease;width:40px;height:40px;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
                 </div>
               </div>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px">
+                <div>
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Marge globale du chantier</div>
+                  <div style="font-size:14px;color:var(--color-neutral-800)">Devis en cours · matériel + main d’œuvre</div>
+                </div>
+                <div style="font-family:var(--font-heading);font-size:40px;line-height:1;color:{{ mg.gInk }}">{{ mg.gPct }}</div>
+              </div>
+              <div style="display:flex;height:16px;border-radius:999px;overflow:hidden;gap:3px;background:var(--color-surface)">
+                <div style="flex:{{ mg.gA }};background:var(--color-neutral-500)"></div>
+                <div style="flex:{{ mg.gC }};background:var(--color-accent-400)"></div>
+                <div style="flex:{{ mg.gM }};background:{{ mg.gFill }}"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--color-neutral-800)"><span style="width:10px;height:10px;border-radius:3px;background:var(--color-neutral-500)"></span>Achats</span><span style="font-size:16px;font-weight:700">{{ mg.gAchat }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--color-neutral-800)"><span style="width:10px;height:10px;border-radius:3px;background:var(--color-accent-400)"></span>Coût MO</span><span style="font-size:16px;font-weight:700">{{ mg.gCout }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--color-neutral-800)"><span style="width:10px;height:10px;border-radius:3px;background:{{ mg.gFill }}"></span>Marge</span><span style="font-size:16px;font-weight:700">{{ mg.gMarge }}</span></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div>
+                  <div style="font-size:15px;font-weight:700">Coût horaire chargé</div>
+                  <div style="font-size:13px;color:var(--color-neutral-700)">salaire + charges + trajet, par heure</div>
+                </div>
+                <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:999px;padding:3px">
+                  <button style-active="transform:scale(0.97)" onClick="{{ mg.coutMinus }}" title="Baisser le coût horaire" style="transition:transform .12s ease;width:44px;height:44px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                  <div style="min-width:60px;text-align:center;font-family:var(--font-heading);font-size:20px">{{ mg.coutTxt }}</div>
+                  <button style-active="transform:scale(0.97)" onClick="{{ mg.coutPlus }}" title="Monter le coût horaire" style="transition:transform .12s ease;width:44px;height:44px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px;border-radius:18px;background:var(--color-surface);padding:10px 14px"><span>Prix plancher HT (seuil {{ seuilTxt }})</span><span style="font-weight:800;white-space:nowrap">{{ mg.gFloor }}</span></div>
+              <div style="font-size:13px;color:var(--color-neutral-700)">Vente HT {{ mg.gHt }} · {{ mg.gHrs }} de main d’œuvre</div>
             </div>
 
             <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px">
@@ -645,6 +992,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
               </sc-if>
               <div style="font-size:14px;line-height:1.4;color:var(--color-neutral-800)">S'applique aux prix du catalogue et aux nouvelles lignes.</div>
               <button style-active="transform:scale(0.97)" onClick="{{ mg.apply }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:52px;font-size:16px;width:100%">Appliquer au devis en cours</button>
+            </div>
+
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px">
+                <div>
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Simuler une remise</div>
+                  <div style="font-size:14px;color:var(--color-neutral-800)">Avant de répondre au client qui négocie</div>
+                </div>
+                <div style="font-family:var(--font-heading);font-size:40px;line-height:1">{{ mg.simTxt }}</div>
+              </div>
+              <input type="range" min="0" max="30" step="1" value="{{ mg.sim }}" onInput="{{ mg.onSim }}" aria-label="Remise simulée en %" style="width:100%;height:44px;accent-color:var(--color-accent-700);cursor:pointer;margin:0">
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+                <div style="border-radius:18px;background:var(--color-surface);padding:10px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:700;color:var(--color-neutral-800)">Nouveau total HT</span><span style="font-size:18px;font-weight:700">{{ mg.simHt }}</span></div>
+                <div style="border-radius:18px;background:{{ mg.simBg }};color:{{ mg.simInk }};padding:10px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:700">Marge restante</span><span style="font-size:18px;font-weight:700">{{ mg.simMarge }}</span></div>
+              </div>
+              <div style="font-size:14px;font-weight:600">{{ mg.simMax }}</div>
+              <button style-active="transform:scale(0.97)" onClick="{{ mg.simApply }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:52px;font-size:16px;border-width:2px;border-color:var(--color-neutral-600)">Appliquer {{ mg.simTxt }} au devis en cours</button>
             </div>
 
             <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:14px">
@@ -700,17 +1064,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
             </div>
 
             <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:10px">
-              <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Devis en cours, ligne par ligne</div>
-              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:10px;row-gap:0;font-size:14px">
-                <span style="padding:6px 0;font-weight:700;color:var(--color-neutral-700)">Article</span>
-                <span style="padding:6px 0;font-weight:700;color:var(--color-neutral-700);text-align:right">Marge</span>
-                <span style="padding:6px 0;font-weight:700;color:var(--color-neutral-700);text-align:right">%</span>
-                <sc-for list="{{ mg.lines }}" as="l" hint-placeholder-count="5">
-                  <span style="padding:8px 0;border-top:1px solid var(--color-divider);font-weight:600;line-height:1.3">{{ l.name }}</span>
-                  <span style="padding:8px 0;border-top:1px solid var(--color-divider);text-align:right;white-space:nowrap">{{ l.marge }}</span>
-                  <span style="padding:8px 0;border-top:1px solid var(--color-divider);text-align:right;font-weight:700;color:{{ l.ink }}">{{ l.pct }}</span>
-                </sc-for>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Devis en cours, ligne par ligne</div>
+                <div style="font-size:13px;color:var(--color-neutral-700)">plus faible en premier</div>
               </div>
+              <sc-for list="{{ mg.lines }}" as="l" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--color-divider)">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600;line-height:1.3">{{ l.name }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700)">marge {{ l.marge }}</div>
+                  </div>
+                  <div style="font-size:15px;font-weight:800;color:{{ l.ink }};white-space:nowrap">{{ l.pct }}</div>
+                  <sc-if value="{{ l.low }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ l.fix }}" class="btn btn-primary" style="min-height:40px;font-size:13px;padding:0 12px">Corriger</button>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <sc-if value="{{ mg.nLow }}" hint-placeholder-val="{{ false }}">
+                <button style-active="transform:scale(0.97)" onClick="{{ mg.fixAll }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:48px;font-size:15px">{{ mg.fixAllTxt }}</button>
+              </sc-if>
               <sc-if value="{{ mg.noLines }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size:14px;color:var(--color-neutral-800)">Aucun matériel dans le devis en cours.</div>
               </sc-if>
@@ -871,7 +1243,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
         <!-- RÉGLAGES -->
         <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
           <div data-screen-label="08 Réglages" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
-            <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Réglages</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button style-active="transform:scale(0.97)" onClick="{{ goBack }}" title="{{ backTitle }}" aria-label="{{ backTitle }}" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+              <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Réglages</div>
+            </div>
             <div data-hscroll="" data-setnav="" style="position:sticky;top:0;z-index:2;margin:-8px -20px 0;padding:8px 20px;background:var(--color-bg);display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding:0 20px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 28px),transparent 100%);cursor:grab;touch-action:pan-x">
               <sc-for list="{{ setNav }}" as="n" hint-placeholder-count="7">
                 <button data-chip="{{ n.id }}" onClick="{{ n.onGo }}" style-active="transform:scale(0.97)" style="transition:transform .12s ease, background-color .2s ease, color .2s ease;scroll-snap-align:start;flex:none;min-height:40px;display:flex;align-items:center;gap:6px;border:none;border-radius:999px;padding:0 14px;font:700 14px var(--font-body);cursor:pointer;white-space:nowrap;background:{{ n.bg }};color:{{ n.fg }}">{{ n.label }}<sc-if value="{{ n.dot }}" hint-placeholder-val="{{ false }}"><span style="min-width:20px;height:20px;border-radius:999px;background:var(--color-accent-700);color:var(--color-neutral-100);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px">{{ n.dot }}</span></sc-if></button>
@@ -1081,7 +1456,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                 </label>
                 <label style="display:flex;flex-direction:column;gap:4px">
                   <span style="display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:700;color:var(--color-neutral-800)"><span>E-mail</span><span style="font-weight:600;color:var(--color-neutral-700)">facultatif</span></span>
-                  <input value="{{ cpt.email }}" onInput="{{ cpt.on.email }}" placeholder="comptable@…" inputmode="email" aria-label="E-mail" class="input" style="min-height:48px;font-size:16px;background:var(--color-surface);border-color:transparent">
+                  <input value="{{ cpt.email }}" onInput="{{ cpt.on.email }}" placeholder="{{ mail.toPh }}" inputmode="email" aria-label="E-mail" class="input" style="min-height:48px;font-size:16px;background:var(--color-surface);border-color:transparent">
                 </label>
                 <label style="display:flex;flex-direction:column;gap:4px">
                   <span style="display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:700;color:var(--color-neutral-800)"><span>Téléphone</span><span style="font-weight:600;color:var(--color-neutral-700)">facultatif</span></span>
@@ -1613,7 +1988,24 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
 
             <sc-if value="{{ pl.isImg }}" hint-placeholder-val="{{ false }}">
               <div style="border-radius:24px;overflow:hidden;background:var(--color-neutral-100)"><img src="{{ pl.src }}" alt="{{ pl.name }}" style="display:block;width:100%;height:auto"></div>
-              <button onClick="{{ pl.exportPdf }}" class="btn btn-primary" style="min-height:50px;font-size:16px;width:100%">Exporter en PDF avec cartouche</button>
+              <sc-if value="{{ pl.canImpl }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--color-accent-2-200);color:var(--color-accent-2-900);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:44px;height:44px;flex:none;border-radius:50%;background:var(--color-accent-2-700);color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg></div>
+                  <div style="min-width:0">
+                    <div style="font-family:var(--font-heading);font-size:20px;line-height:1.15">Implanter mes circuits</div>
+                    <div style="font-size:14px;line-height:1.4">{{ pl.implSub }}</div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4">
+                  <div style="display:flex;gap:8px"><span style="font-weight:800">1</span><span>Le plan devient le fond de l’implantation.</span></div>
+                  <div style="display:flex;gap:8px"><span style="font-weight:800">2</span><span>Tu places prises, points lumineux et tableau sur le plan, ou tu lances le placement auto.</span></div>
+                  <div style="display:flex;gap:8px"><span style="font-weight:800">3</span><span>Chaque symbole est rattaché à un circuit ; les contrôles NF C 15-100 se font au fur et à mesure.</span></div>
+                </div>
+                <button style-active="transform:scale(0.97)" onClick="{{ pl.implant }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:54px;font-size:16px;width:100%">{{ pl.implTxt }}</button>
+              </div>
+              </sc-if>
+              <button onClick="{{ pl.exportPdf }}" class="btn btn-secondary" style="min-height:50px;font-size:16px;width:100%;border-width:2px;border-color:var(--color-neutral-500)">Exporter en PDF avec cartouche</button>
             </sc-if>
             <sc-if value="{{ pl.isPdf }}" hint-placeholder-val="{{ false }}">
               <a href="{{ pl.src }}" target="_blank" rel="noopener" download="{{ pl.fileName }}" style="display:flex;align-items:center;gap:12px;background:var(--color-neutral-100);border-radius:24px;padding:16px;text-decoration:none;color:var(--color-text)">
@@ -1667,7 +2059,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
 
       <!-- Barre récap sticky -->
       <sc-if value="{{ isDevis }}" hint-placeholder-val="{{ false }}">
-        <button style-active="transform:scale(0.97)" onClick="{{ openRecap }}" style="transition:transform .12s ease;position:absolute;left:12px;right:12px;bottom:96px;z-index:4;min-height:64px;border:none;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);display:flex;align-items:center;gap:12px;padding:8px 10px 8px 22px;cursor:pointer;box-shadow:var(--shadow-lg);font-family:var(--font-body);text-align:left">
+        <button style-active="transform:scale(0.97)" onClick="{{ openRecap }}" style="transition:transform .12s ease;position:absolute;left:{{ fr.barL }};right:{{ fr.barR }};bottom:{{ fr.barB }};z-index:4;min-height:64px;border:none;border-radius:999px;background:var(--color-neutral-900);color:var(--color-neutral-100);display:flex;align-items:center;gap:12px;padding:8px 10px 8px 22px;cursor:pointer;box-shadow:var(--shadow-lg);font-family:var(--font-body);text-align:left">
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600;color:var(--color-neutral-400)">{{ totalLabel }}</div>
             <div style="font-family:var(--font-heading);font-size:22px;line-height:1.1">{{ ttcTxt }}</div>
@@ -1780,19 +2172,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
       </sc-if>
 
       <sc-if value="{{ mail.open }}" hint-placeholder-val="{{ false }}">
-        <div style="position:absolute;inset:0;z-index:26;display:flex;flex-direction:column;justify-content:flex-end">
+        <div style="position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;justify-content:flex-end">
           <div onClick="{{ mail.close }}" aria-hidden="true" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
-          <div role="dialog" aria-modal="true" aria-label="Aperçu de l'e-mail" data-screen-label="Aperçu e-mail comptable" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:12px;animation:btpUp .3s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
+          <div role="dialog" aria-modal="true" aria-label="Aperçu de l'e-mail" data-screen-label="Aperçu du message" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:12px;animation:btpUp .3s cubic-bezier(.2,.8,.2,1);max-height:92%;overflow-y:auto">
             <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-              <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Aperçu de l'e-mail</div>
+              <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">{{ mail.title }}</div>
               <button onClick="{{ mail.close }}" aria-label="Fermer" title="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
             </div>
             <div style="font-size:14px;line-height:1.4;color:var(--color-neutral-800)">Relis et modifie le message avant l'envoi. Rien ne part sans ta validation.</div>
             <div style="background:var(--color-neutral-100);border-radius:24px;padding:4px 16px 12px;display:flex;flex-direction:column">
+              <sc-if value="{{ mail.isMail }}" hint-placeholder-val="{{ true }}">
               <label style="display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid var(--color-divider)">
                 <span style="width:44px;flex:none;font-size:14px;font-weight:700;color:var(--color-neutral-700)">À</span>
-                <input value="{{ mail.to }}" onInput="{{ mail.onTo }}" aria-label="À" type="email" inputmode="email" placeholder="comptable@…" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;font:600 16px var(--font-body);color:var(--color-text);padding:0">
+                <input value="{{ mail.to }}" onInput="{{ mail.onTo }}" aria-label="À" type="email" inputmode="email" placeholder="{{ mail.toPh }}" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;font:600 16px var(--font-body);color:var(--color-text);padding:0">
               </label>
               <sc-if value="{{ mail.toErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;font-weight:600;color:var(--color-accent-800);padding:4px 0 0 54px">{{ mail.toErr }}</span></sc-if>
               <label style="display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid var(--color-divider)">
@@ -1803,8 +2196,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                 <span style="width:44px;flex:none;font-size:14px;font-weight:700;color:var(--color-neutral-700)">Objet</span>
                 <input value="{{ mail.subject }}" onInput="{{ mail.onSubject }}" aria-label="Objet"  style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;font:600 16px var(--font-body);color:var(--color-text);padding:0">
               </label>
+              </sc-if>
+              <sc-if value="{{ mail.isWa }}" hint-placeholder-val="{{ false }}">
+                <div style="min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:700;color:var(--color-neutral-700);border-bottom:1px solid var(--color-divider)">Message WhatsApp · le destinataire se choisit dans WhatsApp</div>
+              </sc-if>
               <textarea value="{{ mail.body }}" onInput="{{ mail.onBody }}" aria-label="Message" rows="14" style="margin-top:10px;width:100%;resize:vertical;border:none;background:transparent;font:500 15px/1.5 var(--font-body);color:var(--color-text);padding:0"></textarea>
             </div>
+            <sc-if value="{{ mail.hasAttach }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:6px">
               <div style="font-size:14px;font-weight:700;color:var(--color-neutral-800)">{{ mail.attachCount }}</div>
               <div style="display:flex;flex-wrap:wrap;gap:6px">
@@ -1813,8 +2211,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                 </sc-for>
               </div>
             </div>
-            <button onClick="{{ mail.send }}" class="btn btn-primary" style="min-height:54px;font-size:17px;width:100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg>Ouvrir dans ma messagerie</button>
-            <button onClick="{{ mail.reset }}" class="btn btn-ghost" style="min-height:44px;font-size:15px;color:var(--color-accent-700)">Régénérer le brouillon</button>
+            </sc-if>
+            <button onClick="{{ mail.send }}" class="btn btn-primary" style="min-height:54px;font-size:17px;width:100%"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg>{{ mail.sendTxt }}</button>
+            <button onClick="{{ mail.reset }}" class="btn btn-ghost" style="min-height:44px;font-size:15px;color:var(--color-accent-700)">{{ mail.resetTxt }}</button>
           </div>
         </div>
       </sc-if>
@@ -1844,6 +2243,55 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
               </div>
             </sc-for>
             <button onClick="{{ help.close }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">J'ai compris</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ fv.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ fv.cancel }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div role="dialog" aria-modal="true" aria-label="Vérifier avant de facturer" data-screen-label="Vérification facture" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:90%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div>
+              <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">Vérifier avant de facturer</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;border-radius:16px;background:var(--color-neutral-100);color:var(--color-neutral-900);padding:8px 12px"><span style="font-size:12px;font-weight:700">Devis</span><span style="font:700 14px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fv.devisNo }}</span></div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--color-neutral-700)"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;border-radius:16px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);padding:8px 12px"><span style="font-size:12px;font-weight:700">Facture (brouillon)</span><span style="font:700 14px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fv.facNo }}</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;font-weight:600;color:var(--color-neutral-800)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect width="18" height="11" x="3" y="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Rien n’est envoyé au client à cette étape.</div>
+            </div>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;row-gap:8px;font-size:15px">
+              <span style="color:var(--color-neutral-800)">Client</span><span style="font-weight:700;text-align:right">{{ fv.client }}</span>
+              <span style="color:var(--color-neutral-800)">Lignes</span><span style="font-weight:700;text-align:right">{{ fv.nLines }}</span>
+              <span style="color:var(--color-neutral-800)">Total HT</span><span style="font-weight:700;text-align:right">{{ fv.ht }}</span>
+              <span style="color:var(--color-neutral-800)">TVA</span><span style="font-weight:700;text-align:right">{{ fv.tva }}</span>
+              <span style="color:var(--color-neutral-800)">Total TTC</span><span style="font-weight:700;text-align:right">{{ fv.ttc }}</span>
+              <span style="color:var(--color-neutral-800)">Acompte déduit</span><span style="font-weight:700;text-align:right">{{ fv.ac }}</span>
+              <span style="font-weight:700;padding-top:8px;border-top:1.5px solid var(--color-neutral-900)">Net à payer</span><span style="font-family:var(--font-heading);font-size:22px;text-align:right;padding-top:8px;border-top:1.5px solid var(--color-neutral-900)">{{ fv.net }}</span>
+            </div>
+            <sc-for list="{{ fv.warn }}" as="w" hint-placeholder-count="0">
+              <div style="border-radius:18px;background:var(--color-accent-200);color:var(--color-accent-900);padding:10px 14px;font-size:14px;font-weight:600">{{ w }}</div>
+            </sc-for>
+            <div style="display:flex;flex-direction:column;gap:6px;background:var(--color-neutral-100);border-radius:22px;padding:4px">
+              <button onClick="{{ fv.toggleList }}" aria-expanded="{{ fv.listOpen }}" style-active="transform:scale(0.98)" style="transition:transform .12s ease;display:flex;align-items:center;gap:10px;min-height:52px;border:none;border-radius:18px;background:transparent;padding:0 14px;cursor:pointer;text-align:left;color:var(--color-text)">
+                <span style="flex:1;font:800 15px var(--font-body)">Je confirme avoir vérifié</span>
+                <span style="border-radius:999px;padding:4px 10px;font:700 13px var(--font-body);background:{{ fv.cntBg }};color:{{ fv.cntFg }}">{{ fv.cnt }}</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transition:transform .2s ease;transform:rotate({{ fv.chev }})"><path d="m6 9 6 6 6-6"></path></svg>
+              </button>
+              <sc-if value="{{ fv.listOpen }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ fv.checks }}" as="c" hint-placeholder-count="3">
+                <button onClick="{{ c.toggle }}" role="checkbox" aria-checked="{{ c.on }}" style-active="transform:scale(0.98)" style="transition:transform .12s ease;display:flex;align-items:center;gap:12px;min-height:52px;border:none;border-radius:18px;background:var(--color-neutral-100);padding:8px 14px;cursor:pointer;text-align:left;font:600 15px var(--font-body);color:var(--color-text)">
+                  <span style="width:26px;height:26px;flex:none;border-radius:8px;border:2.5px solid {{ c.bd }};background:{{ c.bg }};color:var(--color-neutral-100);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity:{{ c.op }}"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                  <span style="flex:1">{{ c.l }}</span>
+                </button>
+              </sc-for>
+              </sc-if>
+            </div>
+            <button onClick="{{ fv.preview }}" class="btn btn-secondary" style="min-height:52px;font-size:16px;width:100%;border-width:2px;border-color:var(--color-neutral-500)">Revoir l’aperçu du devis</button>
+            <button onClick="{{ fv.ok }}" disabled="{{ fv.blocked }}" class="btn btn-primary" style="min-height:54px;font-size:16px;width:100%;opacity:{{ fv.okOp }}">{{ fv.okTxt }}</button>
+            <div style="font-size:13px;line-height:1.45;color:var(--color-neutral-700);text-align:center">La facture est créée sans être transmise. Tu l’envoies ensuite depuis Documents › Factures.</div>
+            <button onClick="{{ fv.cancel }}" class="btn btn-ghost" style="min-height:44px;font-size:15px">Annuler</button>
           </div>
         </div>
       </sc-if>
@@ -2014,10 +2462,23 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
                 </sc-for>
               </div>
             </sc-if>
+            <div style="background:var(--color-neutral-100);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:600;color:var(--color-neutral-800)"><span>Taux d’acompte</span><span style="font-weight:700;color:var(--color-text)">{{ fe.acTxt }}</span></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button onClick="{{ fe.ac.dec }}" aria-label="Baisser l'acompte de 5 %" style-active="transform:scale(0.92)" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);color:var(--color-neutral-900);cursor:pointer;font:800 20px var(--font-body);display:flex;align-items:center;justify-content:center">−</button>
+                <input type="range" min="0" max="50" step="5" value="{{ fe.ac.val }}" onChange="{{ fe.ac.onRange }}" aria-label="Taux d'acompte" style="flex:1;min-width:0;height:44px;accent-color:var(--color-accent);cursor:pointer">
+                <button onClick="{{ fe.ac.inc }}" aria-label="Augmenter l'acompte de 5 %" style-active="transform:scale(0.92)" style="transition:transform .12s ease;width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);color:var(--color-neutral-900);cursor:pointer;font:800 20px var(--font-body);display:flex;align-items:center;justify-content:center">+</button>
+                <span style="width:56px;flex:none;text-align:right;font:700 16px var(--font-body);font-variant-numeric:tabular-nums;color:{{ fe.ac.fg }}">{{ fe.ac.label }}</span>
+              </div>
+            </div>
             <div style="display:grid;grid-template-columns:1fr auto;row-gap:6px;font-size:15px;background:var(--color-surface);border-radius:22px;padding:14px 16px">
               <span style="color:var(--color-neutral-800)">Total HT</span><span style="font-weight:600;text-align:right">{{ fe.ht }}</span>
               <span style="color:var(--color-neutral-800)">{{ fe.tvaLabel }}</span><span style="font-weight:600;text-align:right">{{ fe.tva }}</span>
               <span style="font-weight:700">Total TTC</span><span style="font-family:var(--font-heading);font-size:24px;text-align:right">{{ fe.ttc }}</span>
+              <sc-if value="{{ fe.hasAc }}" hint-placeholder-val="{{ false }}">
+                <span style="color:var(--color-neutral-800)">{{ fe.acRow }}</span><span style="font-weight:600;text-align:right">{{ fe.acAmt }}</span>
+                <span style="font-weight:700">Net à payer</span><span style="font-weight:800;text-align:right">{{ fe.net }}</span>
+              </sc-if>
               <span style="color:var(--color-neutral-800);padding-top:6px;border-top:1px solid var(--color-divider)">Échéance</span><span style="font-weight:700;text-align:right;padding-top:6px;border-top:1px solid var(--color-divider)">{{ cgv.dueFac }}</span>
               <span style="grid-column:1 / -1;font-size:13px;line-height:1.45;color:var(--color-neutral-700)">{{ cgv.lateTxt }}</span>
             </div>
@@ -2250,8 +2711,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);o
             <div style="font-family:var(--font-heading);font-size:24px;line-height:1.15">PDF téléchargé</div>
             <div style="font-size:14px;line-height:1.5;color:var(--color-neutral-800)">Ce navigateur ne permet pas d'envoyer directement un fichier. Le PDF <b style="font-family:ui-monospace,Menlo,monospace;font-size:13px">{{ shFb.name }}</b> est dans tes téléchargements : ouvre la conversation, puis joins-le avec le trombone.</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <a href="{{ shFb.wa }}" target="_blank" rel="noopener" class="btn btn-primary" style="min-height:50px;font-size:15px;text-decoration:none">WhatsApp</a>
-              <a href="{{ shFb.mail }}" class="btn btn-secondary" style="min-height:50px;font-size:15px;border-width:2px;text-decoration:none">E-mail</a>
+              <button onClick="{{ shFb.onWa }}" class="btn btn-primary" style="min-height:50px;font-size:15px">WhatsApp</button>
+              <button onClick="{{ shFb.onMail }}" class="btn btn-secondary" style="min-height:50px;font-size:15px;border-width:2px">E-mail</button>
             </div>
             <button onClick="{{ shFb.close }}" class="btn btn-ghost" style="min-height:44px;font-size:15px">Fermer</button>
           </div>
@@ -2308,6 +2769,45 @@ const CAT_RAW = {
     ['Prise dédiée clim 20 A','LEG-CLIM20','Spécifique 974','Rexel Réunion',7,'u'],
     ["Boîte d'encastrement Ø67",'LEG-BE67','Accessoires','COREDIME',0.9,'u'],
     ['Piquet de terre + barrette','PIQ-TERRE','Accessoires','Ravate Pro',19,'u'],
+    ['Goulotte 60×40 2 m','LEG-GOU6040','Conduits','Ravate Pro',9.8,'u'],
+    ['Goulotte 80×60 2 m','LEG-GOU8060','Conduits','CGED',14.5,'u'],
+    ['Moulure 20×10 2 m','LEG-MOU2010','Conduits','COREDIME',2.6,'u'],
+    ['Moulure 32×12,5 2 m','LEG-MOU3212','Conduits','COREDIME',3.4,'u'],
+    ['Angle / embout goulotte 40×40','LEG-ANG4040','Conduits','Ravate Pro',2.2,'u'],
+    ['Tube IRL Ø16 rigide 3 m (Tubiro)','IRL-16','Conduits','Rexel Réunion',1.9,'u'],
+    ['Tube IRL Ø20 rigide 3 m (Tubiro)','IRL-20','Conduits','Rexel Réunion',2.4,'u'],
+    ['Tube IRL Ø25 rigide 3 m (Tubiro)','IRL-25','Conduits','CGED',3.3,'u'],
+    ['Manchon / coude IRL Ø20','IRL-COU20','Conduits','Rexel Réunion',0.6,'u'],
+    ['Collier de fixation IRL Ø20 (×100)','IRL-COL20','Petit matériel','COREDIME',12,'u'],
+    ['Gaine ICTA Ø16','ICTA-16','Conduits','COREDIME',0.45,'m'],
+    ['Gaine ICTA Ø25','ICTA-25','Conduits','COREDIME',0.75,'m'],
+    ['Gaine préfilée ICTA Ø20 3G1,5','ICTA-PF3G15','Conduits','Rexel Réunion',1.35,'m'],
+    ['Gaine préfilée ICTA Ø20 3G2,5','ICTA-PF3G25','Conduits','Rexel Réunion',1.95,'m'],
+    ['Wago 221-412 (2 entrées, ×50)','WAG-221412','Connexion','Rexel Réunion',19,'u'],
+    ['Wago 221-413 (3 entrées, ×50)','WAG-221413','Connexion','Rexel Réunion',22,'u'],
+    ['Wago 221-415 (5 entrées, ×25)','WAG-221415','Connexion','CGED',17,'u'],
+    ['Wago 2273-203 rigide (3 entrées, ×100)','WAG-2273203','Connexion','CGED',15,'u'],
+    ['Wago 2273-205 rigide (5 entrées, ×50)','WAG-2273205','Connexion','CGED',13,'u'],
+    ['Boîte de dérivation étanche IP55 80×80','LEG-BD8080','Connexion','Ravate Pro',3.2,'u'],
+    ['Boîte d’encastrement placo Ø67','LEG-BEP67','Connexion','COREDIME',1.1,'u'],
+    ['Fil H07V-U 1,5 mm² (couronne 100 m)','NEX-H07V15','Câbles','Rexel Réunion',32,'u'],
+    ['Fil H07V-U 2,5 mm² (couronne 100 m)','NEX-H07V25','Câbles','Rexel Réunion',49,'u'],
+    ['Câble H07V-R 10 mm² vert/jaune','NEX-H07VR10','Câbles','CGED',2.9,'m'],
+    ['Câble R2V 3G6','NEX-R2V3G6','Câbles','CGED',3.9,'m'],
+    ['Embouts de câblage assortis (×500)','EMB-ASS500','Petit matériel','COREDIME',11,'u'],
+    ['Colliers de serrage 200 mm (×100)','COL-200','Petit matériel','Ravate Pro',4.5,'u'],
+    ['Chevilles à frapper 6×40 (×100)','CHV-F640','Petit matériel','Ravate Pro',6.5,'u'],
+    ['Chevilles placo Molly (×50)','CHV-MOL50','Petit matériel','COREDIME',9,'u'],
+    ['Vis agglo 4×40 (×200)','VIS-440','Petit matériel','Ravate Pro',5.8,'u'],
+    ['Cavaliers / attaches câble (×100)','CAV-100','Petit matériel','COREDIME',4.2,'u'],
+    ['Ruban isolant PVC 19 mm (×10)','RUB-19','Petit matériel','Rexel Réunion',7.5,'u'],
+    ['Gaine thermorétractable assortie','THR-ASS','Petit matériel','CGED',8.9,'u'],
+    ['Repères de câbles 0 à 9','REP-CAB','Petit matériel','CGED',6,'u'],
+    ['Étiquettes de tableau (planche)','ETQ-TAB','Petit matériel','Rexel Réunion',3.5,'u'],
+    ['Bornier de terre 12 trous','BRN-T12','Petit matériel','CGED',4.8,'u'],
+    ['Mastic / mousse coupe-feu','MST-CF','Petit matériel','COREDIME',11.5,'u'],
+    ['Foret béton Ø6 SDS','FOR-6SDS','Petit matériel','Ravate Pro',3.9,'u'],
+    ['Scie cloche Ø68 boîte placo','SCI-68','Petit matériel','Ravate Pro',14,'u'],
   ],
   plomb: [
     ['WC suspendu + bâti','GEB-DUOFIX','Sanitaire','Téréva Réunion',240,'u'],
@@ -2528,8 +3028,9 @@ function planDiagram(p, sel, mode, errs = {}) {
     ln(56, yb, n ? xs[n - 1] + 2 : 96, yb, K.ink, 3.5);
     R.push({ x: 8, y: yb - 18, w: 48, h: 36, rx: 9, fill: K.paper, stroke: over ? K.acc : K.sage, sw: 2.5 });
     tx(32, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, a: 'middle', fill: K.sage });
-    tx(32, yb - 3, d.cal + ' A', { s: 9, w: 800, a: 'middle' });
-    tx(32, yb + 10, '30 mA ' + d.type, { s: 8.5, a: 'middle', fill: K.mute });
+    tx(32, yb - 6, d.cal + ' A', { s: 9, w: 800, a: 'middle' });
+    tx(32, yb + 4.5, '30 mA', { s: 8, a: 'middle', fill: K.mute });
+    tx(32, yb + 13.5, 'type ' + d.type, { s: 8, w: 700, a: 'middle', fill: K.mute });
     if (!n) tx(70, yb + 24, 'Aucun circuit', { s: 9, fill: K.mute });
     cs.forEach((c, i) => {
       const x = +xs[i].toFixed(1), on = c.id === sel, bad = !!errs[c.id], col = on ? K.acc : K.ink;
@@ -2552,7 +3053,7 @@ function planDiagram(p, sel, mode, errs = {}) {
         const y0 = yb + 102, sec = String(SECTION[c.cal]).replace('.', ',') + ' mm²';
         tx(x + 3.5, y0, a1, { s: 10, w: on ? 800 : 700, fill: col, rot: `rotate(90 ${x + 3.5} ${y0})` });
         if (a2) tx(x - 7, y0, a2, { s: 10, w: on ? 800 : 700, fill: col, rot: `rotate(90 ${x - 7} ${y0})` });
-        tx(x + (a2 ? 12.5 : 12), y0, sec, { s: 8.5, w: 600, fill: K.mute, rot: `rotate(90 ${x + (a2 ? 12.5 : 12)} ${y0})` });
+        tx(x + (a2 ? 17 : 16.5), y0, sec, { s: 8.5, w: 600, fill: K.mute, rot: `rotate(90 ${x + (a2 ? 17 : 16.5)} ${y0})` });
       } else {
         tx(x, yb + 104, String(SECTION[c.cal]).replace('.', ',') + '²', { s: 8.5, w: 600, a: 'middle', fill: K.mute });
       }
@@ -2700,7 +3201,7 @@ class Component extends DCLogic {
   scrollRef = React.createRef();
 
   static KEY = 'btp974-mobile-v1';
-  static KEEP = ['lines','client','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
+  static KEEP = ['lines','client','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
   componentDidMount() {
     this._bipH = e => { e.preventDefault(); this._bip = e; }; window.addEventListener('beforeinstallprompt', this._bipH);
     if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) this.setState({ installed: true });
@@ -2867,7 +3368,7 @@ class Component extends DCLogic {
     const ht = r2((d.ttc || 0) / (this.state.regime === 'micro' ? 1 : 1.085));
     const lines = (d.lines || [{ name: d.client.split(' — ')[1] ? 'Travaux : ' + d.client.split(' — ')[1] : 'Travaux selon devis', qty: 1, pu: ht }])
       .map(l => ({ id: UID++, name: l.name, qtyTxt: String(l.qty).replace('.', ','), puTxt: String(l.pu).replace('.', ',') }));
-    this.setState({ facEdit: { no, client: d.client, lines } });
+    this.setState({ facEdit: { no, client: d.client, lines, acPct: d.acPct ?? (d.acompte ?? 0) } });
   }
 
   facVals() {
@@ -2878,7 +3379,7 @@ class Component extends DCLogic {
     const setE = patch => this.setState(st => ({ facEdit: { ...st.facEdit, ...patch } }));
     const setL = (id, patch) => this.setState(st => ({ facEdit: { ...st.facEdit, lines: st.facEdit.lines.map(l => l.id === id ? { ...l, ...patch } : l) } }));
     const ht = r2(e.lines.reduce((a, l) => a + num(l.qtyTxt) * num(l.puTxt), 0));
-    const tva = micro ? 0 : r2(ht * 0.085), ttc = r2(ht + tva);
+    const tva = micro ? 0 : r2(ht * 0.085), ttc = r2(ht + tva), acP = e.acPct ?? 0, acA = r2(ttc * acP / 100);
     const status = FAC_ST[d.st], locked = d.st >= 1;
     return {
       facOpen: true,
@@ -2890,6 +3391,8 @@ class Component extends DCLogic {
           onDel: () => setE({ lines: e.lines.filter(x => x.id !== l.id) }) })),
         addLine: () => setE({ lines: [...e.lines, { id: UID++, name: 'Nouvelle ligne', qtyTxt: '1', puTxt: '0' }] }),
         ht: fmt(ht), tva: micro ? 'non applicable' : fmt(tva), tvaLabel: micro ? 'TVA (293 B)' : 'TVA 8,5 %', ttc: fmt(ttc),
+        ac: this.acCtl(acP, v => setE({ acPct: v })), acTxt: acP ? fmt(acA) : 'Aucun acompte', hasAc: acP > 0,
+        acRow: `Acompte ${acP} % déduit`, acAmt: '− ' + fmt(acA), net: fmt(ttc - acA),
         saveLabel: locked ? 'Créer la facture rectificative' : 'Enregistrer les modifications',
         plans: this.plans().filter(p => p.facNo === e.no).map(p => ({ name: p.name, onOpen: () => { this.setState({ facEdit: null }); this.openPlan(p.id); } })),
         hasPlans: this.plans().some(p => p.facNo === e.no),
@@ -2897,11 +3400,11 @@ class Component extends DCLogic {
         save: () => {
           const lines = e.lines.map(l => ({ name: l.name, qty: num(l.qtyTxt), pu: num(l.puTxt) }));
           if (!locked) {
-            this.setState(st => ({ facEdit: null, docs: st.docs.map(x => x.no === e.no ? { ...x, client: e.client, lines, ttc } : x) }));
+            this.setState(st => ({ facEdit: null, docs: st.docs.map(x => x.no === e.no ? { ...x, client: e.client, lines, ttc, acPct: acP } : x) }));
             this.flash(`${e.no} mise à jour`);
           } else {
             const nno = docNo('FAC', s.facSeq);
-            this.setState(st => ({ facEdit: null, facSeq: st.facSeq + 1, docs: [{ no: nno, type: 'fac', client: e.client, date: '26/09', st: 0, ttc, lines }, ...st.docs] }));
+            this.setState(st => ({ facEdit: null, facSeq: st.facSeq + 1, docs: [{ no: nno, type: 'fac', client: e.client, date: '26/09', st: 0, ttc, lines, acPct: acP }, ...st.docs] }));
             this.flash(`Avoir + ${nno} créés, à transmettre`);
           }
         },
@@ -2949,11 +3452,28 @@ class Component extends DCLogic {
     });
     const V = devis.reduce((x, d) => x + d.v, 0), A = devis.reduce((x, d) => x + d.a, 0), M = V - A, P = V ? M / V * 100 : 0;
     const low = P < SEUIL;
-    const lines = r.filter(l => l.kind === 'mat').map(l => { const p = l.pu > 0 ? (l.pu - l.achat) / l.pu * 100 : 0; return { name: `${l.qty} × ${l.name}`, marge: fmt((l.pu - l.achat) * l.qty), pct: Math.round(p) + ' %', ink: tone(p).ink }; });
+    const fixL = id => this.setState(st => ({ lines: st.lines.map(l => l.id === id ? { ...l, pu: r2(l.achat * coef), puTxt: undefined } : l) }));
+    const lines = r.filter(l => l.kind === 'mat').map(l => { const p = l.pu > 0 ? (l.pu - l.achat) / l.pu * 100 : 0; return { p, name: `${l.qty} × ${l.name}`, marge: fmt((l.pu - l.achat) * l.qty), pct: Math.round(p) + ' %', ink: tone(p).ink, low: p < SEUIL,
+      fix: () => { fixL(l.id); this.flash(`${l.name} : prix recalculé à ×${String(coef).replace('.', ',')}`); } }; }).sort((a, b) => a.p - b.p);
+    const lowIds = r.filter(l => l.kind === 'mat' && l.pu > 0 && (l.pu - l.achat) / l.pu * 100 < SEUIL).map(l => l.id);
+    const cout = s.coutMO ?? 32, hrs = r.filter(l => l.kind === 'mo').reduce((a, l) => a + l.qty, 0), achT = r.filter(l => l.kind === 'mat').reduce((a, l) => a + l.achat * l.qty, 0);
+    const gC = hrs * cout, gM = T.ht - achT - gC, gP = T.ht > 0 ? gM / T.ht * 100 : 0, gLow = gP < SEUIL;
+    const sim = s.simRem ?? 10, sub = T.mat + T.mo + T.dep, sHt = sub * (1 - sim / 100), sM = sHt - achT - gC, sP = sHt > 0 ? sM / sHt * 100 : 0;
+    const maxR = sub > 0 ? Math.max(0, Math.floor((1 - (achT + gC) / (sub * (1 - SEUIL / 100))) * 100)) : 0;
     return { isMarge: s.tab === 'marge', mg: {
       count: devis.length, avg: Math.round(P) + ' %', avgEur: fmt0(M),
       boxBg: low ? 'var(--color-accent-200)' : 'var(--color-accent-2-200)', ink: low ? 'var(--color-accent-900)' : 'var(--color-accent-2-900)',
       vente: fmt(V), achat: '− ' + fmt(A), marge: fmt(M), devis, lines, noLines: !lines.length,
+      nLow: lowIds.length > 0, fixAllTxt: `Corriger les ${lowIds.length} ligne${lowIds.length > 1 ? 's' : ''} sous le seuil`,
+      fixAll: () => { this.setState(st => ({ lines: st.lines.map(l => lowIds.includes(l.id) ? { ...l, pu: r2(l.achat * coef), puTxt: undefined } : l) })); this.flash(`${lowIds.length} ligne(s) recalculée(s) à ×${String(coef).replace('.', ',')}`); },
+      gPct: Math.round(gP) + ' %', gInk: gLow ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)', gFill: gLow ? 'var(--color-accent-700)' : 'var(--color-accent-2-700)',
+      gA: Math.max(achT, 0.001), gC: Math.max(gC, 0.001), gM: Math.max(gM, 0.001), gAchat: fmt0(achT), gCout: fmt0(gC), gMarge: fmt0(gM), gHt: fmt0(T.ht), gHrs: hrs + ' h',
+      gFloor: fmt0((achT + gC) / (1 - SEUIL / 100)), coutTxt: cout + ' €',
+      coutMinus: () => this.setState({ coutMO: Math.max(15, cout - 1) }), coutPlus: () => this.setState({ coutMO: Math.min(90, cout + 1) }),
+      sim, simTxt: sim + ' %', onSim: e => this.setState({ simRem: Number(e.target.value) }), simHt: fmt0(sHt),
+      simMarge: `${fmt0(sM)} · ${Math.round(sP)} %`, simBg: sP < SEUIL ? 'var(--color-accent-200)' : 'var(--color-accent-2-200)', simInk: sP < SEUIL ? 'var(--color-accent-900)' : 'var(--color-accent-2-900)',
+      simMax: sub > 0 ? `Remise maximale pour rester au-dessus de ${SEUIL} % : ${maxR} %` : 'Ajoute des lignes au devis pour simuler.',
+      simApply: () => { this.setState({ remiseTxt: String(sim) }); this.flash(`Remise de ${sim} % appliquée au devis`); },
       target: tgt, targetTxt: tgt + ' %', coefTxt: String(coef).replace('.', ','), low: tgt < SEUIL, tInk: tgt < SEUIL ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)',
       onTarget: e => this.setState({ targetM: Number(e.target.value) }),
       apply: () => { this.setState(st => ({ lines: st.lines.map(l => l.kind === 'mat' ? { ...l, pu: r2(l.achat * coef), puTxt: undefined } : l) })); this.flash(`Devis recalculé à ×${String(coef).replace('.', ',')} (${tgt} %)`); },
@@ -3003,7 +3523,48 @@ class Component extends DCLogic {
       selLabel: FULL[selI + off],
     };
     const toDocs = (tab, filt) => () => this.setState({ docTab: tab, docFilter: filt }, () => this.go('docs'));
-    return { lc, st: {
+    const avgP = total / nb, prevNb = isMonth ? Math.max(3, Math.round(prev / 1950)) : nb, prevAvg = prev ? prev / prevNb : 0, pPct = prevAvg ? Math.round((avgP - prevAvg) / prevAvg * 100) : 0;
+    const TY = [['Dépannage', 'moins de 500 €', 0.44, 0.09, 'var(--color-accent-400)'], ['Petits travaux', '500 à 3 000 €', 0.41, 0.38, 'var(--color-accent-600)'], ['Chantiers', 'plus de 3 000 €', 0.15, 0.53, 'var(--color-accent-800)']];
+    const ART = [['Disjoncteur 16 A', 148, 11.9], ['Prise 2P+T encastrée', 126, 8.4], ['Câble R2V 3G2,5 (m)', 940, 1.35], ['Spot LED encastré', 84, 14.5], ['Interrupteur différentiel 40 A type A', 22, 62], ['Tableau 3 rangées', 9, 189]];
+    const artMax = Math.max(...ART.map(a => a[1] * a[2]));
+    const CLI = { 'SCI Les Filaos': ['Tableau 3 rangées', 'Disjoncteur 16 A', 'Câble R2V 3G2,5'], 'M. Grondin': ['Prise 2P+T', 'Spot LED', 'Va-et-vient'], 'Mme Hoarau': ['Chauffe-eau solaire', 'Contacteur J/N', 'Disjoncteur 20 A'], 'Commune de Saint-Paul': ['Hublot LED étanche', 'Bloc secours', 'Câble R2V'], 'M. et Mme Payet': ['Borne VE 7 kW', 'Différentiel type A', 'Câble 3G6'], 'Mme Técher': ['VMC simple flux', 'Prise 2P+T', 'Spot LED'] };
+    const clN = [7, 5, 4, 2, 3, 3];
+    const pan = {
+      period: isMonth ? FULL[mi] : p === 6 ? '6 derniers mois' : '12 derniers mois', avg: fmt0(avgP),
+      sub: `${nb} factures${prevAvg ? ` · ${pPct >= 0 ? '+' : ''}${pPct} % vs période précédente` : ''}`,
+      types: TY.map(([l, range, shareN, shareCa, c]) => ({ l, range, c, share: shareN, n: Math.max(1, Math.round(nb * shareN)) + ' factures', avg: fmt0(total * shareCa / Math.max(1, Math.round(nb * shareN))), pct: Math.round(shareCa * 100) + ' %' })),
+      matPct: 58, moPct: 42, matPctTxt: '58 %', moPctTxt: '42 %', mat: fmt0(avgP * 0.58), mo: fmt0(avgP * 0.42), lines: '7,4',
+      ...(() => {
+        const sk = s.panSort || 'q', ck = s.panCl || 'avg';
+        const segO = (cur, opts, key) => opts.map(([k, l]) => { const a = cur === k; return { l, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ [key]: k }) }; });
+        const MG = [34, 41, 28, 46, 22, 31], TR = [12, -4, 8, 21, 0, -9];
+        const arts = ART.map(([name, q, pu], i) => ({ name, q, ca: q * pu, mg: MG[i], tr: TR[i], unit: q > 500 ? ' m' : ' u', ncl: Math.max(2, Math.round(q / 30)) }));
+        const val = a => sk === 'ca' ? a.ca : sk === 'mg' ? a.ca * a.mg / 100 : a.q;
+        const sorted = arts.slice().sort((x, y) => val(y) - val(x)).slice(0, 5), vmax = val(sorted[0]);
+        const top = sorted.map((a, i) => ({ name: a.name, rank: i + 1, rkBg: i === 0 ? 'var(--color-accent-600)' : 'var(--color-surface)', rkFg: i === 0 ? 'var(--color-neutral-100)' : 'var(--color-neutral-900)',
+          main: sk === 'ca' ? fmt0(a.ca) : sk === 'mg' ? fmt0(a.ca * a.mg / 100) : a.q + a.unit, w: Math.round(val(a) / vmax * 100) + '%',
+          meta: sk === 'q' ? `${fmt0(a.ca)} HT · marge ${a.mg} %` : sk === 'ca' ? `${a.q}${a.unit} · marge ${a.mg} %` : `${a.mg} % sur ${fmt0(a.ca)} HT`,
+          trend: a.tr ? `${a.tr > 0 ? '↑' : '↓'} ${Math.abs(a.tr)} %` : '= stable', trFg: a.tr > 0 ? 'var(--color-accent-2-800)' : a.tr < 0 ? 'var(--color-accent-800)' : 'var(--color-neutral-700)' }));
+        const best = arts.slice().sort((x, y) => y.mg - x.mg)[0];
+        const QTY = [[12, 48, 180], [18, 9, 3], [1, 2, 6], [14, 8, 120], [1, 2, 25], [1, 11, 7]], LAST = ['22/09', '08/09', '17/09', '02/09', '11/08', '29/08'];
+        const SUG = ['Parafoudre (acheté par 62 % des SCI)', 'Détecteur de fumée', 'Programmateur chauffe-eau', 'Détecteur de présence', 'Délesteur pour borne VE', 'Interrupteur connecté'];
+        const R = [1.9, 0.62, 1.1, 2.4, 1.35, 0.7];
+        const units = (n, q) => /Câble/.test(n) ? q + ' m' : '× ' + q;
+        let clients = Object.keys(CLI).map((name, i) => { const r = R[i], d = Math.round((r - 1) * 100), pid = { 'SCI Les Filaos': 'filaos', 'M. Grondin': 'grondin', 'Mme Hoarau': 'hoarau' }[name];
+          const ini = name.replace(/^(M\. et Mme|Commune de|Mme|M\.|SCI)\s+/, '').split(/[\s-]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+          return { name, ini, r, nb: clN[i], tot: avgP * r * clN[i], n: clN[i] + ' factures', last: LAST[i],
+            main: ck === 'tot' ? fmt0(avgP * r * clN[i]) : fmt0(avgP * r), vs: ck === 'tot' ? 'cumulé' : `${d >= 0 ? '+' : ''}${d} % vs moyenne`, vsFg: ck === 'tot' ? 'var(--color-neutral-700)' : d >= 0 ? 'var(--color-accent-2-800)' : 'var(--color-accent-800)',
+            items: CLI[name].map((n, j) => ({ n, q: units(n, QTY[i][j]) })), sug: SUG[i],
+            onSug: () => this.flash(`Idée notée pour ${name.split(' — ')[0]}`),
+            onTap: pid ? () => this.openProjet(pid) : toDocs('fac', { k: 'client', v: name, label: name }) }; });
+        clients.sort((x, y) => ck === 'n' ? y.nb - x.nb : ck === 'tot' ? y.tot - x.tot : y.r - x.r);
+        return { top, clients,
+          artSort: segO(sk, [['q', 'Quantité'], ['ca', 'CA HT'], ['mg', 'Marge']], 'panSort'),
+          clSort: segO(ck, [['avg', 'Panier'], ['tot', 'Cumulé'], ['n', 'Fréquence']], 'panCl'),
+          artNote: `Meilleure marge : ${best.name} (${best.mg} %). Tendance comparée à la période précédente.` };
+      })(),
+    };
+    return { lc, isPanier: s.tab === 'panier', pan, st: {
       isMonth,
       periods: [['mois', 'Mois par mois'], [6, '6 mois'], [12, '12 mois']].map(([v, label]) => { const a = mode === v; return { label, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ statPeriod: v }) }; }),
       monthChips: ALL.map((r, i) => ({ m: r[0], bg: on(i === mi)[0], fg: on(i === mi)[1], onPick: () => this.setState({ statMonth: i }) })),
@@ -3014,14 +3575,23 @@ class Component extends DCLogic {
       months: rows.map((r, i) => ({ m: r[0], k: (r[1] / 1000).toFixed(1).replace('.', ','), h: Math.round(r[1] / max * 82) + '%', wait: r[2], paid: r[1] - r[2],
         op: isMonth && i + off !== mi ? 0.35 : 1, onPick: () => this.setState({ statPeriod: 'mois', statMonth: i + off }) })),
       tiles: [
-        { label: 'En attente de paiement', value: fmt0(wait), sub: 'factures non encaissées', onTap: toDocs('fac', { k: 'unpaid', label: 'non encaissées' }) },
+        { label: 'En attente de paiement', value: fmt0(wait), sub: 'factures non encaissées', onTap: () => this.go('enc') },
         { label: 'Délai moyen de paiement', value: '23 j', sub: 'après transmission', onTap: toDocs('fac', { k: 'status', v: 'Acceptée', label: 'acceptées, à encaisser' }) },
         { label: 'Factures émises', value: String(nb), sub: isMonth ? FULL[mi] : `sur ${p} mois`, onTap: toDocs('fac', null) },
-        { label: 'Panier moyen', value: fmt0(total / nb), sub: 'TTC par facture', onTap: toDocs('fac', null) },
+        { label: 'Panier moyen', value: fmt0(total / nb), sub: 'TTC par facture', onTap: () => this.go('panier') },
       ],
       status: status.map(x => ({ ...x, onTap: toDocs('fac', { k: 'status', v: x.l, label: x.l.toLowerCase() }) })),
       clients: cl.map(([name, r]) => { const pid = { 'SCI Les Filaos': 'filaos', 'M. Grondin': 'grondin', 'Mme Hoarau': 'hoarau' }[name]; return { name, amount: fmt0(total * r), w: Math.round(r / cl[0][1] * 100) + '%', onTap: pid ? () => this.openProjet(pid) : toDocs('fac', { k: 'client', v: name, label: name }) }; }),
       tva85: fmt(t85), tva21: fmt(t21), tvaTot: fmt(t85 + t21),
+      htTxt: fmt0(ht), encTxt: fmt0(total - wait), waitTxt: fmt0(wait), goEnc: () => this.go('enc'),
+      exportCsv: () => {
+        const n = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
+        const lines = [['Mois', 'CA TTC', 'CA HT', 'TVA 8,5 %', 'TVA 2,1 %', 'Encaissé', 'En attente'].join(';'),
+          ...sel.map((r, i) => { const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(hh * 0.085 * 0.92), n(hh * 0.021 * 0.08), n(r[1] - r[2]), n(r[2])].join(';'); })];
+        const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }));
+        const el = document.createElement('a'); el.href = url; el.download = 'facturation-' + (isMonth ? FULL[mi].replace(' ', '-') : p + '-mois') + '.csv'; document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.flash('Export CSV téléchargé');
+      },
       toFacs: () => this.setState({ docTab: 'fac' }, () => this.go('docs')),
     } };
   }
@@ -3204,12 +3774,35 @@ class Component extends DCLogic {
     return { to: c.email || '', cc: '', subject: `${co.name} — éléments à relire (${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })})`, body, attach: facs.map(f => f.no + '.pdf') };
   }
 
+  draft(o, cb) {
+    const base = { subject: o.subject || '', body: o.body || '', to: o.to || '', cc: '' };
+    this._mailCb = cb || null;
+    this.setState({ mailDraft: { kind: 'gen', channel: o.channel || 'mail', title: o.title, attach: o.attach || [], ...base, orig: base } });
+  }
+
   mailVals() {
     const d = this.state.mailDraft;
     if (!d) return { mail: { open: false, attach: [] } };
     const set = k => e => this.setState(st => ({ mailDraft: { ...st.mailDraft, [k]: e.target.value } }));
-    const valid = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(d.to);
-    return { mail: { open: true, ...d, onTo: set('to'), onCc: set('cc'), onSubject: set('subject'), onBody: set('body'),
+    const gen = d.kind === 'gen', wa = d.channel === 'wa', valid = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(d.to);
+    const att = d.attach || [];
+    if (gen) return { mail: { open: true, ...d, attach: att.map(a => ({ n: a, onDel: () => this.setState(st => ({ mailDraft: { ...st.mailDraft, attach: st.mailDraft.attach.filter(x => x !== a) } })) })),
+      title: d.title || (wa ? 'Aperçu du message WhatsApp' : 'Aperçu de l\u2019e-mail'), isMail: !wa, isWa: wa, toPh: 'client@… (facultatif)', hasAttach: att.length > 0,
+      attachCount: att.length + ' pièce' + (att.length > 1 ? 's' : '') + ' jointe' + (att.length > 1 ? 's' : ''),
+      onTo: set('to'), onCc: set('cc'), onSubject: set('subject'), onBody: set('body'),
+      toErr: d.to && !valid ? 'Adresse e-mail invalide.' : '', toBorder: 'transparent',
+      sendTxt: wa ? 'Ouvrir dans WhatsApp' : 'Ouvrir dans ma messagerie', resetTxt: 'Revenir au texte proposé',
+      close: () => { this._mailCb = null; this.setState({ mailDraft: null }); },
+      reset: () => this.setState(st => ({ mailDraft: { ...st.mailDraft, ...st.mailDraft.orig } })),
+      send: () => {
+        if (!wa && d.to && !valid) return this.flash('Adresse e-mail invalide');
+        const href = wa ? 'https://wa.me/?text=' + encodeURIComponent(d.body)
+          : 'mailto:' + encodeURIComponent(d.to || '') + '?' + [d.cc ? 'cc=' + encodeURIComponent(d.cc) : '', 'subject=' + encodeURIComponent(d.subject || ''), 'body=' + encodeURIComponent(d.body + (att.length ? '\n\nPièces jointes : ' + att.join(', ') : ''))].filter(Boolean).join('&');
+        const cb = this._mailCb; this._mailCb = null; this.setState({ mailDraft: null });
+        try { window.open(href, '_blank'); } catch (e) {}
+        if (cb) cb(); else this.flash(wa ? 'Message prêt dans WhatsApp' : 'E-mail prêt dans ta messagerie');
+      } } };
+    return { mail: { open: true, ...d, title: 'Aperçu de l\u2019e-mail', isMail: true, isWa: false, toPh: 'comptable@…', hasAttach: true, sendTxt: 'Ouvrir dans ma messagerie', resetTxt: 'Régénérer le brouillon', onTo: set('to'), onCc: set('cc'), onSubject: set('subject'), onBody: set('body'),
       attach: d.attach.map(a => ({ n: a, onDel: () => this.setState(st => ({ mailDraft: { ...st.mailDraft, attach: st.mailDraft.attach.filter(x => x !== a) } })) })),
       attachCount: d.attach.length ? d.attach.length + ' pièce' + (d.attach.length > 1 ? 's' : '') + ' jointe' + (d.attach.length > 1 ? 's' : '') : 'Aucune pièce jointe',
       toErr: d.to && !valid ? 'Adresse e-mail invalide.' : '', toBorder: d.to && !valid ? 'var(--color-accent-700)' : 'transparent',
@@ -3273,6 +3866,17 @@ class Component extends DCLogic {
     const id = 'p' + Date.now(), g = planFromLines(s.lines);
     this.setState(st => ({ plans: [{ id, name: 'Schéma unifilaire — ' + (s.client || cur), kind: 'unifilaire', devisNo: cur, facNo: null, date: new Date().toLocaleDateString('fr-FR'), ...g }, ...(st.plans ?? this.defaultPlans())] }));
     this.openPlan(id); this.flash('Schéma généré depuis ' + cur);
+  }
+  implantFrom(src) {
+    const s = this.state, all = this.plans(), p = all.find(x => x.id === src); if (!p || !p.src) return;
+    let u = all.find(x => x.kind === 'unifilaire' && x.devisNo === p.devisNo);
+    if (!u) { const d = s.docs.find(x => x.no === p.devisNo), lines = (d && d.lines && d.lines.length ? d.lines : s.lines);
+      u = { id: 'p' + Date.now(), name: 'Implantation — ' + p.name, kind: 'unifilaire', devisNo: p.devisNo, facNo: p.facNo || null, date: new Date().toLocaleDateString('fr-FR'), ...planFromLines(lines) };
+      this.setState(st => ({ plans: [u, ...(st.plans ?? this.defaultPlans())] })); }
+    const id = u.id, bg = p.src;
+    this.setState(st => ({ plans: (st.plans ?? this.defaultPlans()).map(x => x.id === id ? { ...x, implFrom: p.id, impl: { ...(x.impl || {}), bg } } : x), planView: 'impl', implTool: 'place' }));
+    this.openPlan(id); this.setState({ planView: 'impl', implTool: 'place' });
+    this.flash(`Plan « ${p.name} » posé en fond · ${u.circuits.length} circuits à implanter`);
   }
   importPlan(e) {
     const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -3379,13 +3983,13 @@ class Component extends DCLogic {
   planSvg(p) {
     const D = planDiagram(p, null, this.state.planMode || 'full', {}), iss = this.planIssues(p), errs = {}; iss.forEach(i => { if (i.cid != null) errs[i.cid] = 1; });
     const E = planDiagram(p, null, this.state.planMode || 'full', errs);
-    const PAL = { 'var(--color-neutral-900)': '#201e1d', 'var(--color-accent-700)': '#8c491a', 'var(--color-accent-200)': '#ffe1d0', 'var(--color-accent-2-700)': '#56633f', 'var(--color-surface)': '#ebddc5', 'var(--color-neutral-100)': '#ffffff', 'var(--color-neutral-700)': '#645c50', 'var(--font-body)': 'Figtree, system-ui, sans-serif' };
+    const PAL = { 'var(--color-neutral-900)': '#201e1d', 'var(--color-accent-700)': '#8c491a', 'var(--color-accent-200)': '#ffe1d0', 'var(--color-accent-2-700)': '#56633f', 'var(--color-surface)': '#ebddc5', 'var(--color-neutral-100)': '#ffffff', 'var(--color-neutral-700)': '#645c50', 'var(--font-body)': "'Figtree Variable', Figtree, system-ui, sans-serif" };
     const c = v => PAL[v] || v, e = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 ${E.h}" width="340" height="${E.h}">`];
     E.L.forEach(l => out.push(`<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="${c(l.c)}" stroke-width="${l.w}" stroke-linecap="round"/>`));
     E.R.forEach(r => out.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${r.rx}" fill="${c(r.fill)}" stroke="${c(r.stroke)}" stroke-width="${r.sw}"/>`));
     (E.P || []).forEach(q => out.push(`<path d="${q.d}" fill="${c(q.f)}" stroke="${c(q.c)}" stroke-width="${q.w}" stroke-linecap="round" stroke-linejoin="round"/>`));
-    E.T.forEach(t => out.push(`<text x="${t.x}" y="${t.y}"${t.rot ? ` transform="${t.rot}"` : ''} font-family="Figtree, system-ui, sans-serif" font-size="${t.s}" font-weight="${t.w}" fill="${c(t.fill)}" text-anchor="${t.a}">${e(t.t)}</text>`));
+    E.T.forEach(t => out.push(`<text x="${t.x}" y="${t.y}"${t.rot ? ` transform="${t.rot}"` : ''} font-family="'Figtree Variable', Figtree, system-ui, sans-serif" font-size="${t.s}" font-weight="${t.w}" fill="${c(t.fill)}" text-anchor="${t.a}">${e(t.t)}</text>`));
     out.push('</svg>'); return out.join('');
   }
 
@@ -3444,7 +4048,7 @@ class Component extends DCLogic {
     const doc = s.docs.find(d => d.no === p.devisNo), live = doc && doc.live;
     const client = live ? (s.client || '') : doc ? String(doc.client).split(' — ')[0] : '';
     const chantier = live ? (s.chantier || '') : doc ? (String(doc.client).split(' — ')[1] || '') : '';
-    const today = new Date().toLocaleDateString('fr-FR'), isUni = p.kind === 'unifilaire', F = 'Figtree, system-ui, sans-serif';
+    const today = new Date().toLocaleDateString('fr-FR'), isUni = p.kind === 'unifilaire', F = "'Figtree Variable', Figtree, system-ui, sans-serif";
     const newPage = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.textBaseline = 'alphabetic'; pages.push(c); return g; };
     const txt = (g, t, x, y, sz, wt = 400, col = '#201e1d', al = 'left', maxW) => { g.font = `${wt} ${sz}px ${F}`; g.fillStyle = col; g.textAlign = al; let v = String(t ?? ''); if (maxW) while (v.length > 1 && g.measureText(v).width > maxW) v = v.slice(0, -2) + '…'; g.fillText(v, x, y); };
     const rr = (g, x, y, w, hh, r) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, hh, r) : g.rect(x, y, w, hh); };
@@ -3464,7 +4068,7 @@ class Component extends DCLogic {
     const loadImg = src => new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ko; im.src = src; });
     let im = null;
     if (isUni) {
-      if (document.fonts && document.fonts.load) { try { await Promise.all(['400', '600', '700', '800'].map(w => document.fonts.load(w + ' 12px Figtree'))); } catch (e) {} }
+      if (document.fonts && document.fonts.load) { try { await Promise.all(['400', '600', '700', '800'].flatMap(w => [document.fonts.load(w + ' 12px Figtree'), document.fonts.load(w + " 12px 'Figtree Variable'")])); await document.fonts.ready; } catch (e) {} }
       const errs = {}; this.planIssues(p).forEach(x => { if (x.cid != null) errs[x.cid] = 1; });
       const D = planDiagram(p, null, s.planMode || 'full', errs);
       const PAL = { 'var(--color-neutral-900)': '#201e1d', 'var(--color-accent-700)': '#8c491a', 'var(--color-accent-200)': '#ffe1d0', 'var(--color-accent-2-700)': '#56633f', 'var(--color-surface)': '#ebddc5', 'var(--color-neutral-100)': '#ffffff', 'var(--color-neutral-700)': '#645c50' };
@@ -3486,7 +4090,7 @@ class Component extends DCLogic {
     if (isUni) {
       const rows = []; let q = 0;
       p.diffs.forEach((d, r) => p.circuits.filter(c => c.diff === d.id).forEach(c => { q++; const k = circNature(c); rows.push(['Q' + q, c.label || 'Circuit', `ID${r + 1} · ${d.type}`, c.cal + ' A', '3G' + SECTION[c.cal] + ' mm²', NAT_LABEL[k] ? (c.pts || 0) + ' ' + NAT_LABEL[k] : '—']); }));
-      const cols = [0, 16, 88, 118, 138, 160].map(v => M + v * mm), rh = 7.5 * mm, bottom = H - M - 12 * mm, top = M; let pn = 1;
+      const cols = [0, 14, 72, 98, 116, 138].map(v => M + v * mm), rh = 7.5 * mm, bottom = H - M - 12 * mm, top = M; let pn = 1;
       const brk = () => { footer(g, pn++); g = newPage(); y = top; };
       const need = hh => { if (y + hh > bottom && y > top + 1) brk(); };
       const wrap = (t, sz, wt, maxW) => { g.font = `${wt} ${sz}px ${F}`; const out = []; let cur = ''; String(t).split(' ').forEach(w => { const test = cur ? cur + ' ' + w : w; if (g.measureText(test).width > maxW && cur) { out.push(cur); cur = w; } else cur = test; }); if (cur) out.push(cur); return out; };
@@ -3582,9 +4186,9 @@ class Component extends DCLogic {
   frameVals() {
     const s = this.state, wide = !!s.wideOn, dark = s.themePref === 'dark' || (s.themePref === 'auto' && s.sysDark);
     const fr = wide ? { wide: true, phone: false, op: '0', w: '100vw', h: '100vh', r: '0', p: '0', ir: '0', dir: 'row-reverse', sp: '0 max(0px, calc((100% - 760px) / 2))',
-        nbt: 'none', nbr: '1px solid var(--color-divider)', nw: '248px', np: '28px 14px', nc: '1fr', ng: '4px', bd: 'row', bj: 'flex-start', bgap: '10px', bp: '0 8px', bf: '15px', sheetW: '560px' }
+        nbt: 'none', nbr: '1px solid var(--color-divider)', nw: '248px', np: '28px 14px', nc: '1fr', ng: '4px', bd: 'row', bj: 'flex-start', bgap: '10px', bp: '0 8px', bf: '15px', sheetW: '560px', barL: 'calc(248px + max(12px, (100% - 248px - 760px) / 2 + 12px))', barR: 'max(12px, calc((100% - 248px - 760px) / 2 + 12px))', barB: '24px' }
       : { wide: false, phone: true, op: '16px', w: '390px', h: '844px', r: '56px', p: '10px', ir: '46px', dir: 'column', sp: '0',
-        nbt: '1px solid var(--color-divider)', nbr: 'none', nw: 'auto', np: '8px 6px 26px', nc: 'repeat(5,minmax(0,1fr))', ng: '2px', bd: 'column', bj: 'center', bgap: '3px', bp: '0', bf: '11px', sheetW: '100%' };
+        nbt: '1px solid var(--color-divider)', nbr: 'none', nw: 'auto', np: '8px 6px 26px', nc: 'repeat(5,minmax(0,1fr))', ng: '2px', bd: 'column', bj: 'center', bgap: '3px', bp: '0', bf: '11px', sheetW: '100%', barL: '12px', barR: '12px', barB: '96px' };
     const seg = (cur, opts, set) => opts.map(([k, l]) => { const a = cur === k; return { l, bg: a ? 'var(--color-neutral-900)' : 'transparent', fg: a ? 'var(--color-neutral-100)' : 'var(--color-neutral-800)', onPick: () => set(k) }; });
     return { fr, theme: dark ? 'dark' : 'light',
       themeOpts: seg(s.themePref || 'light', [['light', 'Clair'], ['dark', 'Sombre'], ['auto', 'Auto']], v => this.setState({ themePref: v })),
@@ -3849,6 +4453,10 @@ class Component extends DCLogic {
         edit: () => { const sc = this.scrollRef.current, el = sc && sc.querySelector('[data-circ="' + c.id + '"]'); if (el) sc.scrollTo({ top: el.offsetTop - 120, behavior: 'smooth' }); } } : { cals: [], errs: [] };
     }
     return { ...base, isPlan: true, pl: { ...extra, name: p.name, isUni, isImg: !isUni && !isPdf, isPdf, src: p.src || '', fileName: p.fileName || '',
+      canImpl: !isUni && !isPdf && isElec && /^data:image\/(png|jpeg|webp)/.test(p.src || ''),
+      implSub: (() => { const u = all.find(x => x.kind === 'unifilaire' && x.devisNo === p.devisNo); return u ? `Utilise les ${u.circuits.length} circuits du schéma de ${p.devisNo}` : `Crée le schéma depuis ${p.devisNo || 'le devis'} et pose ce plan en fond`; })(),
+      implTxt: all.some(x => x.kind === 'unifilaire' && x.implFrom === p.id) ? 'Reprendre l’implantation' : 'Implanter sur ce plan',
+      implant: () => this.implantFrom(p.id),
       kindLabel: isUni ? 'Schéma unifilaire' : 'Plan importé', onName: e => { const v = e.target.value; upd(() => ({ name: v })); },
       facNo: p.facNo || '', openFac: () => { if (p.facNo) this.openFac(p.facNo); },
       openDevis: () => { if (s.docs.find(d => d.no === p.devisNo)) this.openDevis(p.devisNo); else this.flash('Choisis d\u2019abord un devis'); },
@@ -3969,6 +4577,72 @@ class Component extends DCLogic {
     } };
   }
 
+  encVals(docs) {
+    const s = this.state, co = this.coData(), now = new Date(), D = x => { const [dd, mm] = x.split('/').map(Number); return new Date(2026, mm - 1, dd); };
+    const dm = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const cn = d => d.client.split(' — ')[0], facs = docs.filter(d => d.type === 'fac');
+    const paid = facs.filter(d => d.st === 3), due = facs.filter(d => d.st < 3), sum = a => a.reduce((t, d) => t + d.ttc, 0);
+    const pl = (n, w) => n + ' ' + w + (n > 1 ? 's' : '');
+    const lateN = due.filter(d => now - D(d.date) > 30 * 86400000).length;
+    const clientNames = [...new Set([...facs, ...docs.filter(d => d.type === 'devis' && d.st >= 2)].map(cn))];
+    return { isEnc: s.tab === 'enc', enc: {
+      paidTot: fmt0(sum(paid)), paidN: pl(paid.length, 'facture'), dueTot: fmt0(sum(due)), dueN: pl(due.length, 'facture'),
+      caTot: fmt0(sum(facs)), caN: pl(facs.length, 'facture'), month: now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+      noPaid: !paid.length, noDue: !due.length, lateN: lateN ? pl(lateN, 'en retard').replace('retards', 'retard') : '',
+      seeUnpaid: () => { this.setState({ docTab: 'fac', docFilter: { k: 'unpaid', label: 'non encaissées' } }); this.go('docs'); },
+      paid: paid.map(d => ({ no: d.no, client: cn(d), date: d.paidOn || d.date, mode: d.pay || 'Virement', amount: d.amount, onOpen: () => this.openFac(d.no) })),
+      due: due.map(d => { const ech = new Date(D(d.date).getTime() + 30 * 86400000), late = Math.floor((now - ech) / 86400000);
+        const body = `Bonjour,\n\nSauf erreur de notre part, la facture ${d.no} d’un montant de ${d.amount} TTC (échéance ${dm(ech)}) reste à régler.\n\nMerci d’avance pour votre règlement.\n\n${co.name}${co.tel ? '\n' + co.tel : ''}`;
+        const sent = () => { this.setState(st => ({ relances: { ...(st.relances || {}), [d.no]: true } })); this.flash(`Relance préparée pour ${cn(d)}`); };
+        return { no: d.no, client: cn(d), status: d.status, amount: d.amount, dueTxt: late > 0 ? `En retard de ${late} j` : `Échéance ${dm(ech)}`, dueFg: late > 0 ? 'var(--color-accent-800)' : 'var(--color-neutral-700)',
+          onOpen: () => this.openFac(d.no),
+          mail: () => this.draft({ title: 'Relance ' + d.no, subject: 'Relance facture ' + d.no + ' — ' + co.name, body }, sent),
+          wa: () => this.draft({ title: 'Relance ' + d.no + ' · WhatsApp', channel: 'wa', body }, sent),
+          markPaid: () => { this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn: dm(new Date()) } : x) })); this.flash(`${d.no} marquée encaissée`); } }; }),
+      clients: clientNames.map(name => {
+        const f = facs.filter(d => cn(d) === name), dv = docs.filter(d => d.type === 'devis' && d.st >= 2 && cn(d) === name);
+        const devisTot = sum(dv), billed = sum(f), p = sum(f.filter(d => d.st === 3)), reste = Math.max(0, devisTot - billed);
+        const rows = [...dv.map(d => ({ k: `Devis ${d.no}`, v: d.amount, onOpen: () => this.openDevis(d.no) })),
+          ...f.map(d => ({ k: `${/acompte/i.test(d.client) ? 'Acompte' : 'Facture'} ${d.no} · ${d.st === 3 ? 'encaissée' : 'en attente'}`, v: d.amount, onOpen: () => this.openFac(d.no) }))];
+        const base = Math.max(devisTot, billed, 1);
+        return { name, paid: fmt0(p), rows, hasDevis: dv.length > 0, reste: reste ? fmt(reste) : 'Tout est facturé', resteFg: reste ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)',
+          wPaid: Math.round(p / base * 100) + '%', wBilled: Math.round((billed - p) / base * 100) + '%' };
+      }) } };
+  }
+
+  trVals(docs) {
+    const s = this.state, co = this.coData(), now = new Date(), rel = s.trRel || {};
+    const D = x => { const [dd, mm] = x.split('/').map(Number); return new Date(2026, mm - 1, dd); };
+    const cn = d => d.client.split(' — ')[0], dv = docs.filter(d => d.type === 'devis'), sum = a => a.reduce((t, d) => t + d.ttc, 0);
+    const sent = dv.filter(d => d.st >= 1), acc = dv.filter(d => d.st >= 2), fac = dv.filter(d => d.st === 3);
+    const pc = (a, b) => b ? Math.round(a / b * 100) : 0, toDocs = f => () => this.setState({ docTab: 'devis', docFilter: f }, () => this.go('docs'));
+    const F = [['Créés', dv, 'var(--color-accent-300)', null], ['Envoyés', sent, 'var(--color-accent-500)', 'Envoyé'], ['Acceptés', acc, 'var(--color-accent-2-500)', 'Accepté'], ['Facturés', fac, 'var(--color-accent-2-700)', 'Facturé']];
+    const isPro = d => /^(SCI|SARL|SAS|EURL|Commune|Société|Mairie)/i.test(cn(d));
+    const segDef = [['Particuliers', d => !isPro(d)], ['Professionnels et collectivités', isPro], ['Moins de 1 500 €', d => d.ttc < 1500], ['1 500 à 5 000 €', d => d.ttc >= 1500 && d.ttc <= 5000], ['Plus de 5 000 €', d => d.ttc > 5000]];
+    const pl = (n, w) => n + ' ' + w + (n > 1 ? 's' : '');
+    return { isTr: s.tab === 'transfo', tr: {
+      pctN: pc(fac.length, dv.length) + ' %', subN: `${fac.length} facturé${fac.length > 1 ? 's' : ''} sur ${pl(dv.length, 'devis').replace('deviss', 'devis')}`,
+      pctV: pc(sum(fac), sum(dv)) + ' %', subV: `${fmt0(sum(fac))} sur ${fmt0(sum(dv))}`,
+      bench: `Signature (acceptés sur envoyés) : ${pc(acc.length, sent.length)} %. Dans le bâtiment, 10 à 30 % des devis sont signés en moyenne.`,
+      funnel: F.map(([l, a, c, st], i) => ({ l, c, n: a.length, amount: fmt0(sum(a)), w: Math.max(4, pc(a.length, dv.length)) + '%',
+        conv: i ? `${pc(a.length, F[i - 1][1].length)} % de l’étape précédente` : 'point de départ', onTap: toDocs(st ? { k: 'status', v: st, label: st.toLowerCase() + 's' } : null) })),
+      waitTot: fmt0(sum(dv.filter(d => d.st === 1))), noWait: !dv.some(d => d.st === 1),
+      wait: dv.filter(d => d.st === 1).map(d => { const days = Math.max(0, Math.round((now - D(d.date)) / 86400000)), n = rel[d.no] || 0;
+        const body = `Bonjour,\n\nJe reviens vers vous au sujet du devis ${d.no} (${d.amount} TTC). Avez-vous pu le consulter ? Je peux ajuster une option ou vous proposer une date d’intervention.\n\nBien cordialement,\n${co.name}${co.tel ? '\n' + co.tel : ''}`;
+        const done = () => { this.setState(st => ({ trRel: { ...(st.trRel || {}), [d.no]: n + 1 }, relances: { ...(st.relances || {}), [d.no]: true } })); this.flash(`Relance ${n + 1} préparée pour ${cn(d)}`); };
+        return { no: d.no, client: cn(d), amount: d.amount, days: days + ' j', onOpen: () => this.openDevis(d.no),
+          steps: ['J+3', 'J+7', 'J+15'].map((l, j) => { const ok = j < n, due = !ok && days >= [3, 7, 15][j]; return { l: ok ? l + ' ✓' : l, bg: ok ? 'var(--color-accent-2-700)' : due ? 'var(--color-accent-200)' : 'var(--color-surface)', fg: ok ? 'var(--color-neutral-100)' : due ? 'var(--color-accent-900)' : 'var(--color-neutral-700)' }; }),
+          cta: n >= 3 ? 'Dernière relance' : `Relance ${n + 1} · e-mail`,
+          mail: () => this.draft({ title: `Relance ${n + 1} · ${d.no}`, subject: 'Devis ' + d.no + ' — ' + co.name, body }, done),
+          wa: () => this.draft({ title: `Relance ${n + 1} · WhatsApp`, channel: 'wa', body }, done) }; }),
+      hasToBill: dv.some(d => d.st === 2), billTot: fmt0(sum(dv.filter(d => d.st === 2))),
+      toBill: dv.filter(d => d.st === 2).map(d => ({ no: d.no, client: cn(d), amount: d.amount, onOpen: () => this.openDevis(d.no) })),
+      segs: segDef.map(([l, f]) => { const a = dv.filter(f), w = a.filter(d => d.st >= 2).length, p = pc(w, a.length);
+        return { l, pct: a.length ? p + ' %' : '—', w: p + '%', sub: a.length ? `${w} accepté${w > 1 ? 's' : ''} sur ${a.length}` : 'aucun devis', ink: p >= 30 ? 'var(--color-accent-2-800)' : 'var(--color-neutral-900)', fill: p >= 30 ? 'var(--color-accent-2-700)' : 'var(--color-accent-500)' }; }).filter(g => g.sub !== 'aucun devis'),
+      dSend: '2 j', dDec: '9 j', nRel: '1,6',
+    } };
+  }
+
   relVals(docs) {
     const s = this.state, done = s.relances || {}, now = new Date();
     const items = docs.filter(d => d.type === 'devis' && d.st === 1).map(d => {
@@ -3992,8 +4666,8 @@ class Component extends DCLogic {
     return { od: { open: true, close: () => this.setState({ odId: null, odDel: false }), no: o.no, fourn: o.fourn, meta: `${o.date}${o.devisNo ? ' · devis ' + o.devisNo : ' · stock'}`, total: fmt(o.ttl) + ' HT',
       lines: o.lines.map(l => ({ t: l.name, m: `réf. ${l.ref} · ${fmt(l.achat)} HT`, q: l.qty + U(l.unit), tot: fmt(l.achat * l.qty) })),
       steps: OST.map((l, i) => ({ l, bg: o.st === i ? 'var(--color-neutral-900)' : 'transparent', fg: o.st === i ? 'var(--color-neutral-100)' : 'var(--color-neutral-900)', on: () => { setSt(i); this.flash(o.no + ' : ' + l.toLowerCase()); } })),
-      mail: () => { open('mailto:?subject=' + encodeURIComponent('Commande ' + o.no + ' — ' + co.name) + '&body=' + encodeURIComponent(body)); if (o.st === 0) setSt(1); },
-      wa: () => { open('https://wa.me/?text=' + encodeURIComponent(body)); if (o.st === 0) setSt(1); },
+      mail: () => this.draft({ title: 'Commande ' + o.no, subject: 'Commande ' + o.no + ' — ' + co.name, body }, () => { if (o.st === 0) setSt(1); this.flash('Commande prête dans ta messagerie'); }),
+      wa: () => this.draft({ title: 'Commande ' + o.no + ' · WhatsApp', channel: 'wa', body }, () => { if (o.st === 0) setSt(1); this.flash('Commande prête dans WhatsApp'); }),
       copy: async () => { try { if (navigator.share) await navigator.share({ title: 'Commande ' + o.no, text: body }); else { await navigator.clipboard.writeText(body); this.flash('Commande copiée'); } if (o.st === 0) setSt(1); } catch (e) {} },
       delL: s.odDel ? 'Confirmer la suppression' : 'Supprimer la commande', delBg: s.odDel ? 'var(--color-accent-700)' : 'transparent', delFg: s.odDel ? 'var(--color-neutral-100)' : 'var(--color-accent-700)',
       del: () => { if (!s.odDel) return this.setState({ odDel: true }); this.setState(st => ({ orders: st.orders.filter(x => x.id !== o.id), odId: null, odDel: false })); this.flash(o.no + ' supprimée'); } } };
@@ -4149,13 +4823,13 @@ class Component extends DCLogic {
     const kpis = [
       { label: 'Devis ce mois', value: String(devisDocs.length), sub: 'septembre 2026' },
       { label: 'Transformés en facture', value: Math.round(transformed / devisDocs.length * 100) + ' %', sub: `${transformed} sur ${devisDocs.length}` },
-      { label: 'CA facturé TTC', value: fmt0(ca), sub: `${facs.length} factures` },
+      { label: 'CA facturé TTC', value: fmt0(ca), sub: `dont ${fmt0(facs.filter(d => d.st === 3).reduce((a, d) => a + d.ttc, 0))} encaissé` },
       { label: 'Marge brute moy.', value: Math.round(marges.reduce((a, b) => a + b, 0) / marges.length) + ' %', sub: 'matériel, hors MO' },
     ];
     const toDocs = k => () => this.setState({ docTab: k }, () => this.go('docs'));
     const KT = [['var(--color-accent-2-200)', 'var(--color-accent-2-900)'], ['var(--color-accent-200)', 'var(--color-accent-900)'], ['var(--color-accent-2-700)', 'var(--color-neutral-100)'], ['var(--color-surface)', 'var(--color-text)']];
     kpis.forEach((k, i) => { k.bg = KT[i][0]; k.ink = KT[i][1]; });
-    kpis.forEach((k, i) => { k.onTap = i === 2 ? () => this.go('stats') : i === 3 ? () => this.go('marge') : toDocs('devis'); });
+    kpis.forEach((k, i) => { k.onTap = i === 1 ? () => this.go('transfo') : i === 2 ? () => this.go('enc') : i === 3 ? () => this.go('marge') : toDocs('devis'); });
     const CA = [['Avr', 8200], ['Mai', 11400], ['Juin', 9600], ['Juil', 13800], ['Août', 12100], ['Sep', Math.round(ca + 9000)]];
     const max = Math.max(...CA.map(c => c[1]));
     const bars = CA.map((c, i) => ({ m: c[0], k: (c[1] / 1000).toFixed(1).replace('.', ','), h: Math.round(c[1] / max * 88) + '%', bg: i === CA.length - 1 ? 'var(--color-accent)' : 'var(--color-accent-2-400)' }));
@@ -4256,16 +4930,52 @@ class Component extends DCLogic {
       saveDevis: () => { this.setState({ recapOpen: false }); this.flash(`Devis ${s.editNo || LIVE_NO} enregistré`); },
       toFacture: () => {
         if (!s.lines.length) { this.flash('Ajoute au moins une ligne avant de facturer'); return; }
+        this.setState({ facVerif: true, fvChecks: {}, fvOpen: true, recapOpen: false });
+      },
+      fv: (() => { const ch = s.fvChecks || {}, co = this.coData(), L = [['lignes', 'Lignes et quantités conformes aux travaux réalisés'], ['client', 'Nom et adresse du client'], ['montants', 'Montants, TVA et acompte']];
+        const warn = [!(s.client || '').trim() ? 'Client non renseigné sur le devis.' : '', !co.siret ? 'SIRET manquant dans Réglages › Mon entreprise.' : ''].filter(Boolean);
+        const all = L.every(([k]) => ch[k]) && !warn.length;
+        return { open: !!s.facVerif, devisNo: s.editNo || LIVE_NO, facNo: docNo('FAC', s.facSeq), client: s.client || '—', nLines: String(s.lines.length),
+          ht: fmt(T.ht), tva: T.micro ? 'Non applicable' : fmt(T.t85 + T.t21), ttc: fmt(T.ttc), ac: T.ac ? '− ' + fmt(T.ac) : '—', net: fmt(T.ttc - T.ac), warn,
+          checks: L.map(([k, l]) => ({ l, on: !!ch[k], bd: ch[k] ? 'var(--color-accent-2-700)' : 'var(--color-neutral-500)', bg: ch[k] ? 'var(--color-accent-2-700)' : 'transparent', op: ch[k] ? 1 : 0,
+            toggle: () => this.setState(st => ({ fvChecks: { ...(st.fvChecks || {}), [k]: !(st.fvChecks || {})[k] } })) })),
+          listOpen: s.fvOpen !== false, chev: s.fvOpen !== false ? '180deg' : '0deg', toggleList: () => this.setState(st => ({ fvOpen: st.fvOpen === false })),
+          cnt: L.filter(([k]) => ch[k]).length + ' / 3', cntBg: L.every(([k]) => ch[k]) ? 'var(--color-accent-2-700)' : 'var(--color-surface)', cntFg: L.every(([k]) => ch[k]) ? 'var(--color-neutral-100)' : 'var(--color-neutral-800)',
+          blocked: !all, okOp: all ? 1 : 0.45, okTxt: warn.length ? 'Corrige les points en orange' : all ? 'Valider et créer la facture' : 'Coche les 3 vérifications',
+          cancel: () => this.setState({ facVerif: false }), preview: () => this.setState({ facVerif: false, previewOpen: true }),
+          ok: () => { if (all) { this.setState({ facVerif: false }); this.renderVals().doFacture(); } } }; })(),
+      doFacture: () => {
         const no = docNo('FAC', s.facSeq);
         this.setState(st => ({ facSeq: st.facSeq + 1, docTab: 'fac', recapOpen: false, plans: (st.plans ?? this.defaultPlans()).map(p => p.devisNo === (st.editNo || LIVE_NO) ? { ...p, facNo: no } : p),
           docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: '24/09', st: 0, ttc: T.ttc - T.ac }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
-        this.go('docs'); this.flash(`Facture ${no} créée, acompte reporté`);
+        this.go('docs'); this.flash(`Facture ${no} créée, non transmise : vérifie-la puis envoie-la`);
       },
       docTabs: [['devis', 'Devis'], ['fac', 'Factures'], ['plans', 'Plans']].map(([k, label]) => { const a = s.docTab === k; return { label, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ docTab: k }) }; }),
       ...(() => { const f = s.docFilter, base = docs.filter(d => d.type === s.docTab);
         const ok = d => !f ? true : f.k === 'status' ? d.status === f.v : f.k === 'unpaid' ? d.type === 'fac' && d.status !== 'Encaissée' : f.k === 'client' ? d.client.startsWith(f.v) : true;
-        const list = base.filter(ok);
-        return { docList: list, docFilter: { on: !!f, label: f ? f.label : '', count: list.length + ' doc.', empty: !!f && !list.length, clear: () => this.setState({ docFilter: null }) } }; })(),
+        const q = (s.docQ || '').trim().toLowerCase(), nq = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const byQ = base.filter(d => !q || nq(d.no + ' ' + d.client).includes(nq(q)));
+        const sts = s.docTab === 'fac' ? FAC_ST : DEVIS_ST, co = this.coData(), now = new Date();
+        const Dd = x => { const [dd, mm] = String(x).split('/').map(Number); return new Date(2026, (mm || 1) - 1, dd || 1); };
+        const list = byQ.filter(ok).map(d => { const age = Math.round((now - Dd(d.date)) / 86400000), cl = d.client.split(' — ')[0];
+          let act = '', onAct = null, hint2 = d.hint, hintFg = 'var(--color-neutral-700)';
+          const relance = (sub, body) => e => { e && e.stopPropagation && e.stopPropagation(); this.draft({ title: 'Relance ' + d.no, subject: sub, body }, () => this.flash('Relance préparée pour ' + cl)); };
+          if (d.type === 'devis' && d.st === 1) { act = 'Relancer'; if (age >= 7) { hint2 = `Sans réponse depuis ${age} j`; hintFg = 'var(--color-accent-800)'; }
+            onAct = relance('Devis ' + d.no + ' — ' + co.name, `Bonjour,\n\nJe reviens vers vous au sujet du devis ${d.no} (${d.amount} TTC). Avez-vous pu le consulter ?\n\nBien cordialement,\n${co.name}`); }
+          else if (d.type === 'devis' && d.st === 2) { act = 'Facturer'; onAct = e => { e && e.stopPropagation && e.stopPropagation(); this.openDevis(d.no); }; }
+          else if (d.type === 'fac' && d.st < 3) { act = 'Relancer'; if (age > 30) { hint2 = `Échue depuis ${age - 30} j`; hintFg = 'var(--color-accent-800)'; }
+            onAct = relance('Relance facture ' + d.no + ' — ' + co.name, `Bonjour,\n\nSauf erreur de notre part, la facture ${d.no} d’un montant de ${d.amount} TTC reste à régler.\n\nMerci d’avance,\n${co.name}`); }
+          return { ...d, act, onAct, hasAct: !!act, hint2, hintFg }; });
+        const stF = f && f.k === 'status' ? f.v : f && f.k === 'unpaid' ? '__unpaid' : null;
+        const DOT = ['var(--color-neutral-500)', 'var(--color-accent-500)', 'var(--color-accent-2-500)', 'var(--color-accent-2-800)'];
+        const docChips = sts.map((st, i) => { const a = stF === st, n = byQ.filter(d => d.status === st).length;
+          return { l: st, n, on: a, dot: a ? 'var(--color-neutral-100)' : DOT[i], bg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-100)', fg: a ? 'var(--color-neutral-100)' : n ? 'var(--color-neutral-900)' : 'var(--color-neutral-600)',
+            onPick: () => this.setState({ docFilter: a ? null : { k: 'status', v: st, label: st.toLowerCase() } }) }; });
+        const tot = list.reduce((a, d) => a + (d.ttc || 0), 0);
+        return { docList: list, docChips, docQ: s.docQ || '', docQOn: !!q, onDocQ: e => this.setState({ docQ: e.target.value }), clearDocQ: () => this.setState({ docQ: '' }),
+          docSum: { n: `${list.length} ${s.docTab === 'fac' ? 'facture' : 'devis'}${list.length > 1 && s.docTab === 'fac' ? 's' : ''}`, tot: fmt0(tot) + ' TTC', filtered: !!stF && stF !== '__unpaid', clear: () => this.setState({ docFilter: null }) },
+          docEmptyTxt: q ? `Aucun document pour « ${s.docQ.trim()} ».` : 'Aucun document pour ce filtre.',
+          docFilter: { on: !!f && f.k !== 'status', label: f ? f.label : '', count: list.length + ' doc.', empty: !list.length && (!!f || !!q), clear: () => this.setState({ docFilter: null }) } }; })(),
       q: s.q, onQ: e => this.setState({ q: e.target.value }), catEmpty: !catItems.length, catItems,
       fams: fams.map(f => { const a = s.fam === f; return { label: f, bg: a ? 'var(--color-neutral-900)' : 'var(--color-surface)', fg: a ? 'var(--color-neutral-100)' : 'var(--color-neutral-900)', onPick: () => this.setState({ fam: f }) }; }),
       metierOpen: s.metierOpen, openMetier: () => this.setState({ metierOpen: true }), closeMetier: () => this.setState({ metierOpen: false }),
@@ -4279,7 +4989,7 @@ class Component extends DCLogic {
           apply: () => { this.setState(st => ({ lines: st.lines.map(l => l.kind === 'mo' ? { ...l, pu: t, puTxt: undefined } : l) })); this.flash(`Main d'œuvre passée à ${t} € / h`); } }; })(),
       newDevis: () => this.newDevis(),
       timeOpts: { h: Array.from({ length: 24 }, (_, i) => { const v = String(i).padStart(2, '0'); return { v, l: v + ' h' }; }), m: Array.from({ length: 12 }, (_, i) => { const v = String(i * 5).padStart(2, '0'); return { v, l: v }; }) },
-      ...this.frameVals(), ...this.accVals(),
+      ...this.frameVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
       fit: s.wideOn ? { w: '100vw', h: '100vh', t: 'none' } : (() => { const k = Math.max(0.5, s.fitK || 1); return { w: Math.round(390 * k) + 'px', h: Math.round(844 * k) + 'px', t: k < 1 ? `scale(${k.toFixed(3)})` : 'none' }; })(),
       pp: (() => { const hist = (s.aiHistory || []).filter(t => !m.ex.includes(t)), open = !!s.ppOpen;
         const pick = t => () => this.setState({ aiInput: t, aiMsg: '', ppOpen: false });
@@ -4290,7 +5000,7 @@ class Component extends DCLogic {
           clear: () => this.setState({ aiHistory: [] }),
           exLabel: 'Exemples ' + m.label.toLowerCase(), ex: m.ex.map(t => ({ text: t, onPick: pick(t) })) }; })(),
       goStats: () => this.go('stats'),
-      sun: s.sun ? { n: 'var(--color-neutral-900)', div: 'var(--color-neutral-500)', bg: 'var(--color-neutral-100)' } : { n: 'inherit', div: 'inherit', bg: 'inherit' },
+      sun: s.sun ? { n: 'var(--color-neutral-900)', div: 'var(--color-neutral-500)', bg: 'var(--color-neutral-100)' } : { n: '', div: '', bg: '' },
       sunOn: !!s.sun, toggleSun: () => this.setState(st => ({ sun: !st.sun })),
       sunSw: s.sun ? { justify: 'flex-end', bg: 'var(--color-accent-2-700)' } : { justify: 'flex-start', bg: 'var(--color-neutral-400)' },
       savedTxt: 'Devis, factures et réglages gardés sur cet appareil',
@@ -4311,11 +5021,13 @@ class Component extends DCLogic {
       provNo: s.editNo || LIVE_NO, provDef: `Ajouter un acompte de ${s.acompteDef || 30} %`,
       provSend: () => this.setState({ provOk: true }, () => this.renderVals().sendDevis()),
       provAdd: () => { this.setState({ acompte: s.acompteDef || 30, confirmProv: false }); this.flash(`Acompte de ${s.acompteDef || 30} % ajouté`); },
-      shFb: s.shareFallback ? { open: true, name: s.shareFallback.name, wa: 'https://wa.me/?text=' + encodeURIComponent(s.shareFallback.text + '\n(plan en pièce jointe)'), mail: 'mailto:?subject=' + encodeURIComponent('Plan : ' + s.shareFallback.name) + '&body=' + encodeURIComponent(s.shareFallback.text + '\n\nPlan en pièce jointe.'), close: () => this.setState({ shareFallback: null }) } : { open: false, close: () => {} },
+      shFb: s.shareFallback ? { open: true, name: s.shareFallback.name,
+        onWa: () => { const f = s.shareFallback; this.setState({ shareFallback: null }); this.draft({ title: 'Partager ' + f.name, channel: 'wa', body: f.text + '\n(plan en pièce jointe)' }); },
+        onMail: () => { const f = s.shareFallback; this.setState({ shareFallback: null }); this.draft({ title: 'Partager ' + f.name, subject: f.name, body: f.text, attach: [f.name] }); }, wa: 'https://wa.me/?text=' + encodeURIComponent(s.shareFallback.text + '\n(plan en pièce jointe)'), mail: 'mailto:?subject=' + encodeURIComponent('Plan : ' + s.shareFallback.name) + '&body=' + encodeURIComponent(s.shareFallback.text + '\n\nPlan en pièce jointe.'), close: () => this.setState({ shareFallback: null }) } : { open: false, close: () => {} },
       updReady: !!s.updReady && !s.toast, updLater: () => this.setState({ updReady: false }), updReload: () => { if (window.__btpApplyUpdate) window.__btpApplyUpdate(); else location.reload(); },
       provCancel: () => this.setState({ confirmProv: false }),
       goBack: () => this.go(s.prevTab && s.prevTab !== s.tab ? s.prevTab : 'home'),
-      backTitle: 'Retour : ' + ({ home: 'Accueil', devis: 'Devis', docs: 'Documents', stats: 'Facturation', marge: 'Calcul de marge', outil: 'Outils', set: 'Réglages', projet: 'Projet', plan: 'Plan' }[s.prevTab] || 'Accueil'),
+      backTitle: 'Retour : ' + ({ home: 'Accueil', devis: 'Devis', docs: 'Documents', stats: 'Facturation', enc: 'Encaissements', panier: 'Panier moyen', transfo: 'Transformation', marge: 'Calcul de marge', outil: 'Outils', set: 'Réglages', projet: 'Projet', plan: 'Plan' }[s.prevTab] || 'Accueil'),
       showPu: !s.puHidden, puHidden: !!s.puHidden, puTitle: s.puHidden ? 'Afficher les prix unitaires' : 'Masquer les prix unitaires',
       togglePu: () => this.setState(st => ({ puHidden: !st.puHidden })),
       toast: s.toast, seuilTxt: (s.seuil ?? 15) + ' %', seuilPos: Math.min(s.seuil ?? 15, 50) / 50 * 100 + '%',

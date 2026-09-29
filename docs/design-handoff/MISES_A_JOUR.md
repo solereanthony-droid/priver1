@@ -1,6 +1,6 @@
 # Mises à jour pour Claude Code : Chiffrage BTP 974
 
-**Date :** 2026-09-27
+**Date :** 2026-09-29 (v13)
 **Base :** le code livré après le retour de développement (`RETOUR_DEV.md`), c'est-à-dire le handoff jusqu'à la v4 (export PDF des plans).
 **Référence :** `Chiffrage BTP 974 Mobile.dc.html`, fourni dans ce dossier. Le gabarit `<x-dc>` et la classe `Component` restent la source de vérité.
 
@@ -176,11 +176,150 @@ Les RJ45 ne sont rattachés à aucun circuit (réseau de communication) et s'aff
 
 ---
 
+## Mise à jour v12 : réponse au retour v11 (RETOUR_DEV §7)
+**7.1 Corrections reportées dans le prototype**
+1. **Thème sombre** : `sun` vaut maintenant `{ n: '', div: '', bg: '' }` quand le « Mode plein soleil » est désactivé. Rien n'est écrit en ligne, et `[data-theme="dark"]` s'applique.
+2. **Police du PDF** : la pile de polices du canvas et du SVG exporté est `'Figtree Variable', Figtree, system-ui, sans-serif`. Les graisses 400 à 800 des deux noms sont préchargées, puis `document.fonts.ready` est attendu avant le dessin.
+
+**7.2 Assistant plan** : **c'est la fiche de tests qui change.** Le calcul est correct : 9 pièces + terrasse (Entrée, Séjour 26 m², Cuisine, Cellier, WC, 3 chambres, Salle de bain). Test corrigé : « 90 m², 3 chambres, cuisine fermée, cellier → 9 pièces + terrasse (10 éléments) ».
+
+**7.3 Détails visuels**
+- Tableau de repérage (PDF) : colonnes redistribuées `[0, 14, 72, 98, 116, 138]` mm. La colonne « Points » passe de 26 à 48 mm, et « 4 points lumineux » tient sans ellipse.
+- Cadre des ID sur le schéma : trois lignes, « 40 A », « 30 mA », « type A » (au lieu de « 30 mA A » qui débordait du cadre de 48 unités).
+- Section verticale : décalée à `x + 16.5` (`x + 17` quand le nom tient sur deux lignes), au lieu de `x + 12`. Plus de chevauchement avec le nom du circuit.
+
+**7.4** L'icône définitive reste à produire par un graphiste (je ne génère pas d'image).
+
+### v12.1 : catalogue électricien complété
+27 articles ajoutés à la **fin** de `CAT_RAW.elec`, pour ne pas décaler `CAT_RAW.multi = elec.slice(16, 22)`. Deux nouvelles familles de filtre : « Conduits » et « Connexion ».
+- **Goulottes et moulures** : goulottes 60×40 et 80×60, moulures 20×10 et 32×12,5, angles et embouts.
+- **Tubes IRL rigides** (type Tubiro) : Ø16, Ø20 et Ø25 en 3 m, manchons et coudes, colliers.
+- **Gaines ICTA** : Ø16 et Ø25, gaines préfilées 3G1,5 et 3G2,5.
+- **Wago** : 221-412, 221-413, 221-415, 2273-203, 2273-205.
+- **Boîtes** : boîte de dérivation IP55, boîte d'encastrement placo.
+- **Fils et câbles** : H07V-U 1,5 et 2,5 mm², H07V-R 10 mm² vert/jaune, R2V 3G6.
+- **Petites fournitures** : embouts de câblage, colliers de serrage.
+
+Les prix d'achat sont indicatifs (démo).
+
+### v12.2 : famille « Petit matériel »
+Nouveau filtre du catalogue électricien. 12 articles ajoutés à la fin de `CAT_RAW.elec` : chevilles à frapper et Molly, vis, cavaliers, ruban isolant, gaine thermorétractable, repères de câbles, étiquettes de tableau, bornier de terre, mastic coupe-feu, foret SDS Ø6, scie cloche Ø68. Trois articles changent de famille : embouts de câblage, colliers de serrage, colliers IRL.
+
+---
+
+## Mise à jour v13 : encaissements, indicateurs, vérification avant facture (2026-09-29)
+
+**Règles de calcul** : `totals()` n'a pas changé. Aucun envoi au client n'est automatique : tout e-mail ou message WhatsApp passe par un aperçu modifiable, et toute facture par une vérification.
+
+### Nouvelles clés d'état persistées
+Ajouter à `Component.KEEP` : `'coutMO'`, `'trRel'`. Liste complète :
+```
+'lines','client','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
+```
+États non persistés ajoutés : `facVerif`, `fvChecks`, `fvOpen`, `simRem`, `panSort`, `panCl`, `docQ`. Documents : champ optionnel `paidOn` (jj/mm) posé par « Marquer encaissée ».
+
+### Nouveaux onglets (`s.tab`)
+`enc` (Encaissements), `panier` (Panier moyen), `transfo` (Transformation des devis). Libellés ajoutés à la table du bouton retour : `enc: 'Encaissements'`, `panier: 'Panier moyen'`, `transfo: 'Transformation'`.
+
+### Nouvelles fonctions
+- `encVals(docs)` : encaissé / à encaisser, relevé des payées, factures dues (échéance date + 30 j), regroupement par client et chantier (devis acceptés, acomptes, reste à facturer).
+- `trVals(docs)` : taux en nombre et en valeur, entonnoir Créés → Envoyés → Acceptés → Facturés, relances J+3 / J+7 / J+15 (`trRel`), acceptés à facturer, taux par segment.
+- `draft(o, cb)` : ouvre l'aperçu modifiable (e-mail ou WhatsApp). `o = { title, channel: 'mail'|'wa', subject, body, to, attach }`. `cb` n'est appelé qu'après « Ouvrir », jamais à la fermeture.
+- `implantFrom(planId)` : crée ou reprend le schéma unifilaire du devis lié et pose l'image importée en fond (`impl.bg`), puis ouvre la vue Implantation.
+- `statsVals` : ajoute `htTxt`, `encTxt`, `waitTxt`, `goEnc`, `exportCsv` et l'objet `pan` (panier moyen).
+- `margeVals` : ajoute marge globale (matériel + MO), `coutMO` (coût horaire chargé, 32 € par défaut), prix plancher, simulateur de remise, correction des lignes sous le seuil.
+- Liste Documents : recherche `docQ` (sans accents), `docChips` (4 statuts), `docSum`, action directe par document (`hasAct`, `act`, `onAct`).
+
+### Changements par écran
+**Accueil**
+- Titre : nom de l'entreprise des Réglages, prénom abrégé (« J. Hoarau Électricité »). Forme juridique en tête ou nom d'un seul mot : affiché en entier. « Bonjour Julien » supprimé.
+- Pastille En ligne (sauge) / Hors ligne (terracotta) sous le titre, pilotée par `s.offline`, `role="status"`.
+- Tuile « CA facturé TTC » : sous-titre « dont X encaissé », ouvre `enc`.
+- Tuile « Transformés en facture » : ouvre `transfo`.
+
+**Encaissements** (nouveau, écran complet)
+- Encaissé / À encaisser côte à côte.
+- Relevé des encaissements, bouton « Voir les non payées ».
+- Relance e-mail / WhatsApp via `draft()`, « Marquer encaissée ».
+- Par client et chantier.
+
+**Facturation**
+- Graphique « Par mois » supprimé (doublon de la courbe).
+- Carte du haut : HT / Encaissé / En attente + « Voir les encaissements ».
+- Tuile « En attente de paiement » : ouvre `enc`. Tuile « Panier moyen » : ouvre `panier`.
+- TVA : mention de période + « Exporter pour le comptable (CSV) » (UTF-8 avec BOM, séparateur `;`, décimales à virgule).
+
+**Panier moyen** (nouveau)
+- En-tête avec évolution.
+- Par type d'intervention, composition matériel / MO.
+- Articles les plus vendus : tri Quantité / CA HT / Marge, rang, tendance.
+- Par client : tri Panier / Cumulé / Fréquence, initiales, 3 articles avec quantités, suggestion « À proposer ».
+- **Données de démo fixes** (`TY`, `ART`, `CLI`, `MG`, `TR`, `QTY`, `SUG`) : à calculer depuis les lignes des factures.
+
+**Transformation des devis** (nouveau)
+- Taux en nombre et en valeur, repère sectoriel 10 à 30 %.
+- Entonnoir cliquable, relances J+3 / J+7 / J+15, « Vérifier et facturer ».
+- Délais (2 j, 9 j, 1,6) : **démo fixe**.
+
+**Calcul de marge**
+- Retour vers l'écran précédent (`goBack`).
+- Marge globale, coût horaire −/+, prix plancher.
+- Simuler une remise 0–30 % avec remise maximale ; « Appliquer » écrit `remiseTxt`.
+- Lignes triées de la plus faible marge à la plus forte, « Corriger » par ligne et global (`pu = achat × coef`).
+
+**Devis → facture**
+- « Transformer en facture » ouvre la feuille « Vérifier avant de facturer ».
+- La feuille présente :
+  - les pastilles Devis → Facture (brouillon) et la mention cadenas « Rien n'est envoyé au client » ;
+  - le récapitulatif HT / TVA / TTC / acompte / net ;
+  - les alertes bloquantes (client vide, SIRET manquant) ;
+  - le menu déroulant « Je confirme avoir vérifié » (3 cases, compteur n / 3) ;
+  - le bouton « Revoir l'aperçu du devis ».
+- « Valider et créer la facture » appelle `doFacture()` (ancien corps de `toFacture`). La facture est créée **non transmise**.
+
+**Aperçu des messages**
+- `draft()` est utilisé par :
+  - les relances de factures et de devis ;
+  - les commandes fournisseur ;
+  - le partage de plan de secours.
+- E-mail : À (facultatif), Cc, Objet, texte, pièces jointes. WhatsApp : texte seul. « Revenir au texte proposé » restaure le texte d'origine. Couche `z-index: 40`.
+
+**Documents**
+- Retour arrière.
+- Recherche client / n° / adresse.
+- Bandeau de 4 cases de statut (nombre + point de couleur, toujours affichées), « Tout afficher ».
+- Nombre et total TTC visibles.
+- Boutons « Relancer » / « Facturer » sur chaque ligne. Retards en terracotta foncé : devis > 7 j, facture > 30 j.
+
+**Plans**
+- Mention « PNG, JPEG, WebP ou PDF · 3 Mo maximum » centrée sous les boutons Unifilaire / Importer.
+- Plan importé (image, métier électricien) : carte « Implanter mes circuits » → `implantFrom()`. PDF : à convertir en image d'abord.
+
+**Devis, Réglages** : bouton retour ajouté.
+
+**Ordinateur** : barre récap du devis calée sur la colonne de contenu (`fr.barL`, `fr.barR`, `fr.barB` = 24 px) ; téléphone inchangé (12 / 12 / 96 px).
+
+### Tests v13
+- [ ] Accueil : modifier le nom dans Réglages change le titre ; « SARL Dupont » reste entier.
+- [ ] Couper le réseau : la pastille passe à « Hors ligne », puis revient à « En ligne ».
+- [ ] Encaissements : « Marquer encaissée » déplace la facture dans le relevé et met à jour les totaux et la tuile d'accueil.
+- [ ] Relance : fermer l'aperçu n'enregistre rien ; « Ouvrir » coche J+3 (Transformation) et marque la relance.
+- [ ] Aperçu e-mail : objet et texte modifiés sont bien transmis au `mailto:` ; « Revenir au texte proposé » restaure.
+- [ ] Vérification facture : bouton grisé tant que les 3 cases ne sont pas cochées ; client vide → alerte bloquante ; la facture créée a le statut « Émise », non transmise.
+- [ ] Export CSV : s'ouvre dans Excel avec accents et virgules décimales corrects.
+- [ ] Marge : remise simulée au-delà de la remise maximale → marge en terracotta ; « Corriger les N lignes » supprime les alertes de seuil.
+- [ ] Documents : recherche « grondin » trouve « M. Grondin » ; case de statut active → liste filtrée ; retoucher → liste complète.
+- [ ] Implanter sur un plan importé PNG : l'image est en fond de l'implantation ; revenir sur le plan affiche « Reprendre l'implantation ».
+- [ ] Retour arrière sur Documents, Devis, Réglages, Marge, Encaissements, Panier, Transformation : revient à l'écran précédent, sinon à l'Accueil.
+- [ ] Ordinateur : la barre récap ne passe plus sous le menu latéral.
+
+---
+
 ## Tests à passer
 - [ ] Plan unifilaire : « Tout corriger » supprime toutes les alertes du plan de démo « villa Payet ».
 - [ ] Calibre des ID : un ID en 40 A avec 76 A calculés affiche l'alerte ; « Passer en 63 A » la résout.
 - [ ] PDF : aucun tableau ni paragraphe n'est coupé entre deux pages ; la page implantation est entière.
-- [ ] Assistant plan : avec 90 m², 3 chambres, cuisine fermée et cellier, on obtient 10 pièces + terrasse.
+- [ ] Assistant plan : avec 90 m², 3 chambres, cuisine fermée et cellier, on obtient 9 pièces + terrasse (10 éléments).
 - [ ] « Placer selon la norme » : séjour de 26 m² → 7 prises, 2 RJ45 ; chaque chambre → 3 prises, 1 RJ45 ; cuisine → 6 prises (dont 4 au plan de travail) + plaque 32 A + lave-vaisselle + four. Aucun circuit ne dépasse 8 points (12 socles en 20 A, 6 sur la cuisine).
 - [ ] Implantation : Annuler revient à l'état précédent (30 niveaux) ; le zoom ×2 garde des coordonnées justes.
 - [ ] Nouveau projet : le nom du client est obligatoire ; le devis, le plan (électricien) et le RDV sont créés et liés ; la fiche projet s'ouvre.
