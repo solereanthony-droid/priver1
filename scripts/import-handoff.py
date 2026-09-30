@@ -111,6 +111,11 @@ js = sub(js, "const ht = total / 1.085, t85 = ht * 0.085 * 0.92, t21 = ht * 0.02
 js = sub(js, "const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(hh * 0.085 * 0.92), n(hh * 0.021 * 0.08),",
          "const hh = micro ? r[1] : r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(micro ? 0 : hh * 0.085 * 0.92), n(micro ? 0 : hh * 0.021 * 0.08),", label='TVA export CSV')
 
+# Schéma unifilaire (écran et PDF) : le libellé « IDn » était centré sur le trait vertical d'alimentation (x = 30).
+# Il passe à droite du trait, aligné à gauche.
+js = js.replace("tx(32, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, a: 'middle', fill: K.sage });",
+                "tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage });")
+
 # Exports.
 js = sub(js, "\nconst docNo = ", "\nexport const docNo = ", label='docNo')
 header = """// Logique métier du prototype « Chiffrage BTP 974 » (importée par scripts/import-handoff.py, ne pas modifier à la main :

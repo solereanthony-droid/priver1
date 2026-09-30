@@ -140,7 +140,7 @@ function planDiagram(p, sel, mode, errs = {}) {
     const sp = n > 1 ? Math.min(full ? 36 : 32, 236 / (n - 1)) : 32, xs = cs.map((c, i) => 80 + i * sp);
     ln(56, yb, n ? xs[n - 1] + 2 : 96, yb, K.ink, 3.5);
     R.push({ x: 8, y: yb - 18, w: 48, h: 36, rx: 9, fill: K.paper, stroke: over ? K.acc : K.sage, sw: 2.5 });
-    tx(32, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, a: 'middle', fill: K.sage });
+    tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage });
     tx(32, yb - 6, d.cal + ' A', { s: 9, w: 800, a: 'middle' });
     tx(32, yb + 4.5, '30 mA', { s: 8, a: 'middle', fill: K.mute });
     tx(32, yb + 13.5, 'type ' + d.type, { s: 8, w: 700, a: 'middle', fill: K.mute });

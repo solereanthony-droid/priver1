@@ -239,11 +239,13 @@ trouvés et corrigés côté app.
 2. **TVA affichée en micro-entreprise.** L'écran Facturation et l'export CSV calculaient la TVA (8,5 % / 2,1 %)
    quel que soit le régime. En franchise en base (art. 293 B), la TVA est maintenant à 0 et le HT est égal au TTC.
    **À reporter dans le prototype** (`statsVals`, lignes `ht / t85 / t21` et `exportCsv`).
+3. **Libellé « IDn » traversé par le trait** (schéma à l'écran et PDF). Le trait d'alimentation vertical est à
+   `x = 30` et le libellé était centré sur `x = 32`. **Correction :** `tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage })`,
+   c'est-à-dire aligné à gauche, juste à droite du trait. Vérifié sur les deux plans de démo (1 et 2 différentiels).
+   **À reporter dans le prototype** (`planDiagram`).
 
 ### 9.2 Toujours ouvert
 - **Données réelles** : l'historique de Facturation (octobre 2025 à septembre 2026), le panier moyen et la
   transformation des devis sont des données de démo fixes. L'export CSV ne sera juste qu'une fois calculé depuis
   les factures, taux par taux.
 - **Icône définitive** 512 × 512 + maskable.
-- **Détail du schéma PDF** : le trait vertical du disjoncteur de branchement traverse le libellé « ID1 ».
-  Décaler le libellé à droite du trait, ou l'afficher dans le cadre.
