@@ -2,34 +2,14 @@
 // localStorage est limité à ~5 Mo par site : deux plans importés suffisaient à le saturer,
 // et plus rien n'était enregistré. Ici, seules des références courtes restent dans localStorage.
 
-const DB = 'btp974', STORE = 'blobs';
+import { openDb, withStore, STORES } from './db.js';
+
+const STORE = STORES.blobs;
 export const REF = 'btp-idb:';
 export const MIN_SIZE = 16 * 1024; // en dessous, la donnée reste dans le JSON
 
-let dbp = null;
-function db() {
-  if (!dbp) {
-    dbp = new Promise((ok, ko) => {
-      if (typeof indexedDB === 'undefined') return ko(new Error('IndexedDB indisponible'));
-      const req = indexedDB.open(DB, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-      req.onsuccess = () => ok(req.result);
-      req.onerror = () => ko(req.error);
-      req.onblocked = () => ko(new Error('IndexedDB bloquée'));
-    });
-    dbp.catch(() => { dbp = null; });
-  }
-  return dbp;
-}
-
-const tx = async (mode, fn) => {
-  const d = await db();
-  return new Promise((ok, ko) => {
-    const t = d.transaction(STORE, mode), st = t.objectStore(STORE), out = fn(st);
-    t.oncomplete = () => ok(out && 'result' in out ? out.result : undefined);
-    t.onerror = t.onabort = () => ko(t.error || new Error('transaction annulée'));
-  });
-};
+const db = openDb;
+const tx = (mode, fn) => withStore(STORE, mode, fn);
 
 export const available = () => db().then(() => true, () => false);
 

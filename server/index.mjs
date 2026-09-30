@@ -7,6 +7,9 @@ import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildTask, TaskError } from './prompts.mjs';
+import { createSessions } from './auth.mjs';
+import { createPaRoutes } from './pa/routes.mjs';
+import { createPaFromEnv } from './pa/index.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(here, '..', 'dist');
@@ -93,9 +96,9 @@ function readJson(req) {
   });
 }
 
-const send = (res, status, body, type = 'application/json') => {
+const send = (res, status, body, type = 'application/json', extra = {}) => {
   if (res.headersSent) return;
-  res.writeHead(status, { ...SECURITY_HEADERS, 'Content-Type': type, 'Cache-Control': 'no-store', ...(status === 413 ? { Connection: 'close' } : {}) });
+  res.writeHead(status, { ...SECURITY_HEADERS, 'Content-Type': type, 'Cache-Control': 'no-store', ...(status === 413 ? { Connection: 'close' } : {}), ...extra });
   res.end(body);
 };
 
@@ -164,12 +167,19 @@ function compressed(file, st, enc) {
   return body;
 }
 
+// ── Sessions et plateforme agréée (facture électronique) ──
+const sessions = createSessions({ ownerCode: process.env.APP_OWNER_CODE || '', staffCode: process.env.APP_STAFF_CODE || '', tenantId: process.env.TENANT_ID || 'default' });
+const pa = await createPaFromEnv(process.env, { dataDir: path.join(here, 'data') });
+const secureCookie = req => !!req.socket.encrypted || (TRUST_PROXY && String(req.headers['x-forwarded-proto'] || '').startsWith('https'));
+const paRoutes = createPaRoutes({ service: pa?.service || null, sessions, send, sameOrigin, secureCookie, clientIp, appUrl: process.env.APP_URL || '/' });
+
 const server = http.createServer((req, res) => {
   const route = req.url.split('?')[0];
   if (route === '/api/ai') handleAi(req, res).catch(e => { console.error(e); send(res, 500, '{}'); });
+  else if (route === '/api/session' || route.startsWith('/api/pa/')) paRoutes.handle(req, res);
   else if (route.startsWith('/api/')) send(res, 404, JSON.stringify({ error: 'introuvable' }));
   else serveStatic(req, res);
 });
 server.headersTimeout = 10_000;
 server.requestTimeout = 60_000;
-server.listen(PORT, HOST, () => console.log(`Chiffrage BTP 974 → http://${HOST}:${PORT} (modèle ${MODEL})`));
+server.listen(PORT, HOST, () => console.log(`Chiffrage BTP 974 → http://${HOST}:${PORT} (modèle ${MODEL}${pa ? ', PA : ' + (process.env.PA_PROVIDER) : ''})`));

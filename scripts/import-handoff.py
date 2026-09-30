@@ -116,6 +116,13 @@ js = sub(js, "const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r
 js = js.replace("tx(32, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, a: 'middle', fill: K.sage });",
                 "tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage });")
 
+# Facture : date réelle et locale (le prototype écrivait « 24/09 » ; toISOString() serait en UTC, la veille à La Réunion avant 4 h) et instantané complet du contenu (lignes, taux, client,
+# remise, acompte) pour pouvoir produire la facture électronique EN 16931 (src/pa/invoicePayload.js).
+js = sub(js, "docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: '24/09', st: 0, ttc: T.ttc - T.ac },",
+         "docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0, ttc: T.ttc - T.ac, "
+         "snap: { issued: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()), devisNo: st.editNo || LIVE_NO, client: st.client, chantier: st.chantier, clientType: st.clientType || 'part', regime: st.regime, remiseTxt: st.remiseTxt, acompte: st.acompte, prepaid: T.ac, ttc: T.ttc, "
+         "lines: st.lines.map(({ kind, name, ref, qty, unit, pu, tva }) => ({ kind, name, ref, qty, unit, pu, tva })) } },", label='création de facture')
+
 # Exports.
 js = sub(js, "\nconst docNo = ", "\nexport const docNo = ", label='docNo')
 header = """// Logique métier du prototype « Chiffrage BTP 974 » (importée par scripts/import-handoff.py, ne pas modifier à la main :

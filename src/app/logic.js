@@ -2045,7 +2045,7 @@ class Component extends DCLogic {
       doFacture: () => {
         const no = docNo('FAC', s.facSeq);
         this.setState(st => ({ facSeq: st.facSeq + 1, docTab: 'fac', recapOpen: false, plans: (st.plans ?? this.defaultPlans()).map(p => p.devisNo === (st.editNo || LIVE_NO) ? { ...p, facNo: no } : p),
-          docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: '24/09', st: 0, ttc: T.ttc - T.ac }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
+          docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0, ttc: T.ttc - T.ac, snap: { issued: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()), devisNo: st.editNo || LIVE_NO, client: st.client, chantier: st.chantier, clientType: st.clientType || 'part', regime: st.regime, remiseTxt: st.remiseTxt, acompte: st.acompte, prepaid: T.ac, ttc: T.ttc, lines: st.lines.map(({ kind, name, ref, qty, unit, pu, tva }) => ({ kind, name, ref, qty, unit, pu, tva })) } }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
         this.go('docs'); this.flash(`Facture ${no} créée, non transmise : vérifie-la puis envoie-la`);
       },
       docTabs: [['devis', 'Devis'], ['fac', 'Factures'], ['plans', 'Plans']].map(([k, label]) => { const a = s.docTab === k; return { label, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ docTab: k }) }; }),

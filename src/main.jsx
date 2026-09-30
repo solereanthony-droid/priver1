@@ -6,6 +6,8 @@ import './styles/organic.css';
 import './styles/handoff.css';
 import './styles/app.css';
 import './claude.js';
+import { installPaClient } from './pa/paClient.js';
 import App from './app/App.jsx';
 
+installPaClient();
 createRoot(document.getElementById('root')).render(<App />);

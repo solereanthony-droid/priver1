@@ -47,6 +47,15 @@ expressions régulières pour les rendez-vous).
 | `AI_RATE_LIMIT` | `20` | Requêtes IA par minute et par IP |
 | `TRUST_PROXY` | — | `1` pour lire l'IP client dans `X-Forwarded-For` (seulement derrière un proxy de confiance) |
 
+## Facture électronique (plateforme agréée)
+
+Connexion réelle à une plateforme agréée (API XP Z12-013, OAuth2) côté serveur, file d'envoi hors ligne côté app.
+Configuration, sécurité et reste à faire : [`docs/PA.md`](docs/PA.md). Démonstration locale avec la PA simulée :
+
+```bash
+APP_OWNER_CODE=<code long> PA_PROVIDER=mock PA_ENC_KEY=$(openssl rand -base64 32) npm start
+```
+
 ## Hooks Claude Code
 
 Configurés dans `.claude/settings.json` (scripts dans `.claude/hooks/`) :

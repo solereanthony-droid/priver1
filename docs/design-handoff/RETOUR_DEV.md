@@ -249,3 +249,13 @@ trouvés et corrigés côté app.
   transformation des devis sont des données de démo fixes. L'export CSV ne sera juste qu'une fois calculé depuis
   les factures, taux par taux.
 - **Icône définitive** 512 × 512 + maskable.
+
+---
+
+## 10. Plateforme agréée (2026-09-30)
+
+La connexion réelle à une plateforme agréée est livrée côté serveur et côté app (`docs/PA.md`). Les écrans
+restent à faire : voir **`DEMANDE_PA.md`**, avec le contrat d'intégration `window.btpPA`.
+
+Corrigé côté app, à reporter dans le prototype (`doFacture`) : la facture était datée « 24/09 » en dur. Elle prend
+maintenant la date du jour (locale) et garde son contenu complet (`snap`).
