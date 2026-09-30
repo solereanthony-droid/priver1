@@ -230,7 +230,7 @@ describe('Facture EN 16931', () => {
   });
 
   it('contrôles bloquants : SIREN/SIRET (Luhn), client particulier, lignes, devise', () => {
-    expect(validateInvoice(invoice({ buyer: { ...invoice().buyer, siren: '552081318' } }))).toEqual([expect.stringMatching(/SIREN du client/)]);
+    expect(validateInvoice(invoice({ buyer: { ...invoice().buyer, siren: '552081318' } }))).toEqual([expect.stringMatching(/SIREN \(ou SIRET\) du client/)]);
     expect(validateInvoice(invoice({ seller: { ...invoice().seller, siret: '81234567800021' } }))).toEqual([expect.stringMatching(/SIRET du vendeur/)]);
     expect(validateInvoice(invoice({ buyer: { ...invoice().buyer, type: 'part' } }))[0]).toMatch(/particulier/);
     expect(validateInvoice(invoice({ lines: [] }))).toContain('Au moins une ligne est requise.');
@@ -261,6 +261,8 @@ describe('Routes /api/pa/*', () => {
       expect((await fetch(base + p, init)).status, p).toBe(403);
       expect((await fetch(base + p, { ...init, headers: { 'Content-Type': 'application/json' } })).status, p).toBe(401);
     }
+    expect(await (await fetch(base + '/api/pa/config', { headers: { Cookie: staff } })).json()).toEqual({ configured: true, role: 'staff' });
+    expect(await (await fetch(base + '/api/pa/config')).json()).toEqual({ configured: true, role: null });
     const owner = await login('patron-code-1234');
     const r = await fetch(base + '/api/pa/status', { headers: { Cookie: owner } });
     expect(r.status).toBe(200);

@@ -1,6 +1,6 @@
 # Mises à jour pour Claude Code : Chiffrage BTP 974
 
-**Date :** 2026-09-29 (v13)
+**Date :** 2026-09-30 (v14.2)
 **Base :** le code livré après le retour de développement (`RETOUR_DEV.md`), c'est-à-dire le handoff jusqu'à la v4 (export PDF des plans).
 **Référence :** `Chiffrage BTP 974 Mobile.dc.html`, fourni dans ce dossier. Le gabarit `<x-dc>` et la classe `Component` restent la source de vérité.
 
@@ -15,7 +15,7 @@
 ## Nouvelles clés d'état persistées
 Liste complète `Component.KEEP` :
 ```
-'lines','client','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
+'lines','client','cliSiren','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
 ```
 Nouvelles par rapport à la v4 : `userProj`, `orders`, `cmdSeq`, `catPref`. Les plans (`plans`) gagnent les champs `impl` (implantation) et `rooms` (équipement par pièce).
 
@@ -312,6 +312,142 @@ Ajouter à `Component.KEEP` : `'coutMO'`, `'trRel'`. Liste complète :
 - [ ] Implanter sur un plan importé PNG : l'image est en fond de l'implantation ; revenir sur le plan affiche « Reprendre l'implantation ».
 - [ ] Retour arrière sur Documents, Devis, Réglages, Marge, Encaissements, Panier, Transformation : revient à l'écran précédent, sinon à l'Accueil.
 - [ ] Ordinateur : la barre récap ne passe plus sous le menu latéral.
+
+---
+
+## Mise à jour v13.1 : réponse au retour dev §8 (2026-09-29)
+
+`totals()` inchangé.
+
+**8.1 Liens externes** : repris. Les 2 appels `window.open(href, '_blank', 'noopener,noreferrer')` (`draft()` et aperçu e-mail du comptable).
+
+**8.2 Données de démo** : confirmé, rien à changer dans le prototype. Un commentaire `// DÉMO` est ajouté au-dessus de l'export CSV. En production :
+- TVA du CSV : somme de la TVA des lignes de chaque facture, taux par taux (8,5 %, 2,1 %, 0 en micro-entreprise) ; HT = somme des HT des lignes, pas `TTC / 1,085`.
+- Panier moyen et Transformation : calculer `TY`, `ART`, `CLI`, `MG`, `TR`, `QTY`, `SUG` et les délais depuis `docs` (lignes, dates d'envoi, d'acceptation et de relance).
+
+**8.3 Barre récap (ordinateur)** : non, ce n'était pas voulu. La cause était la colonne elle-même : le padding `fr.sp` était calculé sur la largeur totale (menu compris), ce qui réduisait la colonne à 472 px au lieu de 720 px.
+- `fr.sp` : `0 max(0px, calc((100% - 248px - 760px) / 2))`. La colonne est centrée dans la zone à droite du menu, 760 px maximum (720 px de contenu).
+- `fr.barL` : `calc(248px + max(0px, (100% - 248px - 760px) / 2) + 20px)` ; `fr.barR` : `calc(max(0px, (100% - 248px - 760px) / 2) + 20px)`. La barre a exactement les bords du contenu.
+- À 1 280 px : colonne et barre de 404 à 1 124 px.
+
+### Tests v13.1
+- [ ] Ordinateur 1 280 px : bords gauche et droit de la barre récap alignés sur les cartes du devis.
+- [ ] Ordinateur 1 024 px : colonne pleine largeur à droite du menu, barre à 20 px des bords.
+- [ ] Relance WhatsApp : `window.opener` est `null` dans l'onglet ouvert.
+
+---
+
+## Mise à jour v14.1 et v14.2 : statuts de la plateforme agréée et données de facture (2026-09-30)
+
+`totals()` inchangé. Détail technique complet et tests : **`PLATEFORME_AGREEE.md`** (même dossier), à lire avant de coder la connexion à la plateforme.
+
+### v14.1 : statuts de facture alignés sur la réforme
+- `FAC_ST` : indices 0 à 3 inchangés (Émise, Transmise, Acceptée, Encaissée) + **4 Rejetée, 5 Refusée, 6 En litige**. Champ `motif` sur la facture. Couleurs dans `TONE`.
+- Menu de statut (`_cf`) d'une facture : seules les actions de l'artisan sont proposées. Émise → « Transmettre à la plateforme » ; Transmise / Acceptée / En litige → « Enregistrer l'encaissement » ; Rejetée → « Corriger et réémettre » (même numéro) ; Refusée → « Réémettre sous un nouveau numéro » (copie, champ `replaces`) ; Encaissée → information seule.
+- **Plus de passage manuel vers Transmise ou Acceptée** : en production, ces statuts viennent de la plateforme (200/201/202/209) et du client (204).
+- Carte Facturation électronique : compteurs et frise limités aux statuts 0 à 3.
+- Démo : `FAC-2026-026` Rejetée (« SIRET du client absent de l'annuaire »).
+
+### v14.2 : correctifs bloquants sur les données de facture
+1. **Instantané complet** à la création (`doFacture`) : `lines[{ name, ref, kind, unit, tva, qty, pu }]`, `rem`, `ht`, `t85`, `t21`, `ttcFull`, `ac`, `ttc` (net à payer), `micro`, `devisNo`, `chantier`, `siren`, `pro`, `date`.
+2. **TVA par ligne** dans l'éditeur de facture (bouton 8,5 % / 2,1 %), ventilation recalculée avec la remise. Avant : 8,5 % sur tout.
+3. **SIREN / SIRET client** : nouvel état persisté `cliSiren` ; interrupteur Particulier / Professionnel (`clientType` existant) et champ sous le nom du client, dans le devis et dans l'éditeur de facture. `SIREN_OK()` : 9 ou 14 chiffres + clé de Luhn. Obligatoire si client professionnel.
+4. **Dates** : `TODAY()` (JJ/MM/AAAA) pour toute création ; `DOC_D()` lit JJ/MM/AAAA et l'ancien JJ/MM. Tous les `new Date(2026, …)`, `'24/09'` et `'26/09'` sont supprimés.
+5. **Blocages** : vérification avant facture (client pro sans SIREN, SIREN invalide, devis sans ligne) ; une facture Émise incomplète propose « Compléter la facture » au lieu de « Transmettre ». L'enregistrement de l'éditeur est refusé si le SIREN est invalide.
+
+### Migration à prévoir côté app
+- Anciennes factures sans `lines` : les garder, les afficher « à compléter » ; elles ne peuvent pas être transmises.
+- Anciennes dates JJ/MM : lues par `DOC_D()`, ou converties une fois en JJ/MM/AAAA au chargement.
+- `cliSiren` absent des anciennes sauvegardes : vide par défaut.
+
+### Reste à faire côté app
+- Générer le XML CII EN 16931 à partir de l'instantané (BT-1, BT-2 en date ISO, BT-47 préfixé `0002` pour un SIRET, BG-23, BG-25, BT-113) et le Factur-X PDF/A-3.
+- Adresse de facturation du client distincte du chantier (à designer si besoin).
+- Toute la connexion à la plateforme décrite dans `PLATEFORME_AGREEE.md` (OAuth2, idempotence, webhooks signés, file hors ligne).
+
+### Tests v14.1 / v14.2
+- [ ] Facture Émise complète : « Transmettre » ; incomplète (sans lignes ou client pro sans SIREN) : « Compléter la facture » ouvre l'éditeur.
+- [ ] Aucun chemin manuel vers Transmise → Acceptée.
+- [ ] Rejetée → « Corriger et réémettre » : même numéro, retour en Émise, motif effacé. Refusée → nouvelle facture `FAC-<année>-NNN` avec `replaces`, l'originale reste Refusée.
+- [ ] Devis 8,5 % + 2,1 % avec remise 5 % → facture : `t85`, `t21`, `ht` identiques à `totals()` au centime.
+- [ ] Éditeur de facture : basculer une ligne en 2,1 % met à jour le libellé et le total TVA.
+- [ ] SIREN `812 453 678` accepté ; `812 453 679` refusé ; 14 chiffres (SIRET) acceptés si la clé est bonne.
+- [ ] Date d'une nouvelle facture = date du jour avec l'année.
+
+---
+
+## Mise à jour v14 : module Équipe (RH), liens entre plannings, justificatifs, confirmation des statuts (2026-09-30)
+
+`totals()` inchangé. Aucune règle de calcul du devis ne bouge. Le module Équipe n'avait pas encore été documenté : cette section le décrit en entier.
+
+### Persistance
+- Clé persistée : `'rh'` (déjà dans `KEEP`). Si `state.rh` est absent, `rhData()` renvoie les données de démo.
+- États non persistés : `rhTab` (team | pt | pl | abs | paie), `rhWk` (-1 | 0), `rhPw` (0 | 1), `rhF`, `rhEmp`, `rhAdd`, `rhOpen`, `rhOblig`, `absF`, `fraisF`, `fraisView`, `stCf`.
+- Événements d'agenda (`events`) : champ optionnel `ch` (clé de chantier), posé à la création d'un projet.
+
+### Modèle `rh`
+```
+staff[]  { id, nom, role, kind: 'dir'|'sal'|'app', contrat, entree, fin?, brut, coef, pin, hab[[l,date,mois]], visite[type,date,mois], epi[[l,date,mois]], outils[] }
+ext[]    { id, nom, org, kind: 'int'|'st', role, fin?, cout?, docs[[l,date,mois]] }
+points[] { id, who, d:'jj/mm/aaaa', ch, h, panier, emp? }        // emp = envoyé par le salarié, à valider
+plan     { 'jj/mm/aaaa' (lundi) : { who: [ch lun … ch ven] } }   // surcharge de RH_DEF
+panier   10.5                                                     // € par repas
+abs[]    { id, who, type, du, au, st: 'Demandée'|'Validée'|'Refusée' }
+frais[]  { id, who, d, l, m, pj?: { src, name, pdf, by: 'sal'|'pat' }, emp? }
+```
+Constantes module : `RH_CH` (chantiers de démo : [libellé, commune, zone, fond, texte]), `RH_DEF` (planning par défaut semaine 0 et 1), `RH_ZONES` (zones BTP Réunion, €/jour), `RH_FD` (texte selon la forme juridique), helpers `RH_D`, `RH_P`, `RH_MON`, `RH_ADD`.
+
+### Onglet Équipe (`s.tab = 'rh'`, 6ᵉ onglet entre Catalogue et Réglages)
+- **Équipe** : obligations de l'employeur selon la forme juridique ; carte « Aujourd'hui » (chantier prévu, état du pointage, rappel WhatsApp) ; échéances à 60 jours (habilitations, visite médicale, EPI, attestations, fin de mission) avec actions « fait » ou e-mail prérempli ; fiches salarié (contrat, taux brut modifiable, coût chargé, habilitations, EPI, code de pointage, « Voir son écran ») ; ajout d'un salarié avec rappel DPAE ; intérimaires et sous-traitants.
+- **Pointage** : heures de la semaine par personne (repère 35 h, alerte > 48 h / semaine ou > 10 h / jour, heures sup.), pointages salarié à valider, formulaire « Ajouter des heures » (Qui, Chantier, Durée, Panier repas), liste par jour.
+- **Planning** : grille lundi–vendredi, semaine en cours / prochaine ; toucher une case fait tourner l'affectation ; les absences validées bloquent la case.
+- **Absences** : demande, validation, refus ; congés payés, maladie, intempéries, formation, sans solde ; rappel caisse de congés BTP.
+- **Paie** (mois en cours) : heures normales, HS 25 % (36ᵉ à 43ᵉ h) et 50 % (au-delà), paniers, indemnités de zone, notes de frais validées, absences ; coût réel de la main-d'œuvre par chantier contre heures vendues ; export CSV et e-mail au comptable.
+- **Écran salarié** (aperçu, `rhe`) : le salarié ne voit que son pointage et ses notes de frais. Tout arrive « à valider ».
+
+### Liens entre les plannings (nouveau)
+Fonctions : `rhChs()`, `rhPlanOn(R, who, date)`, `rhTeamOn(date, R)`, `agendaDay(iso, R)`, `evRow(e)`, `dayVals()`.
+1. **Chantiers dynamiques** : `rhChs()` = `RH_CH` + un chantier par projet créé (`userProj`), libellé = dernier mot du nom du client, placé avant « Dépôt ». Utilisé partout dans `rhVals` (grille, pointage, paie).
+2. **Agenda → équipe** : chaque événement « Chantier » affiche « Équipe : … » (personnes planifiées ce jour-là, absents exclus). Rapprochement par `e.ch`, sinon par le libellé du chantier dans le titre.
+3. **Planning RH → Agenda** : un jour où des personnes sont affectées à un chantier sans événement correspondant crée un événement virtuel (`virt: true`, 07 h 30, « Depuis le planning équipe », non supprimable depuis l'Agenda).
+4. **Pointage patron** : le chantier est prérempli avec l'affectation du jour de la personne choisie ; « prévu : X » à côté du libellé Chantier.
+5. **Accueil** : carte « Aujourd'hui » (même source `agendaDay`) avec équipe par chantier, absents du jour, lien vers l'Agenda.
+6. **Alerte « sans équipe »** : événement « Chantier » en semaine, dans l'horizon du planning (semaine en cours et suivante, à partir d'aujourd'hui), sans personne affectée. Affichée dans l'Agenda (bandeau des 14 prochains jours + bouton « Affecter ») et dans l'onglet Planning.
+
+### Notes de frais avec justificatif (nouveau)
+- Justificatif **obligatoire** : photo ou scan (PNG, JPEG, WebP ou PDF, 3 Mo maximum), `<input type="file" accept="image/*,application/pdf" capture="environment">`, lu en data URL.
+- Patron : « Ajouter la note » refuse l'enregistrement sans justificatif. Une note sans justificatif affiche « Justificatif manquant » et un bouton appareil photo pour l'ajouter ; un compteur l'indique en tête de carte.
+- Salarié : section « Note de frais » dans son écran ; la note arrive `emp: true`, « Photo envoyée par … · à valider », avec Valider / Refuser. Pastille sur l'onglet Paie. La validation exige un justificatif.
+- Seules les notes validées entrent dans la paie et le total.
+- Visionneuse `nfv` (feuille) : image en grand ou téléchargement du PDF, « Remplacer le justificatif ».
+- **Production** : ne pas garder les justificatifs en data URL dans le stockage local (quota). Les envoyer au serveur ou dans IndexedDB, et ne garder qu'une référence dans `pj`. CSP : autoriser `data:` et `blob:` pour les images.
+
+### Confirmation avant changement de statut (nouveau)
+- Toucher une pastille de statut ouvre un menu sous le document au lieu de changer le statut : type et numéro, client, date, montant TTC, statut actuel → suivant, conséquence en une phrase, boutons « Annuler » et « Passer en … ».
+- Appliqué aux trois listes : Accueil › Facture électronique (`pa.facs`, contexte `pa`), Accueil › documents récents (`rec`), Documents (`docs`). Un seul menu ouvert à la fois (`stCf = { no, ctx }`). Implémentation : `_cf(ctx)` dans le map des documents.
+
+### Autres retouches
+- Carte « Ajouter des heures » : trois blocs titrés (Qui, Chantier, Durée), compteur d'heures agrandi, interrupteur panier pleine largeur.
+
+### Report des corrections de l'app (RETOUR_DEV §8.1 et §9.1)
+- **Liens externes** : les 2 appels `window.open` (`draft()` et l'e-mail du comptable) passent déjà `'noopener,noreferrer'`. Rien à reprendre.
+- **TVA en micro-entreprise** (`statsVals`) : `ht = total`, `t85 = t21 = 0` quand `regime === 'micro'`, dans l'écran Facturation comme dans `exportCsv`. Reprend la correction de l'app.
+- **Libellé « IDn »** (`planDiagram`) : `tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage })`, aligné à gauche à droite du trait. Identique à l'app.
+- **Stockage plein** : texte validé, « Stockage plein : les dernières modifications ne sont pas enregistrées. Supprime un plan importé. » Le prototype l'affiche une fois par échec (toast), puis se réarme après une sauvegarde réussie. Garder le stockage IndexedDB de l'app ; la même règle vaut pour les justificatifs des notes de frais. Jauge d'espace dans Réglages : non retenue pour l'instant.
+- **Toujours ouvert** : données réelles (historique, panier moyen, transformation, CSV taux par taux) et icône définitive 512 × 512 + maskable.
+
+### Tests v14
+- [ ] Planning semaine prochaine : « Lun · M. Grondin — clôture chantier » est listé sans équipe ; l'Agenda affiche « 1 chantier sans équipe » et le bouton « Affecter » ouvre le Planning sur la bonne semaine.
+- [ ] Affecter quelqu'un sur Grondin ce lundi : l'alerte disparaît dans le Planning et l'Agenda, l'événement affiche « Équipe : … ».
+- [ ] Un jour avec des affectations sans événement : l'Agenda montre l'événement « Depuis le planning équipe », sans bouton supprimer.
+- [ ] Une absence validée retire la personne de l'équipe affichée (Agenda, Accueil, carte Aujourd'hui).
+- [ ] Créer un projet : son chantier apparaît dans la grille Planning, le pointage et l'événement d'agenda lié.
+- [ ] Pointage patron : choisir Kévin préremplit son chantier du jour ; « prévu : … » est juste.
+- [ ] Accueil : la carte « Aujourd'hui » liste les événements du jour avec l'équipe ; toucher une ligne ouvre l'Agenda (ou le Planning si personne n'est affecté).
+- [ ] Note de frais patron sans justificatif : refusée avec « Joins la photo ou le scan du justificatif » ; avec une image : « Justificatif joint », vignette, visionneuse.
+- [ ] Note envoyée depuis l'écran salarié : « à valider », hors total ; Valider l'ajoute au total et à la paie ; Refuser la supprime.
+- [ ] Fichier de plus de 3 Mo ou autre qu'une image ou un PDF : refusé avec message.
+- [ ] Statut : toucher une pastille ouvre le récapitulatif ; Annuler ne change rien ; confirmer 4 fois revient au statut de départ ; le toucher ne déclenche pas l'ouverture du document.
 
 ---
 

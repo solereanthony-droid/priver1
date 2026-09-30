@@ -73,7 +73,7 @@ describe('App', () => {
 
   it('Échap ferme l\'aide de saisie', () => {
     const { host, unmount } = mount(React.createElement(App));
-    act(() => host.querySelectorAll('nav button')[4].click());
+    act(() => [...host.querySelectorAll('nav button')].find(b => /Réglages/.test(b.textContent)).click());
     const help = host.querySelector('button[aria-label="Où trouver cette information ?"]');
     act(() => help.click());
     expect(host.querySelector('[data-screen-label="Aide saisie"]')).not.toBeNull();

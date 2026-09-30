@@ -59,7 +59,7 @@ export function validateInvoice(inv) {
   if (!s.addr || !s.addr.postcode || !s.addr.city) e.push('Adresse du vendeur incomplète (code postal, ville).');
   if (b.type !== 'pro') e.push('Client particulier : la facture électronique ne concerne que les clients professionnels (B2B). Pour un particulier, prévoir le e-reporting.');
   if (!b.name) e.push('Nom du client manquant.');
-  if (!validSiren(b.siren)) e.push('SIREN du client absent ou invalide (clé de Luhn).');
+  if (!(validSiren(b.siren) || validSiret(b.siren))) e.push('SIREN (ou SIRET) du client absent ou invalide (clé de Luhn).');
   if (!Array.isArray(inv.lines) || !inv.lines.length) e.push('Au moins une ligne est requise.');
   else inv.lines.forEach((l, i) => {
     if (!l.name) e.push(`Ligne ${i + 1} : désignation manquante.`);
@@ -83,7 +83,10 @@ export function validateInvoice(inv) {
 export function buildCII(inv) {
   const T = computeTotals(inv), s = inv.seller, b = inv.buyer, d = x => x.replace(/-/g, '');
   const siren = digits(s.siret).slice(0, 9);
-  const party = (p, legalId, vatId) => [
+  const buyerId = digits(b.siren), buyerSiren = buyerId.slice(0, 9), buyerSiret = buyerId.length === 14 ? buyerId : '';
+  // SIREN : identifiant légal ISO 6523 « 0002 » ; SIRET : « 0009 » (GlobalID) ; adresse électronique : « 0225 ».
+  const party = (p, legalId, vatId, siret = '') => [
+    siret ? `<ram:GlobalID schemeID="0009">${siret}</ram:GlobalID>` : '',
     `<ram:Name>${esc(p.name)}</ram:Name>`,
     legalId ? `<ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${legalId}</ram:ID></ram:SpecifiedLegalOrganization>` : '',
     `<ram:PostalTradeAddress>${p.addr?.postcode ? `<ram:PostcodeCode>${esc(p.addr.postcode)}</ram:PostcodeCode>` : ''}${p.addr?.line ? `<ram:LineOne>${esc(p.addr.line)}</ram:LineOne>` : ''}${p.addr?.city ? `<ram:CityName>${esc(p.addr.city)}</ram:CityName>` : ''}<ram:CountryID>${esc(p.addr?.country || 'FR')}</ram:CountryID></ram:PostalTradeAddress>`,
@@ -115,7 +118,7 @@ export function buildCII(inv) {
     `<rsm:ExchangedDocument><ram:ID>${esc(inv.no)}</ram:ID><ram:TypeCode>380</ram:TypeCode><ram:IssueDateTime><udt:DateTimeString format="102">${d(inv.issueDate)}</udt:DateTimeString></ram:IssueDateTime>` +
     (T.micro ? `<ram:IncludedNote><ram:Content>${FRANCHISE}</ram:Content></ram:IncludedNote>` : '') + '</rsm:ExchangedDocument>' +
     '<rsm:SupplyChainTradeTransaction>' + lineXml +
-    `<ram:ApplicableHeaderTradeAgreement><ram:SellerTradeParty>${party(s, siren, vatId)}</ram:SellerTradeParty><ram:BuyerTradeParty>${party(b, digits(b.siren), '')}</ram:BuyerTradeParty></ram:ApplicableHeaderTradeAgreement>` +
+    `<ram:ApplicableHeaderTradeAgreement><ram:SellerTradeParty>${party(s, siren, vatId)}</ram:SellerTradeParty><ram:BuyerTradeParty>${party(b, buyerSiren, '', buyerSiret)}</ram:BuyerTradeParty></ram:ApplicableHeaderTradeAgreement>` +
     '<ram:ApplicableHeaderTradeDelivery/>' +
     '<ram:ApplicableHeaderTradeSettlement><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>' + vatXml + allowXml +
     (inv.dueDate ? `<ram:SpecifiedTradePaymentTerms><ram:DueDateDateTime><udt:DateTimeString format="102">${d(inv.dueDate)}</udt:DateTimeString></ram:DueDateDateTime></ram:SpecifiedTradePaymentTerms>` : '') +

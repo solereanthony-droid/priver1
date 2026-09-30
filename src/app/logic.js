@@ -9,6 +9,23 @@ const DCLogic = makeDCLogic(template, { regime: 'assujetti', acompte: 30, paName
 
 
 
+const RH_D = d => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+const RH_P = t => { const [a, b, c] = String(t).split('/').map(Number); return new Date(c || 2026, (b || 1) - 1, a || 1); };
+const RH_MON = off => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7 + off * 7); return d; };
+const RH_ADD = (t, m) => { const d = RH_P(t); d.setMonth(d.getMonth() + m); return d; };
+const RH_CH = { filaos: ['Filaos', 'Saint-Pierre', '5', 'var(--color-accent-2-300)', 'var(--color-accent-2-900)'], hoarau: ['Hoarau', 'Le Tampon', '5', 'var(--color-accent-200)', 'var(--color-accent-900)'], grondin: ['Grondin', 'Sainte-Marie', '4', 'var(--color-accent-400)', 'var(--color-accent-900)'], depot: ['Dépôt', 'Saint-Paul', '—', 'var(--color-neutral-300)', 'var(--color-neutral-900)'] };
+const RH_DEF = { 0: { j: ['filaos', 'grondin', 'filaos', 'hoarau', 'depot'], k: ['filaos', 'filaos', 'filaos', 'hoarau', 'hoarau'], m: ['filaos', 'filaos', 'filaos', 'hoarau', 'hoarau'], i1: ['filaos', 'filaos', 'filaos', 'filaos', 'filaos'] },
+      1: { j: ['hoarau', 'hoarau', 'grondin', 'depot', 'depot'], k: ['hoarau', 'hoarau', 'hoarau', 'grondin', 'filaos'], m: ['filaos', 'filaos', 'filaos', 'filaos', 'filaos'], i1: ['hoarau', 'hoarau', 'off', 'off', 'off'] } };
+const RH_ZONES = [['1A', '0 à 5 km', 0.9], ['1B', '5 à 10 km', 1.8], ['2', '10 à 20 km', 3.6], ['3', '20 à 30 km', 5.4], ['4', '30 à 40 km', 7.2], ['5', '40 à 50 km', 9.0]];
+const RH_FD = {
+  ei: ['Tu es travailleur non salarié', 'Tu n’apparais pas dans l’export paie. Tes heures pointées comptent quand même dans le coût réel des chantiers, au coût horaire du calcul de marge.'],
+  micro: ['Tu es travailleur non salarié (micro)', 'Tu peux embaucher, mais les salaires ne se déduisent pas : ils sortent d’un chiffre d’affaires plafonné à 83 600 €. Surveille la marge chantier par chantier.'],
+  eurl: ['Gérant associé unique : non salarié', 'Tu n’apparais pas dans l’export paie. Ta rémunération se décide avec ton comptable.'],
+  sarl: ['Gérant : non salarié si majoritaire, assimilé salarié sinon', 'Gérant minoritaire ou égalitaire : ta rémunération passe par un bulletin de paie, signale-le à ton comptable.'],
+  sasu: ['Président : assimilé salarié', 'Ta rémunération passe par un bulletin de paie, sans assurance chômage ni heures supplémentaires. Tes heures ne sont pas exportées.'],
+  sas: ['Président : assimilé salarié', 'Ta rémunération passe par un bulletin de paie, sans assurance chômage ni heures supplémentaires. Tes heures ne sont pas exportées.'],
+  scop: ['Dirigeant salarié de la coopérative', 'Tu es sur la paie comme les associés salariés : ta rémunération est transmise au comptable.'],
+};
 const PLAN_REF = { 16: 'SCH-A9N21024', 20: 'SCH-A9N21025', 32: 'SCH-A9N21027' };
 const SECTION = { 2: '1,5', 10: '1,5', 16: '1,5', 20: '2,5', 32: '6' };
 const idNeed = (p0, d) => { const cs = p0.circuits.filter(c => c.diff === d.id), full = cs.filter(c => ['chauffage', 'chauffeeau', 'irve'].includes(circNature(c))).reduce((a, c) => a + c.cal, 0), half = cs.filter(c => !['chauffage', 'chauffeeau', 'irve'].includes(circNature(c))).reduce((a, c) => a + c.cal, 0); return { full, half, need: full + half / 2 }; };
@@ -268,12 +285,16 @@ function demoLines() {
 }
 
 const DEVIS_ST = ['Brouillon', 'Envoyé', 'Accepté', 'Facturé'];
-const FAC_ST = ['Émise', 'Transmise', 'Acceptée', 'Encaissée'];
+const TODAY = () => new Date().toLocaleDateString('fr-FR');
+const DOC_D = x => { const p = String(x || '').split('/').map(Number), now = new Date(); if (!p[0] || !p[1]) return now; let y = p[2] || now.getFullYear(); const d = new Date(y, p[1] - 1, p[0]); if (!p[2] && d - now > 30 * 864e5) d.setFullYear(y - 1); return d; };
+const SIREN_OK = v => { const d = String(v || '').replace(/\D/g, ''); if (d.length !== 9 && d.length !== 14) return false; let t = 0; [...d].reverse().forEach((c, i) => { let n = +c; if (i % 2) { n *= 2; if (n > 9) n -= 9; } t += n; }); return t % 10 === 0; };
+const FAC_ST = ['Émise', 'Transmise', 'Acceptée', 'Encaissée', 'Rejetée', 'Refusée', 'En litige'];
 const TONE = {
   Brouillon: ['var(--color-neutral-300)', 'var(--color-neutral-900)'],
   Envoyé: ['var(--color-accent-200)', 'var(--color-accent-900)'], Émise: ['var(--color-accent-200)', 'var(--color-accent-900)'], Transmise: ['var(--color-accent-200)', 'var(--color-accent-900)'],
   Accepté: ['var(--color-accent-2-300)', 'var(--color-accent-2-900)'], Acceptée: ['var(--color-accent-2-300)', 'var(--color-accent-2-900)'],
   Facturé: ['var(--color-accent-2-700)', 'var(--color-neutral-100)'], Encaissée: ['var(--color-accent-2-700)', 'var(--color-neutral-100)'],
+  Rejetée: ['var(--color-accent-700)', 'var(--color-neutral-100)'], Refusée: ['var(--color-accent-700)', 'var(--color-neutral-100)'], 'En litige': ['var(--color-accent-300)', 'var(--color-accent-900)'],
 };
 
 class Component extends DCLogic {
@@ -286,17 +307,18 @@ class Component extends DCLogic {
     q: '', fam: 'Tout', docTab: 'devis', devisSeq: 42, facSeq: 29,
     docs: [
       { no: LIVE_NO, type: 'devis', live: true, client: 'M. et Mme Payet — rénovation tableau, Saint-Paul', date: '24/09', st: 0 },
-      { no: 'DEV-2026-040', type: 'devis', client: 'Mme Hoarau — cuisine, Le Tampon', date: '19/09', st: 1, ttc: 1284.5, marge: 27 },
-      { no: 'DEV-2026-039', type: 'devis', client: 'SCI Les Filaos — Saint-Pierre', date: '11/09', st: 2, ttc: 3910, marge: 24 },
-      { no: 'DEV-2026-038', type: 'devis', client: 'M. Grondin — Sainte-Marie', date: '02/09', st: 3, ttc: 2146.8, marge: 22 },
-      { no: 'FAC-2026-028', type: 'fac', client: 'SCI Les Filaos — acompte 30 %', date: '15/09', st: 1, ttc: 1173 },
-      { no: 'FAC-2026-027', type: 'fac', client: 'M. Grondin — Sainte-Marie', date: '08/09', st: 3, ttc: 2146.8 },
+      { no: 'DEV-2026-040', type: 'devis', client: 'Mme Hoarau — cuisine, Le Tampon', date: '19/09/2026', st: 1, ttc: 1284.5, marge: 27 },
+      { no: 'DEV-2026-039', type: 'devis', client: 'SCI Les Filaos — Saint-Pierre', date: '11/09/2026', st: 2, ttc: 3910, marge: 24 },
+      { no: 'DEV-2026-038', type: 'devis', client: 'M. Grondin — Sainte-Marie', date: '02/09/2026', st: 3, ttc: 2146.8, marge: 22 },
+      { no: 'FAC-2026-028', type: 'fac', client: 'SCI Les Filaos — acompte 30 %', date: '15/09/2026', st: 1, ttc: 1173, pro: true, siren: '812 453 678' },
+      { no: 'FAC-2026-027', type: 'fac', client: 'M. Grondin — Sainte-Marie', date: '08/09/2026', st: 3, ttc: 2146.8 },
+      { no: 'FAC-2026-026', type: 'fac', client: 'Mme Técher — Saint-Paul', date: '01/09/2026', st: 4, ttc: 684, pro: true, siren: '', motif: 'SIRET du client absent de l’annuaire' },
     ],
   };
   scrollRef = React.createRef();
 
   static KEY = 'btp974-mobile-v1';
-  static KEEP = ['lines','client','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
+  static KEEP = ['lines','client','cliSiren','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
   componentDidMount() {
     this._bipH = e => { e.preventDefault(); this._bip = e; }; window.addEventListener('beforeinstallprompt', this._bipH);
     if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) this.setState({ installed: true });
@@ -436,9 +458,9 @@ class Component extends DCLogic {
 
   newDevis() {
     const s = this.state, T = this.totals(), no = docNo('DEV', s.devisSeq);
-    const docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), ttc: T.ttc, marge: Math.round(T.pct) } : x);
-    this.setState({ docs: [{ no, type: 'devis', live: true, client: 'Nouveau client', date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0 }, ...docs],
-      devisSeq: s.devisSeq + 1, lines: [], client: '', chantier: '', acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' });
+    const docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
+    this.setState({ docs: [{ no, type: 'devis', live: true, client: 'Nouveau client', date: TODAY(), st: 0 }, ...docs],
+      devisSeq: s.devisSeq + 1, lines: [], client: '', cliSiren: '', chantier: '', acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' });
     this.go('devis');
     this.flash(`${no} créé`);
   }
@@ -446,17 +468,17 @@ class Component extends DCLogic {
   openDevis(no) {
     const s = this.state, T = this.totals(), d = s.docs.find(x => x.no === no);
     if (d.live) return this.go('devis');
-    let docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), ttc: T.ttc, marge: Math.round(T.pct) } : x);
+    let docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
     const lines0 = d.lines || this.genLines(d.ttc);
     const [cl, ch] = d.client.split(' — ');
     if (d.st < 2) {
       docs = docs.map(x => x.no === no ? { ...x, live: true } : x);
-      this.setState({ docs, lines: lines0.map(l => ({ ...l })), client: cl, chantier: ch || '', editNo: no, versionOf: d.versionOf || null, baseCount: d.baseCount || 0 });
+      this.setState({ docs, lines: lines0.map(l => ({ ...l })), client: cl, cliSiren: d.siren || '', ...(d.pro != null ? { clientType: d.pro ? 'pro' : 'part' } : {}), chantier: ch || '', editNo: no, versionOf: d.versionOf || null, baseCount: d.baseCount || 0 });
     } else {
       const root = d.versionOf || no, n = s.docs.filter(x => x.versionOf === root).length + 2, nno = `${root}-V${n}`;
       const lines = lines0.map(l => ({ ...l, id: UID++, puTxt: undefined, orig: { qty: l.qty, pu: l.pu } }));
-      docs = [{ no: nno, type: 'devis', live: true, client: d.client, date: '26/09', st: 0, versionOf: root, baseCount: lines.length }, ...docs];
-      this.setState({ docs, lines, client: cl, chantier: ch || '', editNo: nno, versionOf: root, baseCount: lines.length });
+      docs = [{ no: nno, type: 'devis', live: true, client: d.client, siren: d.siren, pro: d.pro, date: TODAY(), st: 0, versionOf: root, baseCount: lines.length }, ...docs];
+      this.setState({ docs, lines, client: cl, cliSiren: d.siren || '', chantier: ch || '', editNo: nno, versionOf: root, baseCount: lines.length });
       this.flash(`${d.status === 'Facturé' ? 'Devis facturé' : 'Devis accepté'} : version ${n} créée`);
     }
     this.go('devis');
@@ -466,8 +488,8 @@ class Component extends DCLogic {
     const d = this.state.docs.find(x => x.no === no);
     const ht = r2((d.ttc || 0) / (this.state.regime === 'micro' ? 1 : 1.085));
     const lines = (d.lines || [{ name: d.client.split(' — ')[1] ? 'Travaux : ' + d.client.split(' — ')[1] : 'Travaux selon devis', qty: 1, pu: ht }])
-      .map(l => ({ id: UID++, name: l.name, qtyTxt: String(l.qty).replace('.', ','), puTxt: String(l.pu).replace('.', ',') }));
-    this.setState({ facEdit: { no, client: d.client, lines, acPct: d.acPct ?? (d.acompte ?? 0) } });
+      .map(l => ({ id: UID++, name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva ?? 8.5, qtyTxt: String(l.qty).replace('.', ','), puTxt: String(l.pu).replace('.', ',') }));
+    this.setState({ facEdit: { no, client: d.client, siren: d.siren || '', pro: !!d.pro, rem: d.rem || 0, lines, acPct: d.acPct ?? (d.acompte ?? 0) } });
   }
 
   facVals() {
@@ -477,19 +499,21 @@ class Component extends DCLogic {
     const num = t => parseFloat(String(t).replace(',', '.')) || 0;
     const setE = patch => this.setState(st => ({ facEdit: { ...st.facEdit, ...patch } }));
     const setL = (id, patch) => this.setState(st => ({ facEdit: { ...st.facEdit, lines: st.facEdit.lines.map(l => l.id === id ? { ...l, ...patch } : l) } }));
-    const ht = r2(e.lines.reduce((a, l) => a + num(l.qtyTxt) * num(l.puTxt), 0));
-    const tva = micro ? 0 : r2(ht * 0.085), ttc = r2(ht + tva), acP = e.acPct ?? 0, acA = r2(ttc * acP / 100);
+    const rem = e.rem || 0, base = { 8.5: 0, 2.1: 0 }; e.lines.forEach(l => { base[l.tva === 2.1 ? 2.1 : 8.5] += r2(num(l.qtyTxt) * num(l.puTxt)); });
+    const ht = r2((base[8.5] + base[2.1]) * (1 - rem)), t85 = micro ? 0 : r2(base[8.5] * (1 - rem) * 0.085), t21 = micro ? 0 : r2(base[2.1] * (1 - rem) * 0.021);
+    const tva = r2(t85 + t21), ttc = r2(ht + tva), sirOk = SIREN_OK(e.siren), sirErr = e.siren && !sirOk ? 'SIREN (9 chiffres) ou SIRET (14 chiffres) invalide.' : e.pro && !e.siren ? 'Obligatoire pour un client professionnel.' : '', acP = e.acPct ?? 0, acA = r2(ttc * acP / 100);
     const status = FAC_ST[d.st], locked = d.st >= 1;
     return {
       facOpen: true,
       fe: {
         no: e.no, date: d.date, status, bg: TONE[status][0], fg: TONE[status][1], locked, pa: this.props.paName || 'FactuPro 974',
-        client: e.client, onClient: ev => setE({ client: ev.target.value }),
-        lines: e.lines.map(l => ({ ...l, montant: fmt(num(l.qtyTxt) * num(l.puTxt)),
+        client: e.client, onClient: ev => setE({ client: ev.target.value }), siren: e.siren, onSiren: ev => setE({ siren: ev.target.value }), sirErr, hasSirErr: !!sirErr,
+        pro: e.pro, proTxt: e.pro ? 'Client professionnel' : 'Client particulier', togglePro: () => setE({ pro: !e.pro }), proJ: e.pro ? 'flex-end' : 'flex-start', proBg: e.pro ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)',
+        lines: e.lines.map(l => ({ ...l, montant: fmt(num(l.qtyTxt) * num(l.puTxt)), tvaTxt: micro ? '' : 'TVA ' + String(l.tva === 2.1 ? 2.1 : 8.5).replace('.', ',') + ' %', showTva: !micro, onTva: () => setL(l.id, { tva: l.tva === 2.1 ? 8.5 : 2.1 }),
           onName: ev => setL(l.id, { name: ev.target.value }), onQty: ev => setL(l.id, { qtyTxt: ev.target.value }), onPu: ev => setL(l.id, { puTxt: ev.target.value }),
           onDel: () => setE({ lines: e.lines.filter(x => x.id !== l.id) }) })),
-        addLine: () => setE({ lines: [...e.lines, { id: UID++, name: 'Nouvelle ligne', qtyTxt: '1', puTxt: '0' }] }),
-        ht: fmt(ht), tva: micro ? 'non applicable' : fmt(tva), tvaLabel: micro ? 'TVA (293 B)' : 'TVA 8,5 %', ttc: fmt(ttc),
+        addLine: () => setE({ lines: [...e.lines, { id: UID++, name: 'Nouvelle ligne', kind: 'mo', unit: 'u', tva: 8.5, qtyTxt: '1', puTxt: '0' }] }),
+        ht: fmt(ht), tva: micro ? 'non applicable' : fmt(tva), tvaLabel: micro ? 'TVA (293 B)' : t21 && t85 ? 'TVA 8,5 % + 2,1 %' : t21 ? 'TVA 2,1 %' : 'TVA 8,5 %', ttc: fmt(ttc),
         ac: this.acCtl(acP, v => setE({ acPct: v })), acTxt: acP ? fmt(acA) : 'Aucun acompte', hasAc: acP > 0,
         acRow: `Acompte ${acP} % déduit`, acAmt: '− ' + fmt(acA), net: fmt(ttc - acA),
         saveLabel: locked ? 'Créer la facture rectificative' : 'Enregistrer les modifications',
@@ -497,13 +521,15 @@ class Component extends DCLogic {
         hasPlans: this.plans().some(p => p.facNo === e.no),
         close: () => this.setState({ facEdit: null }),
         save: () => {
-          const lines = e.lines.map(l => ({ name: l.name, qty: num(l.qtyTxt), pu: num(l.puTxt) }));
+          if (sirErr) return this.flash(sirErr);
+          const lines = e.lines.map(l => ({ name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva === 2.1 ? 2.1 : 8.5, qty: num(l.qtyTxt), pu: num(l.puTxt) }));
+          const fx = { client: e.client, siren: e.siren, pro: e.pro, lines, rem, ht, t85, t21, micro, ttcFull: ttc, ttc: r2(ttc - acA), acPct: acP };
           if (!locked) {
-            this.setState(st => ({ facEdit: null, docs: st.docs.map(x => x.no === e.no ? { ...x, client: e.client, lines, ttc, acPct: acP } : x) }));
+            this.setState(st => ({ facEdit: null, docs: st.docs.map(x => x.no === e.no ? { ...x, ...fx } : x) }));
             this.flash(`${e.no} mise à jour`);
           } else {
             const nno = docNo('FAC', s.facSeq);
-            this.setState(st => ({ facEdit: null, facSeq: st.facSeq + 1, docs: [{ no: nno, type: 'fac', client: e.client, date: '26/09', st: 0, ttc, lines, acPct: acP }, ...st.docs] }));
+            this.setState(st => ({ facEdit: null, facSeq: st.facSeq + 1, docs: [{ no: nno, type: 'fac', date: TODAY(), st: 0, ...fx, replaces: e.no }, ...st.docs] }));
             this.flash(`Avoir + ${nno} créés, à transmettre`);
           }
         },
@@ -513,7 +539,7 @@ class Component extends DCLogic {
 
   paVals(facs) {
     const s = this.state, conn = s.paConn ?? 'ok', ago = s.paAgo ?? 4;
-    const n = i => facs.filter(f => f.st >= i).length;
+    const n = i => facs.filter(f => f.st >= i && f.st <= 3).length;
     const map = {
       ok: { label: 'Connectée', sub: ago ? `il y a ${ago} min` : 'à l\u2019instant', dot: 'var(--color-accent-2-700)', halo: 'var(--color-accent-2-300)', action: 'Synchroniser' },
       sync: { label: 'Synchronisation…', sub: 'en cours', dot: 'var(--color-accent-500)', halo: 'var(--color-accent-200)', action: '…' },
@@ -530,8 +556,8 @@ class Component extends DCLogic {
     return { ...map, busy: conn === 'sync' || !!s.offline, name: this.props.paName || 'FactuPro 974',
       onAction: sync,
       tally: `${n(1)} / ${facs.length} transmises`,
-      facs: facs.slice(0, 3).map(f => ({ ...f, onOpen: () => this.openFac(f.no) })),
-      steps: FAC_ST.map(l => ({ l, c: TONE[l][0] })),
+      facs: facs.slice(0, 3).map(f => ({ ...f, ...(f._cf ? f._cf('pa') : {}), onOpen: () => this.openFac(f.no) })),
+      steps: FAC_ST.slice(0, 4).map(l => ({ l, c: TONE[l][0] })),
     };
   }
 
@@ -685,6 +711,7 @@ class Component extends DCLogic {
       htTxt: fmt0(ht), encTxt: fmt0(total - wait), waitTxt: fmt0(wait), goEnc: () => this.go('enc'),
       exportCsv: () => {
         const n = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
+        // DÉMO : ratios fixes par mois. En production, sommer la TVA des lignes de chaque facture, taux par taux (0 en micro-entreprise).
         const lines = [['Mois', 'CA TTC', 'CA HT', 'TVA 8,5 %', 'TVA 2,1 %', 'Encaissé', 'En attente'].join(';'),
           ...sel.map((r, i) => { const hh = micro ? r[1] : r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(micro ? 0 : hh * 0.085 * 0.92), n(micro ? 0 : hh * 0.021 * 0.08), n(r[1] - r[2]), n(r[2])].join(';'); })];
         const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }));
@@ -786,23 +813,64 @@ class Component extends DCLogic {
     ];
   }
 
+  rhChs() {
+    const out = { ...RH_CH }, dep = out.depot; delete out.depot;
+    const pal = [['var(--color-accent-2-200)', 'var(--color-accent-2-900)'], ['var(--color-accent-300)', 'var(--color-accent-900)'], ['var(--color-neutral-200)', 'var(--color-neutral-900)']];
+    Object.entries(this.state.userProj || {}).forEach(([id, p], i) => { const w = String(p.client || 'Chantier').trim().split(/\s+/); out[id] = [w[w.length - 1], String(p.addr || '').split(',').pop().replace(/\d+/g, '').trim() || 'La Réunion', p.zone || '—', pal[i % 3][0], pal[i % 3][1]]; });
+    out.depot = dep; return out;
+  }
+  rhPlanOn(R, who, d) {
+    const i = (d.getDay() + 6) % 7; if (i > 4) return 'off';
+    const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i), wk = Math.round((mon - RH_MON(0)) / (7 * 864e5));
+    return ((R.plan[RH_D(mon)] || {})[who] || [])[i] ?? ((RH_DEF[wk] || {})[who] || [])[i] ?? 'off';
+  }
+  rhTeamOn(d, R) {
+    R = R || this.rhData(); const out = {};
+    [...R.staff, ...R.ext.filter(e => e.kind === 'int')].forEach(p => { if (R.abs.some(a => a.who === p.id && a.st === 'Validée' && d >= RH_P(a.du) && d <= RH_P(a.au))) return;
+      const k = this.rhPlanOn(R, p.id, d); if (k !== 'off') (out[k] = out[k] || []).push(p.nom.split(' ')[0]); });
+    return out;
+  }
+  agendaDay(iso, R) {
+    const d = new Date(iso + 'T00:00:00'), CH = this.rhChs(), team = this.rhTeamOn(d, R), AP = this.allProj(), t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    const inH = d >= t0 && d < RH_MON(2) && d.getDay() % 6 !== 0;
+    const evCh = e => e.ch && CH[e.ch] ? e.ch : Object.keys(CH).find(k => k !== 'depot' && String(e.title).includes(CH[k][0]));
+    const real = this.events().filter(e => e.date === iso), used = new Set(real.filter(e => e.kind === 'chantier').map(evCh).filter(Boolean));
+    const virt = Object.keys(team).filter(k => k !== 'depot' && CH[k] && !used.has(k)).map(k => ({ id: 'rh-' + iso + k, date: iso, time: '07:30', title: ((AP[k] || {}).client || CH[k][0]) + ' — chantier', place: CH[k][1], kind: 'chantier', ch: k, virt: true }));
+    return [...real, ...virt].map(e => { const k = e.kind === 'chantier' ? evCh(e) : null, names = k ? team[k] || [] : []; return { ...e, names, noTeam: !!k && !names.length && inH }; }).sort((a, b) => a.time.localeCompare(b.time));
+  }
+  evRow(e) {
+    const KC = { chantier: 'var(--color-accent-2-700)', visite: 'var(--color-accent-600)', fourn: 'var(--color-neutral-700)' }, KL = { chantier: 'Chantier', visite: 'Visite / devis', fourn: 'Fournisseur' };
+    const d = new Date(e.date + 'T00:00:00'), mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7), wk = Math.round((mon - RH_MON(0)) / (7 * 864e5));
+    const assign = () => { this.setState({ rhTab: 'pl', rhPw: wk === 1 ? 1 : 0 }); this.go('rh'); };
+    const openCal = () => { this.setState({ toolOpen: 'planning', calDay: e.date, calMonth: [d.getFullYear(), d.getMonth()] }); this.go('outil'); };
+    return { ...e, time: e.time.replace(':', ' h '), c: KC[e.kind], kindLabel: KL[e.kind], hasTeam: e.names.length > 0, team: 'Équipe : ' + e.names.join(', '), virt: !!e.virt, canDel: !e.virt, assign,
+      sub: e.noTeam ? 'Personne n’est affecté' : e.names.length ? 'Équipe : ' + e.names.join(', ') : KL[e.kind] + ' · ' + e.place, subFg: e.noTeam ? 'var(--color-accent-800)' : e.names.length ? 'var(--color-accent-2-800)' : 'var(--color-neutral-700)',
+      onTap: e.noTeam ? assign : openCal, onDel: () => this.setState({ events: this.events().filter(x => x.id !== e.id) }) };
+  }
+  dayVals() {
+    if (this.state.tab !== 'home') return { day: { items: [] } };
+    const t = new Date(); t.setHours(0, 0, 0, 0); const iso = this.iso(t), R = this.rhData(), items = this.agendaDay(iso, R).map(e => this.evRow(e));
+    const abs = [...R.staff, ...R.ext.filter(e => e.kind === 'int')].map(p => { const a = R.abs.find(a => a.who === p.id && a.st === 'Validée' && t >= RH_P(a.du) && t <= RH_P(a.au)); return a ? p.nom.split(' ')[0] + ' (' + a.type.toLowerCase() + ')' : null; }).filter(Boolean);
+    return { day: { l: t.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }), items, empty: !items.length, hasAbs: abs.length > 0, absTxt: 'Absent : ' + abs.join(', '),
+      open: () => { this.setState({ toolOpen: 'planning', calDay: iso, calMonth: [t.getFullYear(), t.getMonth()] }); this.go('outil'); } } };
+  }
   upcoming() { const t = this.iso(new Date()); return this.events().filter(e => e.date >= t).length; }
   iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
   calVals() {
     const s = this.state;
-    if (!(s.tab === 'outil' && s.toolOpen === 'planning')) return { cal: { show: false, cells: [], events: [], kinds: [], legend: [] } };
+    if (!(s.tab === 'outil' && s.toolOpen === 'planning')) return { cal: { show: false, cells: [], events: [], kinds: [], legend: [], warn: [] } };
     const today = new Date(), tIso = this.iso(today);
     const sel = s.calDay || tIso;
     const [vy, vm] = s.calMonth || [today.getFullYear(), today.getMonth()];
     const KC = { chantier: 'var(--color-accent-2-700)', visite: 'var(--color-accent-600)', fourn: 'var(--color-neutral-700)' };
     const KL = { chantier: 'Chantier', visite: 'Visite / devis', fourn: 'Fournisseur' };
-    const evs = this.events();
+    const R = this.rhData(), dayOf = {}, dayEv = iso => dayOf[iso] || (dayOf[iso] = this.agendaDay(iso, R));
     const first = new Date(vy, vm, 1), start = (first.getDay() + 6) % 7, days = new Date(vy, vm + 1, 0).getDate();
     const n = Math.ceil((start + days) / 7) * 7, cells = [];
     for (let i = 0; i < n; i++) {
       const d = new Date(vy, vm, 1 - start + i), iso = this.iso(d), inM = d.getMonth() === vm;
-      const de = evs.filter(e => e.date === iso), isSel = iso === sel, isT = iso === tIso;
+      const de = dayEv(iso), isSel = iso === sel, isT = iso === tIso;
       cells.push({ d: d.getDate(), aria: DF_LONG.format(d),
         bg: isSel ? 'var(--color-neutral-900)' : 'transparent', fg: isSel ? 'var(--color-neutral-100)' : 'var(--color-text)',
         op: inM ? 1 : 0.35, ring: isT && !isSel ? 'inset 0 0 0 2px var(--color-accent-700)' : 'none',
@@ -819,9 +887,11 @@ class Component extends DCLogic {
       goToday: () => this.setState({ calDay: tIso, calMonth: [today.getFullYear(), today.getMonth()] }),
       dayLabel: selD.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
       dayShort: selD.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
-      events: evs.filter(e => e.date === sel).sort((a, b) => a.time.localeCompare(b.time)).map(e => ({ ...e, time: e.time.replace(':', ' h '), c: KC[e.kind], kindLabel: KL[e.kind],
-        onDel: () => this.setState({ events: this.events().filter(x => x.id !== e.id) }) })),
-      empty: !evs.some(e => e.date === sel),
+      events: dayEv(sel).map(e => this.evRow(e)),
+      empty: !dayEv(sel).length,
+      ...(() => { const warn = []; for (let i = 0; i < 14; i++) { const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i), di = this.iso(d);
+        dayEv(di).filter(e => e.noTeam).forEach(e => warn.push({ t: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + e.title, onPick: () => this.setState({ calDay: di, calMonth: [d.getFullYear(), d.getMonth()] }) })); }
+        return { warn, hasWarn: warn.length > 0, warnTitle: warn.length + ' chantier' + (warn.length > 1 ? 's' : '') + ' sans équipe', openPl: () => { this.setState({ rhTab: 'pl', rhPw: 0 }); this.go('rh'); } }; })(),
       legend: Object.keys(KC).map(k => ({ l: KL[k], c: KC[k] })),
       newTitle: s.newTitle || '', onTitle: e => this.setState({ newTitle: e.target.value }),
       newTime: s.newTime || '08:00', onTime: e => this.setState({ newTime: e.target.value }), tp: this.timePick(s.newTime || '08:00', v => this.setState({ newTime: v })),
@@ -1283,8 +1353,8 @@ class Component extends DCLogic {
 
   frameVals() {
     const s = this.state, wide = !!s.wideOn, dark = s.themePref === 'dark' || (s.themePref === 'auto' && s.sysDark);
-    const fr = wide ? { wide: true, phone: false, op: '0', w: '100vw', h: '100vh', r: '0', p: '0', ir: '0', dir: 'row-reverse', sp: '0 max(0px, calc((100% - 760px) / 2))',
-        nbt: 'none', nbr: '1px solid var(--color-divider)', nw: '248px', np: '28px 14px', nc: '1fr', ng: '4px', bd: 'row', bj: 'flex-start', bgap: '10px', bp: '0 8px', bf: '15px', sheetW: '560px', barL: 'calc(248px + max(12px, (100% - 248px - 760px) / 2 + 12px))', barR: 'max(12px, calc((100% - 248px - 760px) / 2 + 12px))', barB: '24px' }
+    const fr = wide ? { wide: true, phone: false, op: '0', w: '100vw', h: '100vh', r: '0', p: '0', ir: '0', dir: 'row-reverse', sp: '0 max(0px, calc((100% - 248px - 760px) / 2))',
+        nbt: 'none', nbr: '1px solid var(--color-divider)', nw: '248px', np: '28px 14px', nc: '1fr', ng: '4px', bd: 'row', bj: 'flex-start', bgap: '10px', bp: '0 8px', bf: '15px', sheetW: '560px', barL: 'calc(248px + max(0px, (100% - 248px - 760px) / 2) + 20px)', barR: 'calc(max(0px, (100% - 248px - 760px) / 2) + 20px)', barB: '24px' }
       : { wide: false, phone: true, op: '16px', w: '390px', h: '844px', r: '56px', p: '10px', ir: '46px', dir: 'column', sp: '0',
         nbt: '1px solid var(--color-divider)', nbr: 'none', nw: 'auto', np: '8px 6px 26px', nc: 'repeat(5,minmax(0,1fr))', ng: '2px', bd: 'column', bj: 'center', bgap: '3px', bp: '0', bf: '11px', sheetW: '100%', barL: '12px', barR: '12px', barB: '96px' };
     const seg = (cur, opts, set) => opts.map(([k, l]) => { const a = cur === k; return { l, bg: a ? 'var(--color-neutral-900)' : 'transparent', fg: a ? 'var(--color-neutral-100)' : 'var(--color-neutral-800)', onPick: () => set(k) }; });
@@ -1665,7 +1735,7 @@ class Component extends DCLogic {
     ];
     const swS = on => on ? { justify: 'flex-end', bg: 'var(--color-accent-2-700)' } : { justify: 'flex-start', bg: 'var(--color-neutral-400)' };
     const fe = s.facEdit && s.docs.find(x => x.no === s.facEdit.no);
-    let feDate = new Date(); if (fe && fe.date) { const [dd, mm] = fe.date.split('/').map(Number); feDate = new Date(2026, mm - 1, dd); }
+    let feDate = fe && fe.date ? DOC_D(fe.date) : new Date();
     return { cgv: {
       terms: ['rec', '30', '45fm', '60'].map(k => [k, TERMS[k]]).map(([k, label]) => ({ label, bg: term === k ? 'var(--color-neutral-900)' : 'var(--color-surface)', fg: term === k ? 'var(--color-neutral-100)' : 'var(--color-neutral-900)', onPick: () => this.setState({ payTerm: k }) })),
       types: [['part', 'Particulier'], ['pro', 'Professionnel']].map(([k, label]) => { const a = (s.clientType || 'part') === k; return { label, bg: a ? 'var(--color-neutral-100)' : 'transparent', bgAlt: a ? 'var(--color-neutral-900)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', fgAlt: a ? 'var(--color-neutral-100)' : 'var(--color-neutral-800)', onPick: () => this.setState({ clientType: k }) }; }),
@@ -1675,8 +1745,250 @@ class Component extends DCLogic {
     } };
   }
 
+  rhData() {
+    const s = this.state; if (s.rh) return s.rh;
+    const now = new Date(), mon = RH_MON(0), points = [];
+    const P = { k: [['grondin', 8], ['grondin', 8], ['filaos', 9], ['filaos', 8], ['filaos', 7], ['filaos', 8], ['filaos', 9], ['filaos', 8], ['hoarau', 8], ['hoarau', 8]],
+      m: [['grondin', 7], ['grondin', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['hoarau', 7], ['hoarau', 7]],
+      j: [['grondin', 4], ['depot', 3], ['filaos', 5], ['filaos', 6], ['depot', 2], ['filaos', 4], ['grondin', 3], ['filaos', 5], ['hoarau', 4], ['depot', 2]],
+      i1: [null, null, ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7], ['filaos', 7]] };
+    for (let i = 0; i < 10; i++) { const d = new Date(mon); d.setDate(mon.getDate() + (i < 5 ? i - 7 : i - 5)); if (d > now) break;
+      Object.entries(P).forEach(([who, arr]) => { const x = arr[i]; if (x) points.push({ id: 'pt' + i + who, who, d: RH_D(d), ch: x[0], h: x[1], panier: x[0] !== 'depot' && who !== 'j' }); }); }
+    return {
+      staff: [
+        { id: 'j', nom: 'Julien Hoarau', role: 'Dirigeant', kind: 'dir' },
+        { id: 'k', nom: 'Kévin Payet', role: 'Électricien N2P2', kind: 'sal', contrat: 'CDI temps plein', entree: '03/03/2024', brut: 13.6, coef: 1.45, pin: '4821',
+          hab: [['B2V', '12/05/2024', 36], ['BR', '12/05/2024', 36], ['H0', '12/05/2024', 36]], visite: ['suivi renforcé', '18/10/2022', 48],
+          epi: [['Chaussures de sécurité', '05/02/2025', 12], ['Gants isolants classe 0 (contrôle)', '20/04/2026', 6], ['VAT (vérificateur d’absence de tension)', '10/01/2024', 60], ['Casque et écran facial', '03/03/2024', 48]],
+          outils: ['Perforateur SDS', 'Pince multifonction', 'Testeur VAT'] },
+        { id: 'm', nom: 'Mathis Rivière', role: 'Apprenti BP électricien', kind: 'app', contrat: 'Apprentissage', entree: '01/09/2025', fin: '31/08/2027', brut: 7.9, coef: 1.05, pin: '1937',
+          hab: [['B1V', '04/11/2023', 36], ['H0', '04/11/2023', 36]], visite: ['suivi renforcé', '12/08/2025', 48],
+          epi: [['Chaussures de sécurité', '01/09/2025', 12], ['Lunettes de protection', '01/09/2025', 12]], outils: ['Caisse à outils apprenti'] },
+      ],
+      ext: [
+        { id: 'i1', nom: 'Dylan Grondin', org: 'Sud Intérim 974', kind: 'int', role: 'Manœuvre intérimaire', fin: '10/10/2026', cout: 27.5, docs: [] },
+        { id: 's1', nom: 'Técher Plomberie', org: 'Sous-traitant', kind: 'st', role: 'Plomberie cuisine Hoarau', docs: [['Attestation de vigilance URSSAF', '15/04/2026', 6], ['Attestation décennale', '10/01/2026', 12]] },
+      ],
+      points, plan: {}, panier: 10.5,
+      abs: [{ id: 'a1', who: 'k', type: 'Congés payés', du: '19/10/2026', au: '23/10/2026', st: 'Demandée' }, { id: 'a2', who: 'm', type: 'Formation', du: RH_D(RH_MON(1)), au: RH_D(new Date(RH_MON(1).getTime() + 4 * 864e5)), st: 'Validée' }],
+      frais: [{ id: 'f1', who: 'k', d: RH_D(new Date(mon.getTime() - 5 * 864e5)), l: 'Parking chantier Saint-Pierre', m: 6.5 }],
+    };
+  }
+
+  rhVals() {
+    const RH_CH = this.rhChs();
+    const s = this.state, R = this.rhData(), co = this.coData(), now = new Date(); now.setHours(0, 0, 0, 0);
+    const setRh = f => this.setState(st => ({ rh: f(st.rh || this.rhData()) }));
+    const tab = s.rhTab || 'team', people = [...R.staff, ...R.ext.filter(e => e.kind === 'int')];
+    const byId = Object.fromEntries(people.map(p => [p.id, p])), first = p => (p ? p.nom : '?').split(' ')[0];
+    const ini = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    const cost = p => !p || p.kind === 'dir' ? (s.coutMO ?? 32) : p.kind === 'int' ? p.cout : p.brut * p.coef;
+    const e2 = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',') + ' €';
+    const hh = v => String(Math.round(v * 100) / 100).replace('.', ',') + ' h';
+    const due = (t, m) => { if (!t || m == null) return null; const d = RH_ADD(t, m); return { d, n: Math.round((d - now) / 864e5) }; };
+    const dueTxt = x => !x ? '' : x.n < 0 ? `échu depuis ${-x.n} j` : x.n === 0 ? 'échéance aujourd’hui' : x.n <= 60 ? `dans ${x.n} j` : 'jusqu’au ' + RH_D(x.d);
+    const tone = x => !x ? ['var(--color-surface)', 'var(--color-neutral-800)'] : x.n < 0 ? ['var(--color-accent-700)', 'var(--color-neutral-100)'] : x.n <= 60 ? ['var(--color-accent-200)', 'var(--color-accent-900)'] : ['var(--color-accent-2-200)', 'var(--color-accent-2-900)'];
+    const chipC = a => a ? { bg: 'var(--color-neutral-900)', fg: 'var(--color-neutral-100)' } : { bg: 'var(--color-surface)', fg: 'var(--color-neutral-900)' };
+    const inR = (t, a, b) => { const d = RH_P(t); return d >= a && d < b; };
+    const fk = FORME_OF(co.forme), fl = FORMES[fk].l, FD = RH_FD[fk] || RH_FD.ei, dirSal = ['sasu', 'sas', 'scop'].includes(fk);
+
+    const alerts = [];
+    const push = (who, t, x, ref) => { if (x && x.n <= 60) alerts.push({ who, t, ref, n: x.n, when: dueTxt(x), fg: x.n < 0 ? 'var(--color-accent-800)' : 'var(--color-accent-700)', c: x.n < 0 ? 'var(--color-accent-700)' : 'var(--color-accent-400)' }); };
+    R.staff.forEach(p => { (p.hab || []).forEach(([l, d, m]) => push(p.nom, `Recyclage habilitation ${l}`, due(d, m), { pid: p.id, k: 'hab', l })); if (p.visite) push(p.nom, `Visite médicale (${p.visite[0]})`, due(p.visite[1], p.visite[2]), { pid: p.id, k: 'visite' });
+      (p.epi || []).forEach(([l, d, m]) => push(p.nom, l, due(d, m), { pid: p.id, k: 'epi', l })); if (p.fin) push(p.nom, `Fin de contrat (${p.contrat})`, due(p.fin, 0), { pid: p.id, k: 'fin' }); });
+    R.ext.forEach(e => { (e.docs || []).forEach(([l, d, m]) => push(e.nom, l, due(d, m), { pid: e.id, k: 'doc', l })); if (e.fin) push(e.nom + ' · ' + e.org, 'Fin de mission d’intérim', due(e.fin, 0), { pid: e.id, k: 'mission' }); });
+    alerts.sort((a, b) => a.n - b.n);
+    const todayS = RH_D(new Date()), mailT = (title, subject, body, to) => this.draft({ title, subject, body, to: to || '' });
+    const renew = ref => setRh(r => { const upd = arr => arr.map(p => { if (p.id !== ref.pid) return p; const bump = a => a.map(x => x[0] === ref.l ? [x[0], todayS, x[2]] : x);
+      if (ref.k === 'hab') return { ...p, hab: bump(p.hab) }; if (ref.k === 'epi') return { ...p, epi: bump(p.epi) }; if (ref.k === 'doc') return { ...p, docs: bump(p.docs) };
+      if (ref.k === 'visite') return { ...p, visite: [p.visite[0] === 'à planifier' ? 'suivi renforcé' : p.visite[0], todayS, 48] };
+      if (ref.k === 'mission') return { ...p, fin: RH_D(new Date(RH_P(p.fin).getTime() + 14 * 864e5)) }; return p; });
+      return { ...r, staff: upd(r.staff), ext: upd(r.ext) }; });
+    const ACT = a => { const r = a.ref, done = (msg) => () => { renew(r); this.flash(msg); };
+      if (r.k === 'hab') return { act1: 'Formation faite', on1: done(`Habilitation ${r.l} renouvelée pour 3 ans`), act2: 'Demander une date', on2: () => mailT('Recyclage ' + r.l, `Recyclage habilitation ${r.l} — ${a.who}`, `Bonjour,\n\nJe souhaite inscrire ${a.who} au recyclage de l’habilitation électrique ${r.l}. Pouvez-vous m’indiquer vos prochaines dates et le tarif ?\n\nBien cordialement,\n${co.name}`) };
+      if (r.k === 'visite') return { act1: 'Visite faite', on1: done('Visite médicale enregistrée'), act2: 'Demander un RDV', on2: () => mailT('RDV médecine du travail', `Demande de visite médicale — ${a.who}`, `Bonjour,\n\nJe vous remercie de fixer une visite de suivi individuel renforcé pour ${a.who}, salarié habilité électriquement, de l’entreprise ${co.name} (SIRET ${co.siret}).\n\nBien cordialement,\n${co.name}`) };
+      if (r.k === 'epi') return { act1: 'Remplacé', on1: done(`${r.l} : remplacement enregistré`), act2: '', on2: null };
+      if (r.k === 'doc') return { act1: 'Reçue', on1: done(`${r.l} enregistrée`), act2: 'La demander', on2: () => mailT('Demande · ' + r.l, `${r.l} — ${co.name}`, `Bonjour,\n\nPour continuer à travailler ensemble, merci de me transmettre votre ${r.l.toLowerCase()} à jour.\n\nBien cordialement,\n${co.name}`) };
+      if (r.k === 'mission') return { act1: 'Prolonger 2 semaines', on1: done('Mission prolongée de 2 semaines'), act2: 'Écrire à l’agence', on2: () => mailT('Mission intérim', `Mission de ${a.who.split(' · ')[0]} — ${co.name}`, `Bonjour,\n\nJe souhaite prolonger la mission de ${a.who.split(' · ')[0]} au-delà du ${(R.ext.find(e => e.id === r.pid) || {}).fin}. Pouvez-vous m’envoyer l’avenant ?\n\nBien cordialement,\n${co.name}`) };
+      return { act1: 'Fait', on1: done('Enregistré'), act2: '', on2: null }; };
+    alerts.forEach(a => { const x = ACT(a); Object.assign(a, x, { has2: !!x.on2 }); });
+
+    const todayIdx = (now.getDay() + 6) % 7;
+    const DEF = RH_DEF;
+    const planOf = (who, wk, i) => { const key = RH_D(RH_MON(wk)); return ((R.plan[key] || {})[who] || [])[i] ?? ((DEF[wk] || {})[who] || [])[i] ?? 'off'; };
+    const absOn = (who, d) => R.abs.find(a => a.who === who && a.st === 'Validée' && d >= RH_P(a.du) && d <= RH_P(a.au));
+    const chOpts = (cur, pick) => Object.entries(RH_CH).map(([k, c]) => { const a = cur === k; return { l: c[0], on: a, bg: a ? c[3] : 'var(--color-surface)', fg: a ? c[4] : 'var(--color-neutral-900)', bd: a ? c[4] : 'transparent', onPick: () => pick(k) }; });
+
+    const wkOff = s.rhWk ?? 0, mon = RH_MON(wkOff), nxt = new Date(mon.getTime() + 7 * 864e5);
+    const ptsW = R.points.filter(p => inR(p.d, mon, nxt)), okW = ptsW.filter(p => !p.emp);
+    const tot = people.map(p => { const mine = okW.filter(x => x.who === p.id), h = mine.reduce((a, x) => a + x.h, 0);
+      const perDay = mine.reduce((a, x) => (a[x.d] = (a[x.d] || 0) + x.h, a), {}), dayMax = Math.max(0, ...Object.values(perDay));
+      const paid = p.kind === 'sal' || p.kind === 'app', hs = paid ? Math.max(0, h - 35) : 0, over = h > 48 || dayMax > 10;
+      return { l: p.nom, h: hh(h), w: Math.min(100, Math.round(h / 48 * 100)) + '%', fill: over ? 'var(--color-accent-700)' : hs ? 'var(--color-accent-500)' : 'var(--color-accent-2-600)',
+        sub: over ? (h > 48 ? 'Plus de 48 h : maximum légal dépassé' : 'Plus de 10 h sur une journée') : hs ? `dont ${hh(hs)} supplémentaires` : paid ? `${hh(Math.max(0, 35 - h))} sous 35 h` : p.kind === 'dir' ? 'Dirigeant, hors paie' : 'Intérim, facturé par l’agence',
+        fg: over ? 'var(--color-accent-800)' : 'var(--color-neutral-700)' }; });
+    const dKeys = [...new Set(okW.map(p => p.d))].sort((a, b) => RH_P(b) - RH_P(a));
+    const days = dKeys.map(d => { const it = okW.filter(p => p.d === d);
+      return { l: RH_P(d).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: '2-digit' }), tot: hh(it.reduce((a, x) => a + x.h, 0)),
+        items: it.map(x => { const c = RH_CH[x.ch] || RH_CH.depot; return { who: first(byId[x.who]), ch: c[0], cBg: c[3], cFg: c[4], h: hh(x.h),
+          meta: [x.panier ? 'panier' : '', c[2] !== '—' ? 'zone ' + c[2] : ''].filter(Boolean).join(' · ') || '—',
+          del: () => { setRh(r => ({ ...r, points: r.points.filter(y => y.id !== x.id) })); this.flash('Ligne supprimée'); } }; }) }; });
+    const pendingPts = R.points.filter(p => p.emp);
+    const pending = pendingPts.map(x => ({ t: `${first(byId[x.who])} · ${RH_P(x.d).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })} · ${(RH_CH[x.ch] || RH_CH.depot)[0]} · ${hh(x.h)}${x.panier ? ' · panier' : ''}`,
+      ok: () => { setRh(r => ({ ...r, points: r.points.map(y => y.id === x.id ? { ...y, emp: false } : y) })); this.flash('Pointage validé'); },
+      ko: () => { setRh(r => ({ ...r, points: r.points.filter(y => y.id !== x.id) })); this.flash('Pointage refusé'); } }));
+    const planCh = who => { const v = todayIdx < 5 ? planOf(who, 0, todayIdx) : 'off'; return RH_CH[v] && !absOn(who, now) ? v : null; };
+    const F0 = s.rhF || {}, F = { who: F0.who || 'k', ch: planCh(F0.who || 'k') || 'filaos', h: 8, panier: true, ...F0 }, setF = p => this.setState(st => ({ rhF: { ...F, ...(st.rhF || {}), ...p } }));
+
+    const pw = s.rhPw ?? 0, pmon = RH_MON(pw), ORD = [...Object.keys(RH_CH).filter(k => k !== 'depot'), 'depot', 'off'];
+    const plRows = people.map(p => ({ l: first(p), cells: [0, 1, 2, 3, 4].map(i => { const d = new Date(pmon.getTime() + i * 864e5), ab = absOn(p.id, d), v = planOf(p.id, pw, i), c = RH_CH[v];
+      if (ab) return { l: ab.type.split(' ')[0], aria: `${first(p)} : ${ab.type}`, bg: 'var(--color-neutral-200)', fg: 'var(--color-neutral-800)', onPick: () => this.flash(`${first(p)} : ${ab.type.toLowerCase()} ce jour-là`) };
+      return { l: c ? c[0] : '—', aria: `${first(p)}, ${d.toLocaleDateString('fr-FR', { weekday: 'long' })} : ${c ? c[0] : 'non affecté'}`, bg: c ? c[3] : 'transparent', fg: c ? c[4] : 'var(--color-neutral-600)',
+        onPick: () => setRh(r => { const key = RH_D(pmon), cur = { ...(r.plan[key] || {}) }, row = [0, 1, 2, 3, 4].map(j => ((cur[p.id] || [])[j]) ?? ((DEF[pw] || {})[p.id] || [])[j] ?? 'off');
+          row[i] = ORD[(ORD.indexOf(row[i]) + 1) % ORD.length]; cur[p.id] = row; return { ...r, plan: { ...r.plan, [key]: cur } }; }) }; }) }));
+    const plDays = [0, 1, 2, 3, 4].map(i => { const d = new Date(pmon.getTime() + i * 864e5), t = pw === 0 && i === todayIdx; return { l: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'][i] + ' ' + d.getDate(), fg: t ? 'var(--color-accent-700)' : 'var(--color-neutral-800)' }; });
+
+    const wd = (a, b, m0, m1) => { let n = 0; const d = RH_P(a), e = RH_P(b); while (d <= e) { const k = d.getDay(); if (k && k < 6 && (!m0 || (d >= m0 && d < m1))) n++; d.setDate(d.getDate() + 1); } return n; };
+    const absPending = R.abs.filter(a => a.st === 'Demandée').length;
+    const AF = { who: 'k', type: 'Congés payés', du: '', au: '', ...(s.absF || {}) }, setAF = p => this.setState(st => ({ absF: { ...AF, ...(st.absF || {}), ...p } }));
+    const iso = t => { if (!t) return ''; const [y, m, d] = t.split('-'); return `${d}/${m}/${y}`; };
+    const staffPick = (cur, set) => R.staff.filter(p => p.kind !== 'dir').map(p => ({ l: first(p), on: cur === p.id, ...chipC(cur === p.id), onPick: () => set(p.id) }));
+
+    const m0 = new Date(now.getFullYear(), now.getMonth(), 1), m1 = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const monthL = m0.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const ptsM = R.points.filter(p => !p.emp && inR(p.d, m0, m1)), zoneAmt = z => (RH_ZONES.find(x => x[0] === z) || [0, 0, 0])[2];
+    const monOf = t => { const d = RH_P(t); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return RH_D(d); };
+    const paie = R.staff.filter(p => p.kind === 'sal' || p.kind === 'app').map(p => { const mine = ptsM.filter(x => x.who === p.id), W = {};
+      mine.forEach(x => { const k = monOf(x.d); W[k] = (W[k] || 0) + x.h; }); let n = 0, h25 = 0, h50 = 0;
+      Object.values(W).forEach(h => { n += Math.min(h, 35); h25 += Math.min(Math.max(h - 35, 0), 8); h50 += Math.max(h - 43, 0); });
+      const pan = mine.filter(x => x.panier).length, zt = mine.reduce((a, x) => a + zoneAmt((RH_CH[x.ch] || [])[2]), 0);
+      const fr = R.frais.filter(f => f.who === p.id && !f.emp && inR(f.d, m0, m1)).reduce((a, f) => a + f.m, 0);
+      const ab = R.abs.filter(a => a.who === p.id && a.st === 'Validée').reduce((a, x) => a + wd(x.du, x.au, m0, m1), 0);
+      return { nom: p.nom, sub: `${p.role} · ${p.contrat}`,
+        rows: [['Heures normales', hh(n)], ['Heures sup. à 25 %', hh(h25)], ['Heures sup. à 50 %', hh(h50)], ['Paniers', `${pan} × ${e2(R.panier)}`], ['Indemnités de trajet', e2(zt)], ['Notes de frais', e2(fr)], ['Absences validées', ab + ' j']].map(([k, v]) => ({ k, v })),
+        hasNote: p.kind === 'app', note: 'Apprenti : les jours de CFA comptent comme temps de travail, sans être pointés sur un chantier.',
+        csv: [p.nom, p.contrat, n, h25, h50, pan, pan * R.panier, zt, fr, ab].map(v => typeof v === 'number' ? String(Math.round(v * 100) / 100).replace('.', ',') : v) }; });
+    const fraisM = R.frais.filter(f => inR(f.d, m0, m1));
+    const FF = { who: 'k', l: '', m: '', ...(s.fraisF || {}) }, setFF = p => this.setState(st => ({ fraisF: { ...FF, ...(st.fraisF || {}), ...p } }));
+    const SOLD = { filaos: 120, hoarau: 24, grondin: 16 }, okAll = R.points.filter(p => !p.emp);
+    let tH = 0, tC = 0;
+    const cc = Object.keys(SOLD).map(k => { const it = okAll.filter(p => p.ch === k), h = it.reduce((a, x) => a + x.h, 0), c = it.reduce((a, x) => a + x.h * cost(byId[x.who]), 0); tH += h; tC += c;
+      const over = h > SOLD[k]; return { l: `${RH_CH[k][0]} · ${RH_CH[k][1]}`, cost: fmt0(c), w: Math.min(100, Math.round(h / SOLD[k] * 100)) + '%', fill: over ? 'var(--color-accent-700)' : 'var(--color-accent-2-600)',
+        hTxt: `${hh(h)} pointées / ${SOLD[k]} h vendues`, sub: over ? `+ ${hh(h - SOLD[k])} de dépassement` : `reste ${hh(SOLD[k] - h)}`, fg: over ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)' }; });
+    const avg = tH ? tC / tH : 0;
+    const csvName = 'paie-' + monthL.replace(/\s+/g, '-') + '.csv';
+    const csvRows = () => [['Salarié', 'Contrat', 'Heures normales', 'HS 25 %', 'HS 50 %', 'Paniers', 'Montant paniers', 'Indemnités trajet', 'Frais', 'Absences (j)'].join(';'), ...paie.map(y => y.csv.join(';'))].join('\n');
+
+    const readPj = (e, cb) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > 3e6) return this.flash('Fichier trop lourd : 3 Mo maximum');
+      if (!/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(f.type)) return this.flash('Photo (PNG, JPEG, WebP) ou PDF uniquement'); const rd = new FileReader(); rd.onload = () => cb({ src: rd.result, name: f.name, pdf: /pdf/.test(f.type) }); rd.readAsDataURL(f); };
+    const pjVals = (pj, set) => ({ NoPj: !pj, HasPj: !!pj, IsImg: !!pj && !pj.pdf, IsPdf: !!pj && !!pj.pdf, Src: pj ? pj.src : '', Name: pj ? pj.name : '', OnPj: e => readPj(e, set), Clear: () => set(null) });
+    const pre = (p, o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [p + k, v]));
+    const E = s.rhEmp, setE = p => this.setState(st => ({ rhEmp: { ...st.rhEmp, ...p } }));
+    const rhe = E ? { open: true, first: first(byId[E.who]), date: new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
+      plan: todayIdx < 5 ? ((RH_CH[planOf(E.who, 0, todayIdx)] || [])[0] || 'aucun chantier') : 'repos', ch: chOpts(E.ch, k => setE({ ch: k })),
+      hTxt: hh(E.h), minus: () => setE({ h: Math.max(0.5, E.h - 0.5) }), plus: () => setE({ h: Math.min(12, E.h + 0.5) }),
+      panier: !!E.panier, pJ: E.panier ? 'flex-end' : 'flex-start', pBg: E.panier ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)', togglePan: () => setE({ panier: !E.panier }),
+      fl: E.fl || '', fm: E.fm || '', onFl: e => setE({ fl: e.target.value }), onFm: e => setE({ fm: e.target.value }), ...pre('f', pjVals(E.fpj, v => setE({ fpj: v }))),
+      sendFrais: () => { const m = parseFloat(String(E.fm || '').replace(',', '.')); if (!(E.fl || '').trim() || !(m > 0)) return this.flash('Indique un libellé et un montant'); if (!E.fpj) return this.flash('Prends en photo le ticket ou la facture');
+        setRh(r => ({ ...r, frais: [...r.frais, { id: 'f' + Date.now(), who: E.who, d: RH_D(new Date()), l: E.fl.trim(), m, pj: { ...E.fpj, by: 'sal' }, emp: true }] })); setE({ fl: '', fm: '', fpj: null }); this.flash('Note envoyée, à valider'); },
+      close: () => this.setState({ rhEmp: null }),
+      send: () => { setRh(r => ({ ...r, points: [...r.points, { id: 'pt' + Date.now(), who: E.who, d: RH_D(new Date()), ch: E.ch, h: E.h, panier: !!E.panier, emp: true }] }));
+        this.setState({ rhEmp: null, rhTab: 'pt', rhWk: 0 }); this.flash(`Pointage de ${first(byId[E.who])} reçu, à valider`); } } : { open: false };
+
+    const T = [['team', 'Équipe', alerts.some(a => a.n < 0)], ['pt', 'Pointage', pendingPts.length > 0], ['pl', 'Planning', false], ['abs', 'Absences', absPending > 0], ['paie', 'Paie', R.frais.some(f => f.emp)]];
+    const seg = (cur, opts, key) => opts.map(([k, l]) => { const a = cur === k; return { l, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ [key]: k }) }; });
+    const nSal = R.staff.filter(p => p.kind !== 'dir').length;
+    return { isRh: s.tab === 'rh', rhDot: alerts.some(a => a.n < 0) || pendingPts.length > 0 || absPending > 0 || R.frais.some(f => f.emp), rhe, nfv: (() => { const f = R.frais.find(x => x.id === s.fraisView); if (!f || !f.pj) return { open: false, close: () => {} };
+      return { open: true, title: f.l + ' · ' + e2(f.m), meta: first(byId[f.who]) + ' · ' + f.d + ' · ' + f.pj.name, isImg: !f.pj.pdf, isPdf: !!f.pj.pdf, src: f.pj.src, name: f.pj.name, close: () => this.setState({ fraisView: null }),
+        onPj: e => readPj(e, pj => { setRh(r => ({ ...r, frais: r.frais.map(y => y.id === f.id ? { ...y, pj: { ...pj, by: 'pat' } } : y) })); this.flash('Justificatif remplacé'); }) }; })(), rh: {
+      sub: `Toi + ${nSal} salarié${nSal > 1 ? 's' : ''} · ${R.ext.length} externe${R.ext.length > 1 ? 's' : ''}`,
+      tabs: T.map(([k, l, dot]) => { const a = tab === k; return { l, dot, on: a, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ rhTab: k }) }; }),
+      isTeam: tab === 'team', isPt: tab === 'pt', isPl: tab === 'pl', isAbs: tab === 'abs', isPaie: tab === 'paie',
+      forme: { l: fl, dir: FD[0], txt: FD[1], open: !!s.rhOblig, chev: s.rhOblig ? '180deg' : '0deg', toggle: () => this.setState(st => ({ rhOblig: !st.rhOblig })),
+        oblig: ['DPAE à l’URSSAF avant chaque embauche, au plus tard le jour même', 'Registre unique du personnel à jour', 'Adhésion à la caisse de congés payés du BTP', 'Document unique d’évaluation des risques (DUERP)', 'Suivi médical renforcé des salariés habilités électriquement', 'Attestation de vigilance des sous-traitants tous les 6 mois', ...(fk === 'micro' ? ['Au premier salarié, vérifie avec ton comptable que la micro reste adaptée'] : [])] },
+      hasAlerts: alerts.length > 0, alerts,
+      today: { show: todayIdx < 5, l: new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }),
+        rows: people.map(p => { const c = RH_CH[planOf(p.id, 0, todayIdx)], ab = absOn(p.id, now), pts = R.points.filter(x => x.who === p.id && x.d === todayS), h = pts.reduce((a, x) => a + x.h, 0), pend = pts.some(x => x.emp);
+          return { ini: ini(p.nom), nom: first(p), where: ab ? ab.type : c ? c[0] + ' · ' + c[1] : 'non affecté',
+            st: ab ? 'Absent' : pts.length ? (pend ? hh(h) + ' à valider' : hh(h) + ' pointées') : p.kind === 'dir' ? 'Pas encore pointé' : 'Pas encore pointé aujourd’hui',
+            stFg: ab ? 'var(--color-neutral-700)' : pts.length ? (pend ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)') : 'var(--color-neutral-700)',
+            dot: ab ? 'var(--color-neutral-400)' : pts.length ? (pend ? 'var(--color-accent-500)' : 'var(--color-accent-2-600)') : 'var(--color-neutral-400)',
+            need: !ab && !!c && !pts.length && !!p.pin,
+            remind: () => this.draft({ title: 'Rappel pointage · ' + first(p), channel: 'wa', body: `Bonjour ${first(p)},\n\nPense à pointer tes heures d’aujourd’hui sur l’appli (chantier ${c ? c[0] : ''}). Merci !\n\n${first(R.staff[0])}` }) }; }) },
+      add: (() => { const A = s.rhAdd, setA = p => this.setState(st => ({ rhAdd: { ...(st.rhAdd || {}), ...p } }));
+        const base = { closed: !A, isOpen: !!A, open: () => this.setState({ rhAdd: { nom: '', poste: '', contrat: 'CDI', brut: '' } }), cancel: () => this.setState({ rhAdd: null }) };
+        if (!A) return { ...base, nom: '', poste: '', brut: '', contrats: [] };
+        return { ...base, nom: A.nom, poste: A.poste, brut: A.brut, onNom: e => setA({ nom: e.target.value }), onPoste: e => setA({ poste: e.target.value }), onBrut: e => setA({ brut: e.target.value }),
+          contrats: ['CDI', 'CDD', 'Apprentissage'].map(c => ({ l: c, on: A.contrat === c, ...chipC(A.contrat === c), onPick: () => setA({ contrat: c }) })),
+          save: () => { const b = parseFloat(String(A.brut).replace(',', '.')); if (!A.nom.trim()) return this.flash('Indique le prénom et le nom'); if (!(b > 0)) return this.flash('Indique le taux horaire brut');
+            const app = A.contrat === 'Apprentissage', id = 'p' + Date.now(), pin = String(1000 + Math.floor(Math.random() * 9000));
+            setRh(r => ({ ...r, staff: [...r.staff, { id, nom: A.nom.trim(), role: A.poste.trim() || (app ? 'Apprenti' : 'Ouvrier'), kind: app ? 'app' : 'sal', contrat: A.contrat === 'CDI' ? 'CDI temps plein' : A.contrat, entree: todayS, brut: b, coef: app ? 1.05 : 1.45, pin, hab: [], visite: ['à planifier', todayS, 0], epi: [], outils: [] }] }));
+            this.setState({ rhAdd: null, rhOpen: id }); this.flash(`${A.nom.trim().split(' ')[0]} ajouté · DPAE à faire avant son premier jour`); } }; })(),
+      staff: R.staff.map(p => { const open = s.rhOpen === p.id, vis = p.visite ? due(p.visite[1], p.visite[2]) : null, warnN = alerts.filter(a => a.who === p.nom).length;
+        const hab = (p.hab || []).map(([l, d, m]) => { const x = due(d, m), [bg, fg] = tone(x); return { l, due: dueTxt(x), bg, fg }; });
+        const epi = (p.epi || []).map(([l, d, m]) => { const x = due(d, m); return { l, due: 'à renouveler ' + dueTxt(x), fg: x && x.n <= 60 ? 'var(--color-accent-800)' : 'var(--color-neutral-700)' }; });
+        return { nom: p.nom, ini: ini(p.nom), role: p.kind === 'dir' ? `${p.role} · ${fl}` : `${p.role} · ${p.contrat}`, cost: e2(cost(p)), costSub: p.kind === 'dir' ? 'coût horaire' : 'coût chargé / h',
+          avBg: p.kind === 'dir' ? 'var(--color-accent-200)' : 'var(--color-accent-2-200)', avFg: p.kind === 'dir' ? 'var(--color-accent-900)' : 'var(--color-accent-2-900)',
+          open, chev: open ? '180deg' : '0deg', toggle: () => this.setState({ rhOpen: open ? null : p.id }),
+          hasWarn: warnN > 0, warn: `${warnN} échéance${warnN > 1 ? 's' : ''} à traiter`,
+          rows: (p.kind === 'dir' ? [['Statut', FD[0]], ['Coût horaire', e2(cost(p)) + ', réglé dans Calcul de marge'], ['Sur la paie', dirSal ? 'Oui, bulletin sans heures' : 'Non']]
+            : [['Contrat', p.contrat], ['Entrée', p.entree], ...(p.fin ? [['Fin', p.fin]] : []), ['Taux horaire brut', e2(p.brut)], ['Coût chargé estimé', `${e2(cost(p))} (× ${String(p.coef).replace('.', ',')})`], ['Visite médicale', p.visite ? `${p.visite[0]}, ${dueTxt(vis)}` : '—']]).map(([k, v]) => ({ k, v })),
+          canEdit: p.kind === 'sal' || p.kind === 'app', brutTxt: e2(p.brut || 0),
+          brutMinus: () => setRh(r => ({ ...r, staff: r.staff.map(y => y.id === p.id ? { ...y, brut: Math.max(1, Math.round((y.brut - 0.1) * 100) / 100) } : y) })),
+          brutPlus: () => setRh(r => ({ ...r, staff: r.staff.map(y => y.id === p.id ? { ...y, brut: Math.round((y.brut + 0.1) * 100) / 100 } : y) })),
+          hasHab: hab.length > 0, hab, hasEpi: epi.length > 0, epi, outils: p.outils || [], hasOutils: !!(p.outils || []).length, hasPin: !!p.pin, pin: p.pin,
+          share: () => this.draft({ title: 'Accès pointage · ' + first(p), channel: 'wa', body: `Bonjour ${first(p)},\n\nVoici ton accès pour pointer tes heures sur l’application de ${co.name} :\ncode personnel ${p.pin}\n\nTu ne vois que ton pointage : chantier, heures et panier.\n\n${co.name}` }),
+          preview: () => this.setState({ rhEmp: { who: p.id, h: 8, panier: true, ch: todayIdx < 5 && RH_CH[planOf(p.id, 0, todayIdx)] ? planOf(p.id, 0, todayIdx) : 'filaos' } }) }; }),
+      ext: R.ext.map(e => ({ nom: e.nom, org: e.org, role: e.role, extra: e.kind === 'int' ? `Mission jusqu’au ${e.fin} · ${e2(e.cout)} / h facturé par l’agence` : 'Vigilance obligatoire dès 5 000 € HT de travaux sous-traités',
+        docs: (e.docs || []).filter(d => d[1]).map(([l, d, m]) => { const x = due(d, m), [bg, fg] = tone(x); return { l, due: dueTxt(x), bg, fg }; }) })),
+      wkOpts: seg(wkOff, [[-1, 'Semaine dernière'], [0, 'Cette semaine']], 'rhWk'),
+      wkLabel: `du ${RH_D(mon).slice(0, 5)} au ${RH_D(new Date(mon.getTime() + 4 * 864e5)).slice(0, 5)}`, tot, days,
+      hasPending: pending.length > 0, pending,
+      f: { date: 'Pour aujourd’hui, ' + new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: '2-digit' }),
+        who: people.map(p => ({ l: first(p), on: F.who === p.id, ...chipC(F.who === p.id), onPick: () => setF({ who: p.id, ch: planCh(p.id) || F.ch }) })), ch: chOpts(F.ch, k => setF({ ch: k })),
+        planHint: planCh(F.who) ? 'prévu : ' + RH_CH[planCh(F.who)][0] : 'rien de prévu',
+        hTxt: hh(F.h), minus: () => setF({ h: Math.max(0.5, F.h - 0.5) }), plus: () => setF({ h: Math.min(12, F.h + 0.5) }),
+        panier: !!F.panier, pJ: F.panier ? 'flex-end' : 'flex-start', pBg: F.panier ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)', togglePan: () => setF({ panier: !F.panier }),
+        add: () => { setRh(r => ({ ...r, points: [...r.points, { id: 'pt' + Date.now(), who: F.who, d: RH_D(new Date()), ch: F.ch, h: F.h, panier: !!F.panier }] })); this.setState({ rhWk: 0 }); this.flash(`${hh(F.h)} ajoutées pour ${first(byId[F.who])}`); } },
+      plOpts: seg(pw, [[0, 'Cette semaine'], [1, 'Semaine prochaine']], 'rhPw'), plDays, plRows,
+      plWarn: (() => { const out = []; [0, 1, 2, 3, 4].forEach(i => { const d = new Date(pmon.getTime() + i * 864e5); this.agendaDay(this.iso(d), R).filter(e => e.noTeam).forEach(e => out.push({ t: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'][i] + ' ' + d.getDate() + ' · ' + e.title })); }); return out; })(),
+      openAgenda: () => { const d = pw ? pmon : new Date(); this.setState({ toolOpen: 'planning', calDay: this.iso(d), calMonth: [d.getFullYear(), d.getMonth()] }); this.go('outil'); },
+      legend: [...Object.values(RH_CH).map(c => ({ l: `${c[0]} · ${c[1]}`, bg: c[3], fg: c[4] })), { l: '— non affecté', bg: 'var(--color-surface)', fg: 'var(--color-neutral-700)' }],
+      get hasPlWarn() { return this.plWarn.length > 0; },
+      noAbs: !R.abs.length,
+      abs: R.abs.slice().sort((x, y) => RH_P(x.du) - RH_P(y.du)).map(a => { const st = a.st, setSt = v => { setRh(r => ({ ...r, abs: r.abs.map(y => y.id === a.id ? { ...y, st: v } : y) })); this.flash(`Absence ${v.toLowerCase()}`); };
+        return { who: first(byId[a.who]), type: a.type, dates: `du ${a.du.slice(0, 5)} au ${a.au.slice(0, 5)} · ${wd(a.du, a.au)} j ouvrés`, st, pending: st === 'Demandée',
+          stBg: st === 'Validée' ? 'var(--color-accent-2-200)' : st === 'Refusée' ? 'var(--color-neutral-200)' : 'var(--color-accent-200)', stFg: st === 'Validée' ? 'var(--color-accent-2-900)' : st === 'Refusée' ? 'var(--color-neutral-800)' : 'var(--color-accent-900)',
+          ok: () => setSt('Validée'), ko: () => setSt('Refusée') }; }),
+      af: { who: staffPick(AF.who, v => setAF({ who: v })),
+        types: ['Congés payés', 'Maladie', 'Intempéries', 'Formation', 'Sans solde'].map(t => { const a = AF.type === t; return { l: t, on: a, bg: a ? 'var(--color-accent-2-200)' : 'var(--color-surface)', fg: a ? 'var(--color-accent-2-900)' : 'var(--color-neutral-900)', bd: a ? 'var(--color-accent-2-700)' : 'transparent', onPick: () => setAF({ type: t }) }; }),
+        du: AF.du, au: AF.au, onDu: e => setAF({ du: e.target.value }), onAu: e => setAF({ au: e.target.value }),
+        add: () => { if (!AF.du || !AF.au) return this.flash('Choisis les dates de début et de fin'); if (AF.au < AF.du) return this.flash('La date de fin est avant la date de début');
+          setRh(r => ({ ...r, abs: [...r.abs, { id: 'a' + Date.now(), who: AF.who, type: AF.type, du: iso(AF.du), au: iso(AF.au), st: 'Validée' }] })); this.setState({ absF: null }); this.flash('Absence enregistrée et reportée au planning'); } },
+      monthL, paie, dirPaie: dirSal, dirPaieTxt: `${fl} : ta rémunération de dirigeant passe aussi par la paie. Indique-la au comptable, elle n’est pas calculée ici.`,
+      pan: { txt: e2(R.panier), minus: () => setRh(r => ({ ...r, panier: Math.max(0, Math.round((r.panier - 0.1) * 100) / 100) })), plus: () => setRh(r => ({ ...r, panier: Math.round((r.panier + 0.1) * 100) / 100 })) },
+      zones: RH_ZONES.map(z => ({ k: `Zone ${z[0]} · ${z[1]}`, v: e2(z[2]) + ' / jour' })),
+      fraisTot: e2(fraisM.filter(f => !f.emp).reduce((a, f) => a + f.m, 0)),
+      hasFraisMissing: fraisM.some(f => !f.pj), fraisMissing: (n => n + (n > 1 ? ' notes sans justificatif : elles ne peuvent pas être remboursées en l’état.' : ' note sans justificatif : elle ne peut pas être remboursée en l’état.'))(fraisM.filter(f => !f.pj).length),
+      frais: fraisM.map(f => { const updF = p => setRh(r => ({ ...r, frais: r.frais.map(y => y.id === f.id ? { ...y, ...p } : y) }));
+        return { l: f.l, who: first(byId[f.who]), d: f.d.slice(0, 5), m: e2(f.m), pending: !!f.emp, noPj: !f.pj, isImg: !!f.pj && !f.pj.pdf, isPdf: !!f.pj && !!f.pj.pdf, src: f.pj ? f.pj.src : '',
+          pjTxt: !f.pj ? 'Justificatif manquant' : (f.pj.by === 'sal' ? 'Photo envoyée par ' + first(byId[f.who]) : 'Justificatif joint') + (f.emp ? ' · à valider' : ''), pjFg: !f.pj ? 'var(--color-accent-800)' : f.emp ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)',
+          view: () => this.setState({ fraisView: f.id }), onPj: e => readPj(e, pj => { updF({ pj: { ...pj, by: 'pat' } }); this.flash('Justificatif ajouté'); }),
+          ok: () => { if (!f.pj) return this.flash('Ajoute d’abord le justificatif'); updF({ emp: false }); this.flash('Note de frais validée'); }, ko: () => { setRh(r => ({ ...r, frais: r.frais.filter(y => y.id !== f.id) })); this.flash('Note de frais refusée'); },
+          del: () => setRh(r => ({ ...r, frais: r.frais.filter(y => y.id !== f.id) })) }; }),
+      ff: { who: staffPick(FF.who, v => setFF({ who: v })), l: FF.l, m: FF.m, ...pjVals(FF.pj, v => setFF({ pj: v })), onL: e => setFF({ l: e.target.value }), onM: e => setFF({ m: e.target.value }),
+        add: () => { const m = parseFloat(String(FF.m).replace(',', '.')); if (!FF.l.trim() || !(m > 0)) return this.flash('Indique un libellé et un montant'); if (!FF.pj) return this.flash('Joins la photo ou le scan du justificatif');
+          setRh(r => ({ ...r, frais: [...r.frais, { id: 'f' + Date.now(), who: FF.who, d: RH_D(new Date()), l: FF.l.trim(), m, pj: { ...FF.pj, by: 'pat' } }] })); this.setState({ fraisF: { who: FF.who, l: '', m: '', pj: null } }); this.flash('Note de frais ajoutée'); } },
+      cc, avgTxt: e2(avg) + ' / h', useAvgTxt: `Utiliser ${Math.round(avg)} € / h dans le calcul de marge`,
+      useAvg: () => { if (!avg) return; this.setState({ coutMO: Math.round(avg) }); this.flash(`Coût horaire de ${Math.round(avg)} € repris dans le calcul de marge`); },
+      exportCsv: () => { const url = URL.createObjectURL(new Blob(['\ufeff' + csvRows()], { type: 'text/csv;charset=utf-8' })); const a = document.createElement('a'); a.href = url; a.download = csvName; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); this.flash('Fichier paie téléchargé'); },
+      sendCompta: () => this.draft({ title: 'Éléments de paie · ' + monthL, to: (s.compta && (s.compta.email || s.compta.mail)) || '', subject: `Éléments variables de paie ${monthL} — ${co.name}`,
+        body: `Bonjour,\n\nVoici les éléments variables de paie de ${monthL} :\n\n` + paie.map(y => `${y.nom} (${y.sub})\n` + y.rows.map(r => `  ${r.k} : ${r.v}`).join('\n')).join('\n\n') + `\n\nLe détail est dans le fichier ${csvName}.\n\nBien cordialement,\n${co.name}`, attach: [csvName] }),
+    } };
+  }
+
   encVals(docs) {
-    const s = this.state, co = this.coData(), now = new Date(), D = x => { const [dd, mm] = x.split('/').map(Number); return new Date(2026, mm - 1, dd); };
+    const s = this.state, co = this.coData(), now = new Date(), D = x => { const [dd, mm] = x.split('/').map(Number); return DOC_D(dd + '/' + mm); };
     const dm = d => d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
     const cn = d => d.client.split(' — ')[0], facs = docs.filter(d => d.type === 'fac');
     const paid = facs.filter(d => d.st === 3), due = facs.filter(d => d.st < 3), sum = a => a.reduce((t, d) => t + d.ttc, 0);
@@ -1710,7 +2022,7 @@ class Component extends DCLogic {
 
   trVals(docs) {
     const s = this.state, co = this.coData(), now = new Date(), rel = s.trRel || {};
-    const D = x => { const [dd, mm] = x.split('/').map(Number); return new Date(2026, mm - 1, dd); };
+    const D = x => { const [dd, mm] = x.split('/').map(Number); return DOC_D(dd + '/' + mm); };
     const cn = d => d.client.split(' — ')[0], dv = docs.filter(d => d.type === 'devis'), sum = a => a.reduce((t, d) => t + d.ttc, 0);
     const sent = dv.filter(d => d.st >= 1), acc = dv.filter(d => d.st >= 2), fac = dv.filter(d => d.st === 3);
     const pc = (a, b) => b ? Math.round(a / b * 100) : 0, toDocs = f => () => this.setState({ docTab: 'devis', docFilter: f }, () => this.go('docs'));
@@ -1744,7 +2056,7 @@ class Component extends DCLogic {
   relVals(docs) {
     const s = this.state, done = s.relances || {}, now = new Date();
     const items = docs.filter(d => d.type === 'devis' && d.st === 1).map(d => {
-      const [dd, mm] = d.date.split('/').map(Number), days = Math.max(0, Math.round((now - new Date(2026, mm - 1, dd)) / 86400000)), ok = !!done[d.no];
+      const [dd, mm] = d.date.split('/').map(Number), days = Math.max(0, Math.round((now - DOC_D(dd + '/' + mm)) / 86400000)), ok = !!done[d.no];
       return { client: d.client.split(' — ')[0], amount: d.amount, since: ok ? 'relancé aujourd\u2019hui' : `envoyé il y a ${days} j`, done: ok,
         label: ok ? 'Relancé' : 'Relancer', bg: ok ? 'var(--color-accent-2-300)' : 'var(--color-accent-700)', fg: ok ? 'var(--color-accent-2-900)' : 'var(--color-neutral-100)',
         onOpen: () => this.openDevis(d.no),
@@ -1819,10 +2131,10 @@ class Component extends DCLogic {
         const P = { client: f.client.trim(), contact: f.client.trim(), tel: (f.tel || '').trim() || '—', addr: (f.addr || '').trim() || 'Adresse à compléter', type: (f.type || '').trim() || 'Travaux', debut: fr(f.debut) || new Date().toLocaleDateString('fr-FR'), fin: fr(f.fin) || '—', devis: [], facs: [], key, etapes: steps.map(t => [t, false]), note: (f.note || '').trim(), user: true };
         let no = null;
         if (f.mkDevis !== false) { no = docNo('DEV', s.devisSeq); P.devis.push(no);
-          const T = this.totals(), docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), ttc: T.ttc, marge: Math.round(T.pct) } : x);
-          this.setState({ docs: [{ no, type: 'devis', live: true, client: P.client + ' — ' + P.type, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0 }, ...docs], devisSeq: s.devisSeq + 1, lines: [], client: P.client, chantier: P.addr, acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' }); }
+          const T = this.totals(), docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
+          this.setState({ docs: [{ no, type: 'devis', live: true, client: P.client + ' — ' + P.type, date: TODAY(), st: 0 }, ...docs], devisSeq: s.devisSeq + 1, lines: [], client: P.client, chantier: P.addr, acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' }); }
         if (s.metier === 'elec' && f.mkPlan !== false) { const a = planFromLines([]); this.setState(st => ({ plans: [{ id: 'p' + (UID++), name: 'Schéma unifilaire — ' + P.client, kind: 'unifilaire', devisNo: no, facNo: null, date: new Date().toLocaleDateString('fr-FR'), ...a }, ...(st.plans ?? this.defaultPlans())] })); }
-        if (f.mkRdv !== false && f.debut) this.setState(st => ({ events: [...this.events(), { id: UID++, date: f.debut, time: '07:30', title: P.client + ' — ' + P.type, place: P.addr.split(',').pop().replace(/\d+/g, '').trim(), kind: 'chantier' }] }));
+        if (f.mkRdv !== false && f.debut) this.setState(st => ({ events: [...this.events(), { id: UID++, ch: id, date: f.debut, time: '07:30', title: P.client + ' — ' + P.type, place: P.addr.split(',').pop().replace(/\d+/g, '').trim(), kind: 'chantier' }] }));
         this.setState(st => ({ userProj: { ...(st.userProj || {}), [id]: P }, npForm: null }));
         this.flash('Projet créé' + (no ? ' · ' + no : ''));
         setTimeout(() => this.openProjet(id), 0);
@@ -1912,7 +2224,26 @@ class Component extends DCLogic {
       return { ...d, status, amount: fmt(ttc), ttc, bg: TONE[status][0], fg: TONE[status][1],
         hint: d.type === 'fac' ? 'Ouvrir la facture' : d.live ? 'En cours d\u2019édition' : d.st < 2 ? 'Modifier le devis' : 'Validé · modifier crée une nouvelle version',
         onOpen: () => d.type === 'fac' ? this.openFac(d.no) : this.openDevis(d.no),
-        onCycle: e => { e && e.stopPropagation && e.stopPropagation(); this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ? { ...x, st: (x.st + 1) % list.length } : x) })); } };
+        _cf: ctx => { const open = !!s.stCf && s.stCf.no === d.no && s.stCf.ctx === ctx, stop = e => e && e.stopPropagation && e.stopPropagation(), fac = d.type === 'fac', pa = this.props.paName || 'FactuPro 974';
+          const setSt = v => this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: v, motif: v === 0 ? null : x.motif } : x) }));
+          const NOTE = { 'Brouillon': 'Le devis repasse en brouillon.', 'Envoyé': 'Le devis est marqué comme envoyé au client.', 'Accepté': 'Le devis est marqué comme signé par le client.', 'Facturé': 'Le devis est marqué comme facturé.' };
+          const motif = d.motif ? ' : ' + d.motif : '';
+          const A = !fac ? (() => { const nx = (d.st + 1) % list.length; return { next: list[nx], ok: (nx === 0 ? 'Repasser en ' : 'Passer en ') + list[nx].toLowerCase(), note: NOTE[list[nx]], run: () => { setSt(nx); this.flash(d.no + ' : ' + list[nx].toLowerCase()); } }; })()
+            : d.st === 0 && (!d.lines || !d.lines.length || (d.pro && !SIREN_OK(d.siren))) ? { next: 'Émise', ok: 'Compléter la facture', note: !d.lines || !d.lines.length ? 'La facture n’a pas de lignes détaillées : la plateforme la rejetterait (EN 16931).' : 'SIREN du client manquant ou invalide : la plateforme la rejetterait.', run: () => { this.setState({ stCf: null }); this.openFac(d.no); } }
+            : d.st === 0 ? { next: 'Transmise', ok: 'Transmettre à la plateforme', note: s.offline ? 'Hors ligne : la facture partira à la reconnexion.' : 'La facture est déposée sur ' + pa + '. Ce n’est pas encore une acceptation du client.', run: () => { if (window.__btpPaSend && window.__btpPaSend('transmit', d)) { this.setState({ stCf: null }); return; } setSt(1); this.flash(s.offline ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }
+            : [1, 2, 6].includes(d.st) ? { next: 'Encaissée', ok: 'Enregistrer l’encaissement', note: 'Le statut Encaissée (212) est envoyé à ' + pa + ' avec la date et le montant. Le passage à Acceptée vient du client, pas de toi.', run: () => { if (window.__btpPaSend && window.__btpPaSend('pay', d)) { this.setState({ stCf: null }); return; } this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) } : x) })); this.flash(d.no + ' encaissée'); } }
+            : d.st === 4 ? { next: 'Émise', ok: 'Corriger et réémettre', note: 'Rejetée par la plateforme' + motif + '. Corrige la facture puis réémets-la : le numéro est conservé.', run: () => { setSt(0); this.openFac(d.no); } }
+            : d.st === 5 ? { next: 'Émise', ok: 'Réémettre sous un nouveau numéro', note: 'Refusée par le client' + motif + '. La facture reste dans l’historique ; une nouvelle facture est créée.', run: () => { const src = s.docs.find(x => x.no === d.no), no = docNo('FAC', s.facSeq); this.setState(st => ({ stCf: null, facSeq: st.facSeq + 1, docs: [{ ...src, no, st: 0, motif: null, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), replaces: d.no }, ...st.docs] })); this.flash(no + ' créée, remplace ' + d.no); } }
+            : null;
+          return { cfOpen: open, cfChev: open ? '180deg' : '0deg', cfTitle: (fac ? 'Facture ' : 'Devis ') + d.no,
+            cfRows: [['Client', d.client], ['Date', d.date], ['Montant TTC', fmt(ttc)], ...(d.motif ? [['Motif', d.motif]] : [])].map(([k, v]) => ({ k, v: v || '—' })),
+            cfCur: status, cfCurBg: TONE[status][0], cfCurFg: TONE[status][1], cfHasOk: !!A,
+            cfNext: A ? A.next : '', cfNextBg: A ? TONE[A.next][0] : 'transparent', cfNextFg: A ? TONE[A.next][1] : 'inherit',
+            cfNote: A ? A.note : status === 'Encaissée' ? 'Statut final : le cycle de la facture est terminé.' : 'Ce statut est posé par la plateforme ou le client. Rien à faire de ton côté.',
+            cfOkTxt: A ? A.ok : '', cfStop: stop,
+            onCycle: e => { stop(e); this.setState({ stCf: open ? null : { no: d.no, ctx } }); },
+            cfNo: e => { stop(e); this.setState({ stCf: null }); },
+            cfOk: e => { stop(e); if (A) A.run(); } }; } };
     });
     const devisDocs = docs.filter(d => d.type === 'devis'), facs = docs.filter(d => d.type === 'fac');
     const transformed = devisDocs.filter(d => d.st === 3).length;
@@ -1989,13 +2320,13 @@ class Component extends DCLogic {
       cmp,
       scrollRef: this.scrollRef,
       isHome: s.tab === 'home', isDevis: s.tab === 'devis', isDocs: s.tab === 'docs', isCat: s.tab === 'cat',
-      tabs: { home: tabOn('home'), devis: tabOn('devis'), docs: tabOn('docs'), cat: tabOn('cat'), set: tabOn('set') },
+      tabs: { home: tabOn('home'), devis: tabOn('devis'), docs: tabOn('docs'), cat: tabOn('cat'), rh: tabOn('rh'), set: tabOn('set') },
       isSet: s.tab === 'set', goSet: () => this.go('set'), goMarge: () => this.go('marge'),
       sw: s.puHidden ? { justify: 'flex-end', bg: 'var(--color-accent-2-700)' } : { justify: 'flex-start', bg: 'var(--color-neutral-400)' },
       co: (() => { const c = this.coData(); c.capTxt = FORMES[FORME_OF(c.forme)].soc_ && c.capital ? ' au capital de ' + c.capital + ' €' : ''; const set = k => e => this.setState({ co: { ...c, [k]: e.target.value } }); return { ...c, onName: set('name'), onSiret: set('siret'), onAddr: set('addr'), onTel: set('tel'), onRm: set('rm'), onAssureur: set('assureur'), onPolice: set('police'), onMediateur: set('mediateur') }; })(),
-      goHome: () => this.go('home'), goDevis: () => this.go('devis'), goDocs: () => { this.setState({ docFilter: null }); this.go('docs'); }, goCat: () => this.go('cat'),
+      goHome: () => this.go('home'), goDevis: () => this.go('devis'), goDocs: () => { this.setState({ docFilter: null }); this.go('docs'); }, goCat: () => this.go('cat'), goRh: () => this.go('rh'),
       metierLabel: m.label, metierShort: m.short, kpis, bars, jEmit,
-      recentDocs: docs.slice(0, 3),
+      recentDocs: docs.slice(0, 3).map(d => ({ ...d, ...d._cf('rec') })),
       devisNo: s.editNo || LIVE_NO,
       versionNote: s.baseCount ? (() => { const withO = s.lines.filter(l => l.orig), mod = withO.filter(l => l.qty !== l.orig.qty || l.pu !== l.orig.pu).length, add = s.lines.length - withO.length, rem = s.baseCount - withO.length; return `Nouvelle version de ${s.versionOf}. Modifications marquées : ${mod} modifiée${mod > 1 ? 's' : ''}, ${add} ajoutée${add > 1 ? 's' : ''}, ${rem} supprimée${rem > 1 ? 's' : ''}.`; })() : '',
       aiInput: s.aiInput, onAiInput: e => this.setState({ aiInput: e.target.value }),
@@ -2010,6 +2341,10 @@ class Component extends DCLogic {
       dots: React.createElement('span', { style: { display: 'inline-flex', gap: 4 } }, [0, 1, 2].map(i => React.createElement('span', { key: i, style: { width: 8, height: 8, borderRadius: '50%', background: 'var(--color-accent)', animation: `btpDot 1s ${i * 0.15}s infinite ease-in-out` } }))),
       aiMsg: s.aiMsg, aiMsgBg: s.aiOk ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)', aiMsgFg: s.aiOk ? 'var(--color-accent-2-900)' : 'var(--color-accent-900)',
       client: s.client, onClient: e => this.setState({ client: e.target.value }),
+      cliSiren: s.cliSiren || '', onCliSiren: e => this.setState({ cliSiren: e.target.value }), cliPro: (s.clientType || 'part') === 'pro',
+      cliSirErr: (s.cliSiren && !SIREN_OK(s.cliSiren)) ? 'SIREN (9 chiffres) ou SIRET (14 chiffres) invalide.' : ((s.clientType || 'part') === 'pro' && !s.cliSiren) ? 'Obligatoire pour un client professionnel (facture électronique).' : '',
+      get hasCliSirErr() { return !!this.cliSirErr; }, cliTypeTxt: (s.clientType || 'part') === 'pro' ? 'professionnel' : 'particulier',
+      toggleCliType: () => this.setState(st => ({ clientType: (st.clientType || 'part') === 'pro' ? 'part' : 'pro' })), cliTypeJ: (s.clientType || 'part') === 'pro' ? 'flex-end' : 'flex-start', cliTypeBg: (s.clientType || 'part') === 'pro' ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)',
       chantier: s.chantier, onChantier: e => this.setState({ chantier: e.target.value }),
       isMicro: T.micro, lines, isEmpty: !s.lines.length, lineCount: `${s.lines.length} ligne${s.lines.length > 1 ? 's' : ''}`,
       addMO: () => this.setState(st => ({ lines: [...st.lines.filter(x => x.kind !== 'dep'), moLine(1, this.taux()), ...st.lines.filter(x => x.kind === 'dep')] })),
@@ -2031,7 +2366,9 @@ class Component extends DCLogic {
         this.setState({ facVerif: true, fvChecks: {}, fvOpen: true, recapOpen: false });
       },
       fv: (() => { const ch = s.fvChecks || {}, co = this.coData(), L = [['lignes', 'Lignes et quantités conformes aux travaux réalisés'], ['client', 'Nom et adresse du client'], ['montants', 'Montants, TVA et acompte']];
-        const warn = [!(s.client || '').trim() ? 'Client non renseigné sur le devis.' : '', !co.siret ? 'SIRET manquant dans Réglages › Mon entreprise.' : ''].filter(Boolean);
+        const pro = (s.clientType || 'part') === 'pro', sv = s.cliSiren || '';
+        const warn = [!(s.client || '').trim() ? 'Client non renseigné sur le devis.' : '', !co.siret ? 'SIRET manquant dans Réglages › Mon entreprise.' : '',
+          pro && !sv ? 'SIREN du client manquant : obligatoire pour un client professionnel.' : '', sv && !SIREN_OK(sv) ? 'SIREN du client invalide (9 chiffres, ou SIRET 14 chiffres).' : '', !s.lines.length ? 'Le devis n’a aucune ligne.' : ''].filter(Boolean);
         const all = L.every(([k]) => ch[k]) && !warn.length;
         return { open: !!s.facVerif, devisNo: s.editNo || LIVE_NO, facNo: docNo('FAC', s.facSeq), client: s.client || '—', nLines: String(s.lines.length),
           ht: fmt(T.ht), tva: T.micro ? 'Non applicable' : fmt(T.t85 + T.t21), ttc: fmt(T.ttc), ac: T.ac ? '− ' + fmt(T.ac) : '—', net: fmt(T.ttc - T.ac), warn,
@@ -2045,7 +2382,11 @@ class Component extends DCLogic {
       doFacture: () => {
         const no = docNo('FAC', s.facSeq);
         this.setState(st => ({ facSeq: st.facSeq + 1, docTab: 'fac', recapOpen: false, plans: (st.plans ?? this.defaultPlans()).map(p => p.devisNo === (st.editNo || LIVE_NO) ? { ...p, facNo: no } : p),
-          docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0, ttc: T.ttc - T.ac, snap: { issued: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()), devisNo: st.editNo || LIVE_NO, client: st.client, chantier: st.chantier, clientType: st.clientType || 'part', regime: st.regime, remiseTxt: st.remiseTxt, acompte: st.acompte, prepaid: T.ac, ttc: T.ttc, lines: st.lines.map(({ kind, name, ref, qty, unit, pu, tva }) => ({ kind, name, ref, qty, unit, pu, tva })) } }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
+          docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: TODAY(), st: 0, devisNo: st.editNo || LIVE_NO,
+            siren: st.cliSiren || '', pro: (st.clientType || 'part') === 'pro', chantier: st.chantier || '', micro: T.micro,
+            lines: st.lines.map(l => ({ name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva, qty: l.qty, pu: l.pu })),
+            rem: Math.min(Math.max(parseFloat(String(st.remiseTxt).replace(',', '.')) || 0, 0), 100) / 100,
+            ht: T.ht, t85: T.t85, t21: T.t21, ttcFull: T.ttc, acPct: st.acompte, ac: T.ac, ttc: r2(T.ttc - T.ac) }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
         this.go('docs'); this.flash(`Facture ${no} créée, non transmise : vérifie-la puis envoie-la`);
       },
       docTabs: [['devis', 'Devis'], ['fac', 'Factures'], ['plans', 'Plans']].map(([k, label]) => { const a = s.docTab === k; return { label, bg: a ? 'var(--color-neutral-100)' : 'transparent', fg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-700)', onPick: () => this.setState({ docTab: k }) }; }),
@@ -2054,7 +2395,7 @@ class Component extends DCLogic {
         const q = (s.docQ || '').trim().toLowerCase(), nq = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         const byQ = base.filter(d => !q || nq(d.no + ' ' + d.client).includes(nq(q)));
         const sts = s.docTab === 'fac' ? FAC_ST : DEVIS_ST, co = this.coData(), now = new Date();
-        const Dd = x => { const [dd, mm] = String(x).split('/').map(Number); return new Date(2026, (mm || 1) - 1, dd || 1); };
+        const Dd = DOC_D;
         const list = byQ.filter(ok).map(d => { const age = Math.round((now - Dd(d.date)) / 86400000), cl = d.client.split(' — ')[0];
           let act = '', onAct = null, hint2 = d.hint, hintFg = 'var(--color-neutral-700)';
           const relance = (sub, body) => e => { e && e.stopPropagation && e.stopPropagation(); this.draft({ title: 'Relance ' + d.no, subject: sub, body }, () => this.flash('Relance préparée pour ' + cl)); };
@@ -2070,7 +2411,7 @@ class Component extends DCLogic {
           return { l: st, n, on: a, dot: a ? 'var(--color-neutral-100)' : DOT[i], bg: a ? 'var(--color-neutral-900)' : 'var(--color-neutral-100)', fg: a ? 'var(--color-neutral-100)' : n ? 'var(--color-neutral-900)' : 'var(--color-neutral-600)',
             onPick: () => this.setState({ docFilter: a ? null : { k: 'status', v: st, label: st.toLowerCase() } }) }; });
         const tot = list.reduce((a, d) => a + (d.ttc || 0), 0);
-        return { docList: list, docChips, docQ: s.docQ || '', docQOn: !!q, onDocQ: e => this.setState({ docQ: e.target.value }), clearDocQ: () => this.setState({ docQ: '' }),
+        return { docList: list.map(d => ({ ...d, ...(d._cf ? d._cf('docs') : {}) })), docChips, docQ: s.docQ || '', docQOn: !!q, onDocQ: e => this.setState({ docQ: e.target.value }), clearDocQ: () => this.setState({ docQ: '' }),
           docSum: { n: `${list.length} ${s.docTab === 'fac' ? 'facture' : 'devis'}${list.length > 1 && s.docTab === 'fac' ? 's' : ''}`, tot: fmt0(tot) + ' TTC', filtered: !!stF && stF !== '__unpaid', clear: () => this.setState({ docFilter: null }) },
           docEmptyTxt: q ? `Aucun document pour « ${s.docQ.trim()} ».` : 'Aucun document pour ce filtre.',
           docFilter: { on: !!f && f.k !== 'status', label: f ? f.label : '', count: list.length + ' doc.', empty: !list.length && (!!f || !!q), clear: () => this.setState({ docFilter: null }) } }; })(),
@@ -2087,7 +2428,7 @@ class Component extends DCLogic {
           apply: () => { this.setState(st => ({ lines: st.lines.map(l => l.kind === 'mo' ? { ...l, pu: t, puTxt: undefined } : l) })); this.flash(`Main d'œuvre passée à ${t} € / h`); } }; })(),
       newDevis: () => this.newDevis(),
       timeOpts: { h: Array.from({ length: 24 }, (_, i) => { const v = String(i).padStart(2, '0'); return { v, l: v + ' h' }; }), m: Array.from({ length: 12 }, (_, i) => { const v = String(i * 5).padStart(2, '0'); return { v, l: v }; }) },
-      ...this.frameVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
+      ...this.frameVals(), ...this.dayVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.rhVals(), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
       fit: s.wideOn ? { w: '100vw', h: '100vh', t: 'none' } : (() => { const k = Math.max(0.5, s.fitK || 1); return { w: Math.round(390 * k) + 'px', h: Math.round(844 * k) + 'px', t: k < 1 ? `scale(${k.toFixed(3)})` : 'none' }; })(),
       pp: (() => { const hist = (s.aiHistory || []).filter(t => !m.ex.includes(t)), open = !!s.ppOpen;
         const pick = t => () => this.setState({ aiInput: t, aiMsg: '', ppOpen: false });
@@ -2125,7 +2466,7 @@ class Component extends DCLogic {
       updReady: !!s.updReady && !s.toast, updLater: () => this.setState({ updReady: false }), updReload: () => { if (window.__btpApplyUpdate) window.__btpApplyUpdate(); else location.reload(); },
       provCancel: () => this.setState({ confirmProv: false }),
       goBack: () => this.go(s.prevTab && s.prevTab !== s.tab ? s.prevTab : 'home'),
-      backTitle: 'Retour : ' + ({ home: 'Accueil', devis: 'Devis', docs: 'Documents', stats: 'Facturation', enc: 'Encaissements', panier: 'Panier moyen', transfo: 'Transformation', marge: 'Calcul de marge', outil: 'Outils', set: 'Réglages', projet: 'Projet', plan: 'Plan' }[s.prevTab] || 'Accueil'),
+      backTitle: 'Retour : ' + ({ home: 'Accueil', devis: 'Devis', docs: 'Documents', stats: 'Facturation', enc: 'Encaissements', panier: 'Panier moyen', rh: 'Équipe', transfo: 'Transformation', marge: 'Calcul de marge', outil: 'Outils', set: 'Réglages', projet: 'Projet', plan: 'Plan' }[s.prevTab] || 'Accueil'),
       showPu: !s.puHidden, puHidden: !!s.puHidden, puTitle: s.puHidden ? 'Afficher les prix unitaires' : 'Masquer les prix unitaires',
       togglePu: () => this.setState(st => ({ puHidden: !st.puHidden })),
       toast: s.toast, seuilTxt: (s.seuil ?? 15) + ' %', seuilPos: Math.min(s.seuil ?? 15, 50) / 50 * 100 + '%',

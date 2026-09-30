@@ -104,7 +104,7 @@ export function createPaService({ store, adapter, key, log = () => {}, now = Dat
       if (prev.state !== 'emise' && prev.state !== 'rejetee' && prev.state !== 'echec') throw new PaError(409, 'Ce numéro de facture est déjà déposé : un numéro ne peut jamais être réutilisé.');
     }
     const T0 = computeTotals(invoice), inv = t.invoices[invoice.no] = {
-      ...(prev?.state === 'echec' ? prev : {}), no: invoice.no, state: 'emise', idemKey, fileHash, grand: T0.grand, buyerSiren: String(invoice.buyer.siren).replace(/\s/g, ''),
+      ...(prev?.state === 'echec' ? prev : {}), no: invoice.no, state: 'emise', idemKey, fileHash, grand: T0.grand, buyerSiren: String(invoice.buyer.siren).replace(/\D/g, '').slice(0, 9),
       createdAt: prev?.createdAt || now(), history: prev?.state === 'rejetee' ? [] : prev?.history || [], errors: [], payments: prev?.payments || [], paidTotal: prev?.paidTotal || 0,
       file: seal(key, xml, 'pa-file:' + tenantId + ':' + invoice.no),
     };

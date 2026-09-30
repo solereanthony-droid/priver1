@@ -41,6 +41,33 @@
               </sc-for>
             </div>
 
+            <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">
+                <div style="min-width:0">
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Aujourd’hui</div>
+                  <div style="font-size:13px;color:var(--color-neutral-700);text-transform:capitalize">{{ day.l }}</div>
+                </div>
+                <button style-active="transform:scale(0.97)" onClick="{{ day.open }}" class="btn btn-ghost" style="transition:transform .12s ease;min-height:44px;font-size:14px;color:var(--color-accent-700)">Agenda</button>
+              </div>
+              <sc-if value="{{ day.empty }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:14px;color:var(--color-neutral-700);padding:8px 0;border-top:1px solid var(--color-divider)">Rien de prévu aujourd’hui.</div>
+              </sc-if>
+              <sc-for list="{{ day.items }}" as="e" hint-placeholder-count="2">
+                <button style-active="transform:scale(0.98)" onClick="{{ e.onTap }}" style="transition:transform .12s ease;display:flex;align-items:center;gap:12px;min-height:58px;border:none;border-top:1px solid var(--color-divider);background:transparent;padding:8px 0;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                  <span style="width:6px;align-self:stretch;border-radius:999px;background:{{ e.c }}"></span>
+                  <span style="width:50px;flex:none;font-size:14px;font-weight:700">{{ e.time }}</span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:15px;font-weight:600;line-height:1.3">{{ e.title }}</span>
+                    <span style="font-size:13px;font-weight:700;color:{{ e.subFg }}">{{ e.sub }}</span>
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 18 6-6-6-6"></path></svg>
+                </button>
+              </sc-for>
+              <sc-if value="{{ day.hasAbs }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13px;font-weight:600;color:var(--color-neutral-700);padding-top:10px;border-top:1px solid var(--color-divider)">{{ day.absTxt }}</div>
+              </sc-if>
+            </div>
+
             <button style-active="transform:scale(0.97)" onClick="{{ goDevis }}" style="transition:transform .12s ease;position:relative;overflow:hidden;text-align:left;border:none;cursor:pointer;border-radius:32px;background:var(--color-accent-700);color:var(--color-neutral-100);padding:22px 22px 20px;display:flex;flex-direction:column;gap:6px;font-family:var(--font-body)">
               <div style="position:absolute;right:-40px;top:-50px;width:170px;height:170px;border-radius:50%;background:var(--color-accent-600)"></div>
               <div style="position:absolute;right:30px;bottom:-60px;width:110px;height:110px;border-radius:50%;background:var(--color-accent-800)"></div>
@@ -97,7 +124,7 @@
               </div>
               <div style="display:flex;flex-direction:column;gap:6px">
                 <sc-for list="{{ pa.facs }}" as="f" hint-placeholder-count="3">
-                  <div style="display:flex;align-items:center;gap:10px;background:var(--color-neutral-100);border-radius:18px;padding:10px 10px 10px 14px">
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--color-neutral-100);border-radius:18px;padding:10px 10px 10px 14px">
                     <button style-active="transform:scale(0.97)" data-comment-anchor="cc-3" onClick="{{ f.onOpen }}" title="Ouvrir la facture" style="transition:transform .12s ease;flex:1;min-width:0;min-height:44px;border:none;background:transparent;padding:0;text-align:left;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;gap:8px">
                       <div style="flex:1;min-width:0">
                         <div style="font-size:14px;font-weight:600;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.client }}</div>
@@ -105,7 +132,27 @@
                       </div>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 18 6-6-6-6"></path></svg>
                     </button>
-                    <button style-active="transform:scale(0.97)" onClick="{{ f.onCycle }}" title="Changer le statut" style="transition:transform .12s ease;min-height:34px;border:none;border-radius:999px;padding:0 12px;font:700 13px var(--font-body);cursor:pointer;background:{{ f.bg }};color:{{ f.fg }}">{{ f.status }}</button>
+                    <button style-active="transform:scale(0.97)" onClick="{{ f.onCycle }}" title="Changer le statut" style="transition:transform .12s ease;min-height:34px;border:none;border-radius:999px;padding:0 12px;font:700 13px var(--font-body);cursor:pointer;background:{{ f.bg }};color:{{ f.fg }}">{{ f.status }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:-1px;transition:transform .2s ease;transform:rotate({{ f.cfChev }})"><path d="m6 9 6 6 6-6"></path></svg></button>
+                  <sc-if value="{{ f.cfOpen }}" hint-placeholder-val="{{ false }}">
+                    <div onClick="{{ f.cfStop }}" style="flex:1 0 100%;background:var(--color-surface);border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;cursor:default;animation:btpIn .2s ease">
+                      <div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">{{ f.cfTitle }}</div>
+                      <div style="display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:4px;font-size:14px">
+                        <sc-for list="{{ f.cfRows }}" as="r" hint-placeholder-count="3">
+                          <span style="color:var(--color-neutral-700)">{{ r.k }}</span><span style="font-weight:700;text-align:right;overflow-wrap:anywhere">{{ r.v }}</span>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <span style="border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:{{ f.cfCurBg }};color:{{ f.cfCurFg }}">{{ f.cfCur }}</span>
+                        <sc-if value="{{ f.cfHasOk }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                        <span style="border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:{{ f.cfNextBg }};color:{{ f.cfNextFg }}">{{ f.cfNext }}</span></sc-if>
+                      </div>
+                      <div style="font-size:13px;line-height:1.4;color:var(--color-neutral-800)">{{ f.cfNote }}</div>
+                      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:8px">
+                        <button style-active="transform:scale(0.97)" onClick="{{ f.cfNo }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Annuler</button>
+                        <sc-if value="{{ f.cfHasOk }}" hint-placeholder-val="{{ true }}"><button style-active="transform:scale(0.97)" onClick="{{ f.cfOk }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:44px;font-size:14px">{{ f.cfOkTxt }}</button></sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
                   </div>
                 </sc-for>
               </div>
@@ -141,12 +188,32 @@
                 <button style-active="transform:scale(0.97)" onClick="{{ goDocs }}" class="btn btn-ghost" style="transition:transform .12s ease;min-height:44px;font-size:14px;color:var(--color-accent-700)">Tout voir</button>
               </div>
               <sc-for list="{{ recentDocs }}" as="d" hint-placeholder-count="3">
-                <div style="display:flex;align-items:center;gap:12px;background:var(--color-neutral-100);border-radius:22px;padding:12px 12px 12px 16px">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--color-neutral-100);border-radius:22px;padding:12px 12px 12px 16px">
                   <div onClick="{{ d.onOpen }}" role="button" style="flex:1;min-width:0;cursor:pointer">
                     <div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.client }}</div>
                     <div style="font-size:13px;color:var(--color-neutral-700);font-family:ui-monospace,Menlo,monospace">{{ d.no }} · {{ d.amount }}</div>
                   </div>
-                  <button style-active="transform:scale(0.97)" onClick="{{ d.onCycle }}" title="Changer le statut" style="transition:transform .12s ease;min-height:36px;border:none;border-radius:999px;padding:0 12px;font:700 13px var(--font-body);cursor:pointer;background:{{ d.bg }};color:{{ d.fg }}">{{ d.status }}</button>
+                  <button style-active="transform:scale(0.97)" onClick="{{ d.onCycle }}" title="Changer le statut" style="transition:transform .12s ease;min-height:36px;border:none;border-radius:999px;padding:0 12px;font:700 13px var(--font-body);cursor:pointer;background:{{ d.bg }};color:{{ d.fg }}">{{ d.status }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:-1px;transition:transform .2s ease;transform:rotate({{ d.cfChev }})"><path d="m6 9 6 6 6-6"></path></svg></button>
+                  <sc-if value="{{ d.cfOpen }}" hint-placeholder-val="{{ false }}">
+                    <div onClick="{{ d.cfStop }}" style="flex:1 0 100%;background:var(--color-surface);border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;cursor:default;animation:btpIn .2s ease">
+                      <div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">{{ d.cfTitle }}</div>
+                      <div style="display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:4px;font-size:14px">
+                        <sc-for list="{{ d.cfRows }}" as="r" hint-placeholder-count="3">
+                          <span style="color:var(--color-neutral-700)">{{ r.k }}</span><span style="font-weight:700;text-align:right;overflow-wrap:anywhere">{{ r.v }}</span>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <span style="border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:{{ d.cfCurBg }};color:{{ d.cfCurFg }}">{{ d.cfCur }}</span>
+                        <sc-if value="{{ d.cfHasOk }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                        <span style="border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:{{ d.cfNextBg }};color:{{ d.cfNextFg }}">{{ d.cfNext }}</span></sc-if>
+                      </div>
+                      <div style="font-size:13px;line-height:1.4;color:var(--color-neutral-800)">{{ d.cfNote }}</div>
+                      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:8px">
+                        <button style-active="transform:scale(0.97)" onClick="{{ d.cfNo }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Annuler</button>
+                        <sc-if value="{{ d.cfHasOk }}" hint-placeholder-val="{{ true }}"><button style-active="transform:scale(0.97)" onClick="{{ d.cfOk }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:44px;font-size:14px">{{ d.cfOkTxt }}</button></sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
                 </div>
               </sc-for>
             </div>
@@ -226,6 +293,14 @@
 
             <div style="display:flex;flex-direction:column;gap:10px">
               <input value="{{ client }}" onInput="{{ onClient }}" placeholder="Client" class="input" style="min-height:50px;font-size:16px;background:var(--color-neutral-100);border-color:transparent">
+              <button onClick="{{ toggleCliType }}" role="switch" aria-checked="{{ cliPro }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;border:none;background:var(--color-neutral-100);border-radius:999px;padding:0 8px 0 18px;cursor:pointer;font:600 15px var(--font-body);color:var(--color-text);text-align:left">
+                <span>Client {{ cliTypeTxt }}</span>
+                <span style="width:48px;height:28px;flex:none;border-radius:999px;padding:3px;display:flex;justify-content:{{ cliTypeJ }};background:{{ cliTypeBg }}"><span style="width:22px;height:22px;border-radius:50%;background:var(--color-neutral-100)"></span></span>
+              </button>
+              <input value="{{ cliSiren }}" onInput="{{ onCliSiren }}" placeholder="SIREN ou SIRET du client" inputmode="numeric" aria-label="SIREN ou SIRET du client" class="input" style="min-height:50px;font-size:16px;background:var(--color-neutral-100);border-color:transparent">
+              <sc-if value="{{ hasCliSirErr }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:13px;font-weight:700;color:var(--color-accent-800);padding:0 14px;margin-top:-4px">{{ cliSirErr }}</div>
+              </sc-if>
               <input value="{{ chantier }}" onInput="{{ onChantier }}" placeholder="Adresse du chantier" class="input" style="min-height:50px;font-size:16px;background:var(--color-neutral-100);border-color:transparent">
             </div>
 
@@ -410,8 +485,28 @@
               <div onClick="{{ d.onOpen }}" role="button" style="cursor:pointer;background:var(--color-neutral-100);border-radius:24px;padding:14px 14px 14px 18px;display:flex;flex-direction:column;gap:8px">
                 <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
                   <div style="font-size:13px;font-family:ui-monospace,Menlo,monospace;color:var(--color-neutral-700)">{{ d.no }} · {{ d.date }}</div>
-                  <button style-active="transform:scale(0.97)" onClick="{{ d.onCycle }}" title="Changer le statut" style="transition:transform .12s ease;min-height:36px;border:none;border-radius:999px;padding:0 12px;font:700 13px var(--font-body);cursor:pointer;background:{{ d.bg }};color:{{ d.fg }}">{{ d.status }}</button>
+                  <button style-active="transform:scale(0.97)" onClick="{{ d.onCycle }}" title="Changer le statut" style="transition:transform .12s ease;min-height:36px;border:none;border-radius:999px;padding:0 12px;font:700 13px var(--font-body);cursor:pointer;background:{{ d.bg }};color:{{ d.fg }}">{{ d.status }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:-1px;transition:transform .2s ease;transform:rotate({{ d.cfChev }})"><path d="m6 9 6 6 6-6"></path></svg></button>
                 </div>
+                <sc-if value="{{ d.cfOpen }}" hint-placeholder-val="{{ false }}">
+                    <div onClick="{{ d.cfStop }}" style="background:var(--color-surface);border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;cursor:default;animation:btpIn .2s ease">
+                      <div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">{{ d.cfTitle }}</div>
+                      <div style="display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:4px;font-size:14px">
+                        <sc-for list="{{ d.cfRows }}" as="r" hint-placeholder-count="3">
+                          <span style="color:var(--color-neutral-700)">{{ r.k }}</span><span style="font-weight:700;text-align:right;overflow-wrap:anywhere">{{ r.v }}</span>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <span style="border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:{{ d.cfCurBg }};color:{{ d.cfCurFg }}">{{ d.cfCur }}</span>
+                        <sc-if value="{{ d.cfHasOk }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                        <span style="border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;background:{{ d.cfNextBg }};color:{{ d.cfNextFg }}">{{ d.cfNext }}</span></sc-if>
+                      </div>
+                      <div style="font-size:13px;line-height:1.4;color:var(--color-neutral-800)">{{ d.cfNote }}</div>
+                      <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:8px">
+                        <button style-active="transform:scale(0.97)" onClick="{{ d.cfNo }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Annuler</button>
+                        <sc-if value="{{ d.cfHasOk }}" hint-placeholder-val="{{ true }}"><button style-active="transform:scale(0.97)" onClick="{{ d.cfOk }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:44px;font-size:14px">{{ d.cfOkTxt }}</button></sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
                 <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
                   <div style="font-size:15px;font-weight:600;line-height:1.3;min-width:0">{{ d.client }}</div>
                   <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;white-space:nowrap">{{ d.amount }}</div>
@@ -425,7 +520,7 @@
               </div>
             </sc-for>
             <sc-if value="{{ notPlansTab }}" hint-placeholder-val="{{ true }}">
-            <div style="font-size:14px;line-height:1.45;color:var(--color-neutral-700)">Touche un statut pour le faire avancer. En version complète, les statuts se mettent à jour via ta Plateforme Agréée.</div>
+            <div style="font-size:14px;line-height:1.45;color:var(--color-neutral-700)">Touche un statut pour voir le récapitulatif. Transmise et Acceptée viennent de la plateforme et du client : tu ne les changes pas à la main. En version complète, les statuts se mettent à jour via ta Plateforme Agréée.</div>
             </sc-if>
             <sc-if value="{{ isPlansTab }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:10px">
@@ -454,6 +549,503 @@
                   </button>
                 </sc-for>
               </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ÉQUIPE / RH -->
+        <sc-if value="{{ isRh }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="07 Équipe" style="padding:12px 20px 28px;display:flex;flex-direction:column;gap:20px;animation:btpIn .28s ease">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="font-family:var(--font-heading);font-size:32px;line-height:1.05;letter-spacing:-.015em">Équipe</div>
+              <div style="font-size:14px;color:var(--color-neutral-800)">{{ rh.sub }}</div>
+            </div>
+            <div role="tablist" aria-label="Rubriques équipe" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;background:var(--color-surface);border-radius:999px;padding:4px">
+              <sc-for list="{{ rh.tabs }}" as="t" hint-placeholder-count="5">
+                <button role="tab" aria-selected="{{ t.on }}" onClick="{{ t.onPick }}" style-active="transform:scale(0.97)" style="transition:transform .12s ease;position:relative;min-width:0;min-height:44px;border:none;border-radius:999px;padding:0 2px;font:700 13px var(--font-body);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:{{ t.bg }};color:{{ t.fg }}">{{ t.l }}<sc-if value="{{ t.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--color-accent-700)"></span></sc-if></button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ rh.isTeam }}" hint-placeholder-val="{{ true }}">
+              <sc-if value="{{ rh.today.show }}" hint-placeholder-val="{{ true }}">
+                <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
+                    <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Aujourd’hui</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700);text-transform:capitalize">{{ rh.today.l }}</div>
+                  </div>
+                  <sc-for list="{{ rh.today.rows }}" as="t" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:12px;min-height:56px;border-top:1px solid var(--color-divider)">
+                      <div style="position:relative;width:40px;height:40px;flex:none;border-radius:50%;background:var(--color-surface);display:flex;align-items:center;justify-content:center;font:800 14px var(--font-body)">{{ t.ini }}<span style="position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:{{ t.dot }};box-shadow:0 0 0 2px var(--color-neutral-100)"></span></div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:15px;font-weight:700">{{ t.nom }} · {{ t.where }}</div>
+                        <div style="font-size:13px;font-weight:600;color:{{ t.stFg }}">{{ t.st }}</div>
+                      </div>
+                      <sc-if value="{{ t.need }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ t.remind }}" class="btn btn-secondary" style="flex:none;min-height:44px;font-size:14px;padding:0 14px;border-width:2px;border-color:var(--color-neutral-500)">Rappeler</button>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <div style="background:var(--color-accent-2-200);color:var(--color-accent-2-900);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:13px;font-weight:800">Forme juridique · {{ rh.forme.l }}</div>
+                <div style="font-family:var(--font-heading);font-size:20px;line-height:1.2">{{ rh.forme.dir }}</div>
+                <div style="font-size:14px;line-height:1.45">{{ rh.forme.txt }}</div>
+                <button onClick="{{ rh.forme.toggle }}" aria-expanded="{{ rh.forme.open }}" style="display:flex;align-items:center;gap:8px;min-height:44px;border:none;background:transparent;padding:0;cursor:pointer;font:700 14px var(--font-body);color:var(--color-accent-2-900);text-align:left">Tes obligations d’employeur<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transition:transform .2s ease;transform:rotate({{ rh.forme.chev }})"><path d="m6 9 6 6 6-6"></path></svg></button>
+                <sc-if value="{{ rh.forme.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <sc-for list="{{ rh.forme.oblig }}" as="o" hint-placeholder-count="4">
+                      <div style="display:flex;gap:8px;font-size:14px;line-height:1.4"><span style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--color-accent-2-800);margin-top:7px"></span><span>{{ o }}</span></div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+
+              <sc-if value="{{ rh.hasAlerts }}" hint-placeholder-val="{{ true }}">
+                <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
+                    <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">À surveiller</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700)">60 prochains jours</div>
+                  </div>
+                  <sc-for list="{{ rh.alerts }}" as="a" hint-placeholder-count="3">
+                    <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--color-divider)">
+                      <div style="display:flex;align-items:flex-start;gap:10px">
+                        <span style="width:10px;height:10px;flex:none;border-radius:50%;margin-top:5px;background:{{ a.c }}"></span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:15px;font-weight:700;line-height:1.3">{{ a.t }}</div>
+                          <div style="font-size:13px;color:var(--color-neutral-700)">{{ a.who }}</div>
+                        </div>
+                        <div style="font-size:13px;font-weight:800;white-space:nowrap;color:{{ a.fg }}">{{ a.when }}</div>
+                      </div>
+                      <div style="display:flex;gap:8px;padding-left:20px">
+                        <button onClick="{{ a.on1 }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">{{ a.act1 }}</button>
+                        <sc-if value="{{ a.has2 }}" hint-placeholder-val="{{ true }}">
+                          <button onClick="{{ a.on2 }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">{{ a.act2 }}</button>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <sc-for list="{{ rh.staff }}" as="p" hint-placeholder-count="3">
+                <div style="background:var(--color-neutral-100);border-radius:28px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+                  <button onClick="{{ p.toggle }}" aria-expanded="{{ p.open }}" style="display:flex;align-items:center;gap:12px;min-height:52px;border:none;background:transparent;padding:0;cursor:pointer;text-align:left;color:var(--color-text)">
+                    <div style="width:48px;height:48px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 16px var(--font-body);background:{{ p.avBg }};color:{{ p.avFg }}">{{ p.ini }}</div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:16px;font-weight:800">{{ p.nom }}</div>
+                      <div style="font-size:13px;color:var(--color-neutral-700)">{{ p.role }}</div>
+                    </div>
+                    <div style="text-align:right;flex:none">
+                      <div style="font-size:15px;font-weight:700;white-space:nowrap">{{ p.cost }}</div>
+                      <div style="font-size:12px;color:var(--color-neutral-700);white-space:nowrap">{{ p.costSub }}</div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transition:transform .2s ease;transform:rotate({{ p.chev }})"><path d="m6 9 6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{ p.hasWarn }}" hint-placeholder-val="{{ false }}">
+                    <span class="tag tag-accent" style="align-self:flex-start">{{ p.warn }}</span>
+                  </sc-if>
+                  <sc-if value="{{ p.open }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:auto 1fr;column-gap:12px;row-gap:6px;font-size:14px;border-radius:18px;background:var(--color-surface);padding:12px 14px">
+                      <sc-for list="{{ p.rows }}" as="r" hint-placeholder-count="4">
+                        <span style="color:var(--color-neutral-800)">{{ r.k }}</span><span style="font-weight:700;text-align:right">{{ r.v }}</span>
+                      </sc-for>
+                    </div>
+                    <sc-if value="{{ p.canEdit }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                        <div>
+                          <div style="font-size:14px;font-weight:800">Taux horaire brut</div>
+                          <div style="font-size:12px;color:var(--color-neutral-700)">recalcule le coût chargé</div>
+                        </div>
+                        <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:999px;padding:3px">
+                          <button onClick="{{ p.brutMinus }}" aria-label="Baisser le taux" style="width:44px;height:44px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                          <div style="min-width:76px;text-align:center;font-family:var(--font-heading);font-size:18px">{{ p.brutTxt }}</div>
+                          <button onClick="{{ p.brutPlus }}" aria-label="Monter le taux" style="width:44px;height:44px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+                        </div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ p.hasHab }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:6px">
+                        <div style="font-size:14px;font-weight:800">Habilitations électriques</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px">
+                          <sc-for list="{{ p.hab }}" as="b" hint-placeholder-count="3">
+                            <span style="display:flex;flex-direction:column;border-radius:16px;padding:6px 12px;background:{{ b.bg }};color:{{ b.fg }}"><span style="font-size:14px;font-weight:800">{{ b.l }}</span><span style="font-size:12px;font-weight:600">{{ b.due }}</span></span>
+                          </sc-for>
+                        </div>
+                        <div style="font-size:12px;color:var(--color-neutral-700)">Recyclage conseillé tous les 3 ans (NF C 18-510).</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ p.hasEpi }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:4px">
+                        <div style="font-size:14px;font-weight:800">EPI et outillage attribués</div>
+                        <sc-for list="{{ p.epi }}" as="e" hint-placeholder-count="3">
+                          <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0"><span style="min-width:0">{{ e.l }}</span><span style="font-size:13px;font-weight:700;white-space:nowrap;color:{{ e.fg }}">{{ e.due }}</span></div>
+                        </sc-for>
+                        <sc-if value="{{ p.hasOutils }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+                            <sc-for list="{{ p.outils }}" as="o" hint-placeholder-count="2">
+                              <span style="border-radius:999px;background:var(--color-surface);padding:6px 12px;font-size:13px;font-weight:600">{{ o }}</span>
+                            </sc-for>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ p.hasPin }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:8px;border-radius:18px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);padding:12px 14px">
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:14px;font-weight:800">Accès pointage</span><span style="font:800 16px ui-monospace,Menlo,monospace;letter-spacing:.15em">{{ p.pin }}</span></div>
+                        <div style="font-size:13px;line-height:1.4">Ne voit que son pointage : chantier, heures, panier. Aucun prix ni devis.</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap">
+                          <button onClick="{{ p.share }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Envoyer l’accès</button>
+                          <button onClick="{{ p.preview }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-2-700);color:var(--color-accent-2-900)">Voir son écran</button>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </sc-if>
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ rh.add.closed }}" hint-placeholder-val="{{ true }}">
+                <button style-active="transform:scale(0.97)" onClick="{{ rh.add.open }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:52px;font-size:15px;border-width:2px;border-style:dashed;border-color:var(--color-neutral-500)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Ajouter un salarié</button>
+              </sc-if>
+              <sc-if value="{{ rh.add.isOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Nouveau salarié</div>
+                  <input value="{{ rh.add.nom }}" onInput="{{ rh.add.onNom }}" placeholder="Prénom et nom" aria-label="Prénom et nom" class="input" style="min-height:48px;font-size:16px">
+                  <input value="{{ rh.add.poste }}" onInput="{{ rh.add.onPoste }}" placeholder="Poste (électricien N2P1, manœuvre…)" aria-label="Poste" class="input" style="min-height:48px;font-size:16px">
+                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    <sc-for list="{{ rh.add.contrats }}" as="c" hint-placeholder-count="3">
+                      <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:44px;border:none;border-radius:999px;padding:0 16px;font:700 14px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                    </sc-for>
+                  </div>
+                  <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:700">Taux horaire brut (€)<input value="{{ rh.add.brut }}" onInput="{{ rh.add.onBrut }}" inputmode="decimal" placeholder="12,50" class="input" style="width:110px;min-height:48px;font-size:16px;text-align:right"></label>
+                  <div style="border-radius:18px;background:var(--color-accent-200);color:var(--color-accent-900);padding:10px 14px;font-size:14px;line-height:1.45">Avant son premier jour : DPAE à l’URSSAF et visite médicale d’embauche. L’app ajoute la visite dans « À surveiller ».</div>
+                  <div style="display:flex;gap:8px">
+                    <button onClick="{{ rh.add.save }}" class="btn btn-primary" style="flex:2;min-height:52px;font-size:16px">Ajouter</button>
+                    <button onClick="{{ rh.add.cancel }}" class="btn btn-ghost" style="flex:1;min-height:52px;font-size:15px">Annuler</button>
+                  </div>
+                </div>
+              </sc-if>
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:4px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;margin-bottom:6px">Intérim et sous-traitants</div>
+                <sc-for list="{{ rh.ext }}" as="x" hint-placeholder-count="2">
+                  <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--color-divider)">
+                    <div>
+                      <div style="font-size:15px;font-weight:800">{{ x.nom }}</div>
+                      <div style="font-size:13px;color:var(--color-neutral-700)">{{ x.org }} · {{ x.role }}</div>
+                    </div>
+                    <div style="font-size:13px;color:var(--color-neutral-800)">{{ x.extra }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <sc-for list="{{ x.docs }}" as="b" hint-placeholder-count="1">
+                        <span style="display:flex;flex-direction:column;border-radius:16px;padding:6px 12px;background:{{ b.bg }};color:{{ b.fg }}"><span style="font-size:13px;font-weight:800">{{ b.l }}</span><span style="font-size:12px;font-weight:600">{{ b.due }}</span></span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ rh.isPt }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                <sc-for list="{{ rh.wkOpts }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.onPick }}" style="flex:1;min-height:44px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button>
+                </sc-for>
+              </div>
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Heures de la semaine</div>
+                  <div style="font-size:13px;color:var(--color-neutral-700)">{{ rh.wkLabel }}</div>
+                </div>
+                <sc-for list="{{ rh.tot }}" as="t" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;justify-content:space-between;gap:10px;font-size:15px"><span style="font-weight:700">{{ t.l }}</span><span style="font-weight:800;white-space:nowrap">{{ t.h }}</span></div>
+                    <div style="position:relative;height:10px;border-radius:999px;background:var(--color-surface)"><div style="height:100%;border-radius:999px;width:{{ t.w }};background:{{ t.fill }}"></div><div style="position:absolute;top:-3px;bottom:-3px;left:73%;width:2px;border-radius:2px;background:var(--color-neutral-600)"></div></div>
+                    <div style="font-size:13px;font-weight:600;color:{{ t.fg }}">{{ t.sub }}</div>
+                  </div>
+                </sc-for>
+                <div style="font-size:12px;color:var(--color-neutral-700)">Trait vertical : 35 h. Maximum légal : 48 h par semaine, 10 h par jour.</div>
+              </div>
+
+              <sc-if value="{{ rh.hasPending }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--color-accent-200);color:var(--color-accent-900);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:10px">
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Pointages à valider</div>
+                  <sc-for list="{{ rh.pending }}" as="q" hint-placeholder-count="1">
+                    <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0;border-top:1px solid var(--color-accent-300)">
+                      <div style="font-size:15px;font-weight:700">{{ q.t }}</div>
+                      <div style="display:flex;gap:8px">
+                        <button onClick="{{ q.ok }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Valider</button>
+                        <button onClick="{{ q.ko }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-700);color:var(--color-accent-900)">Refuser</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <div style="width:44px;height:44px;flex:none;border-radius:50%;background:var(--color-surface);display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></div>
+                  <div style="min-width:0">
+                    <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;line-height:1.15">Ajouter des heures</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700);text-transform:capitalize">{{ rh.f.date }}</div>
+                  </div>
+                </div>
+                <div style="background:var(--color-surface);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">Qui</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <sc-for list="{{ rh.f.who }}" as="c" hint-placeholder-count="4">
+                        <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:44px;border:none;border-radius:999px;padding:0 16px;font:700 14px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="height:1px;background:var(--color-divider)"></div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700);display:flex;justify-content:space-between;gap:8px">Chantier<span style="text-transform:none;letter-spacing:0;font-weight:700;color:var(--color-accent-2-800)">{{ rh.f.planHint }}</span></div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                      <sc-for list="{{ rh.f.ch }}" as="c" hint-placeholder-count="4">
+                        <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:44px;border:2px solid {{ c.bd }};border-radius:999px;padding:0 14px;font:700 14px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="height:1px;background:var(--color-divider)"></div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-neutral-700)">Durée</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                      <button style-active="transform:scale(0.92)" onClick="{{ rh.f.minus }}" aria-label="Moins d’heures" style="transition:transform .12s ease;width:52px;height:52px;flex:none;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                      <div style="flex:1;text-align:center;font-family:var(--font-heading);font-size:36px;letter-spacing:-.02em;line-height:1">{{ rh.f.hTxt }}</div>
+                      <button style-active="transform:scale(0.92)" onClick="{{ rh.f.plus }}" aria-label="Plus d’heures" style="transition:transform .12s ease;width:52px;height:52px;flex:none;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+                    </div>
+                  </div>
+                  <div style="height:1px;background:var(--color-divider)"></div>
+                  <button onClick="{{ rh.f.togglePan }}" role="switch" aria-checked="{{ rh.f.panier }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;border:none;background:transparent;cursor:pointer;font:700 15px var(--font-body);color:var(--color-text);padding:0;text-align:left">
+                    <span style="display:flex;flex-direction:column;gap:2px"><span>Panier repas</span><span style="font-size:12px;font-weight:500;color:var(--color-neutral-700)">Repas pris sur le chantier</span></span>
+                    <span style="width:48px;height:28px;flex:none;border-radius:999px;padding:3px;display:flex;justify-content:{{ rh.f.pJ }};background:{{ rh.f.pBg }}"><span style="width:22px;height:22px;border-radius:50%;background:var(--color-neutral-100)"></span></span>
+                  </button>
+                </div>
+                <button style-active="transform:scale(0.97)" onClick="{{ rh.f.add }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:52px;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Ajouter au pointage</button>
+              </div>
+
+              <sc-for list="{{ rh.days }}" as="d" hint-placeholder-count="2">
+                <div style="background:var(--color-neutral-100);border-radius:28px;padding:14px 18px;display:flex;flex-direction:column;gap:2px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-bottom:6px"><span style="font-size:15px;font-weight:800;text-transform:capitalize">{{ d.l }}</span><span style="font-size:14px;font-weight:700">{{ d.tot }}</span></div>
+                  <sc-for list="{{ d.items }}" as="e" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;gap:10px;min-height:48px;border-top:1px solid var(--color-divider)">
+                      <span style="width:64px;flex:none;font-size:14px;font-weight:700">{{ e.who }}</span>
+                      <span style="flex:none;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;background:{{ e.cBg }};color:{{ e.cFg }}">{{ e.ch }}</span>
+                      <span style="flex:1;min-width:0;font-size:13px;color:var(--color-neutral-700)">{{ e.meta }}</span>
+                      <span style="font-size:15px;font-weight:800;white-space:nowrap">{{ e.h }}</span>
+                      <button onClick="{{ e.del }}" aria-label="Supprimer cette ligne" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-neutral-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </sc-if>
+
+            <sc-if value="{{ rh.isPl }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                <sc-for list="{{ rh.plOpts }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.onPick }}" style="flex:1;min-height:44px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button>
+                </sc-for>
+              </div>
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:14px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:grid;grid-template-columns:60px repeat(5,minmax(0,1fr));gap:4px">
+                  <span></span>
+                  <sc-for list="{{ rh.plDays }}" as="d" hint-placeholder-count="5">
+                    <span style="text-align:center;font-size:12px;font-weight:800;color:{{ d.fg }}">{{ d.l }}</span>
+                  </sc-for>
+                </div>
+                <sc-for list="{{ rh.plRows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:60px repeat(5,minmax(0,1fr));gap:4px;align-items:stretch">
+                    <span style="display:flex;align-items:center;font-size:13px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ r.l }}</span>
+                    <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5">
+                      <button onClick="{{ c.onPick }}" aria-label="{{ c.aria }}" style-active="transform:scale(0.95)" style="transition:transform .12s ease;min-width:0;min-height:48px;border:none;border-radius:14px;padding:0 2px;font:700 12px var(--font-body);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ rh.legend }}" as="g" hint-placeholder-count="4">
+                  <span style="border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;background:{{ g.bg }};color:{{ g.fg }}">{{ g.l }}</span>
+                </sc-for>
+              </div>
+              <div style="font-size:13px;line-height:1.45;color:var(--color-neutral-700)">Touche une case pour changer d’affectation. Les absences validées s’affichent d’elles-mêmes et bloquent la case. Les jours affectés apparaissent dans l’Agenda.</div>
+              <sc-if value="{{ rh.hasPlWarn }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--color-accent-200);color:var(--color-accent-900);border-radius:28px;padding:16px 18px;display:flex;flex-direction:column;gap:4px">
+                  <div style="font-family:var(--font-heading);font-size:18px;letter-spacing:-.01em;margin-bottom:4px">Chantiers de l’Agenda sans équipe</div>
+                  <sc-for list="{{ rh.plWarn }}" as="w" hint-placeholder-count="1">
+                    <div style="font-size:14px;font-weight:600;padding:8px 0;border-top:1px solid var(--color-accent-300)">{{ w.t }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <button style-active="transform:scale(0.97)" onClick="{{ rh.openAgenda }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Voir dans l’Agenda</button>
+            </sc-if>
+
+            <sc-if value="{{ rh.isAbs }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:4px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;margin-bottom:6px">Congés et absences</div>
+                <sc-if value="{{ rh.noAbs }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:14px;color:var(--color-neutral-700)">Aucune absence enregistrée.</div>
+                </sc-if>
+                <sc-for list="{{ rh.abs }}" as="a" hint-placeholder-count="2">
+                  <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--color-divider)">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+                      <div style="min-width:0">
+                        <div style="font-size:15px;font-weight:800">{{ a.who }} · {{ a.type }}</div>
+                        <div style="font-size:13px;color:var(--color-neutral-700)">{{ a.dates }}</div>
+                      </div>
+                      <span style="flex:none;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;background:{{ a.stBg }};color:{{ a.stFg }}">{{ a.st }}</span>
+                    </div>
+                    <sc-if value="{{ a.pending }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:8px">
+                        <button onClick="{{ a.ok }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Valider</button>
+                        <button onClick="{{ a.ko }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Refuser</button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Nouvelle absence</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <sc-for list="{{ rh.af.who }}" as="c" hint-placeholder-count="3">
+                    <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:44px;border:none;border-radius:999px;padding:0 16px;font:700 14px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <sc-for list="{{ rh.af.types }}" as="c" hint-placeholder-count="5">
+                    <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:44px;border:2px solid {{ c.bd }};border-radius:999px;padding:0 14px;font:700 14px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Du<input type="date" value="{{ rh.af.du }}" onInput="{{ rh.af.onDu }}" class="input" style="min-height:48px;font-size:16px"></label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700;color:var(--color-neutral-800)">Au<input type="date" value="{{ rh.af.au }}" onInput="{{ rh.af.onAu }}" class="input" style="min-height:48px;font-size:16px"></label>
+                </div>
+                <button style-active="transform:scale(0.97)" onClick="{{ rh.af.add }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:52px;font-size:16px">Enregistrer l’absence</button>
+              </div>
+              <div style="background:var(--color-surface);border-radius:28px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45">
+                <div><span style="font-weight:800">Congés payés : </span>dans le BTP, c’est la caisse de congés payés qui les verse au salarié. L’app transmet les jours au comptable.</div>
+                <div><span style="font-weight:800">Intempéries : </span>arrêt de chantier pour pluie cyclonique ou forte chaleur, à déclarer à la caisse pour être indemnisé.</div>
+                <div><span style="font-weight:800">Apprenti : </span>les jours de CFA comptent comme du temps de travail.</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ rh.isPaie }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 4px">
+                <div style="font-family:var(--font-heading);font-size:24px;letter-spacing:-.01em;text-transform:capitalize">{{ rh.monthL }}</div>
+                <div style="font-size:13px;color:var(--color-neutral-700)">éléments variables</div>
+              </div>
+              <sc-if value="{{ rh.dirPaie }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:22px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);padding:12px 16px;font-size:14px;line-height:1.45">{{ rh.dirPaieTxt }}</div>
+              </sc-if>
+              <sc-for list="{{ rh.paie }}" as="y" hint-placeholder-count="2">
+                <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:10px">
+                  <div>
+                    <div style="font-size:16px;font-weight:800">{{ y.nom }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700)">{{ y.sub }}</div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr auto;row-gap:6px;font-size:14px">
+                    <sc-for list="{{ y.rows }}" as="r" hint-placeholder-count="6">
+                      <span style="color:var(--color-neutral-800)">{{ r.k }}</span><span style="font-weight:700;text-align:right;white-space:nowrap">{{ r.v }}</span>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ y.hasNote }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:13px;color:var(--color-neutral-700)">{{ y.note }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:10px">
+                <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Paniers et zones de trajet</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:15px;font-weight:700">Panier repas</span>
+                  <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:999px;padding:3px">
+                    <button onClick="{{ rh.pan.minus }}" aria-label="Baisser le panier" style="width:44px;height:44px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                    <div style="min-width:76px;text-align:center;font-family:var(--font-heading);font-size:18px">{{ rh.pan.txt }}</div>
+                    <button onClick="{{ rh.pan.plus }}" aria-label="Monter le panier" style="width:44px;height:44px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr auto;row-gap:6px;font-size:14px;border-radius:18px;background:var(--color-surface);padding:12px 14px">
+                  <sc-for list="{{ rh.zones }}" as="z" hint-placeholder-count="6">
+                    <span style="color:var(--color-neutral-800)">{{ z.k }}</span><span style="font-weight:700;text-align:right">{{ z.v }}</span>
+                  </sc-for>
+                </div>
+                <div style="font-size:13px;line-height:1.45;color:var(--color-neutral-700)">Zone comptée depuis le siège de Saint-Paul, selon le chantier pointé. Montants d’exemple : reprends ceux de la convention collective du BTP de La Réunion en vigueur.</div>
+              </div>
+
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Notes de frais</div>
+                  <div style="font-size:15px;font-weight:800">{{ rh.fraisTot }}</div>
+                </div>
+                <sc-if value="{{ rh.hasFraisMissing }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:13px;font-weight:700;color:var(--color-accent-800)">{{ rh.fraisMissing }}</div>
+                </sc-if>
+                <sc-for list="{{ rh.frais }}" as="f" hint-placeholder-count="1">
+                  <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--color-divider)">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <sc-if value="{{ f.isImg }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ f.view }}" aria-label="Voir le justificatif" style="width:52px;height:52px;flex:none;border:none;padding:0;border-radius:14px;overflow:hidden;cursor:pointer;background:var(--color-surface)"><img src="{{ f.src }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></button>
+                    </sc-if>
+                    <sc-if value="{{ f.isPdf }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ f.view }}" aria-label="Voir le justificatif" style="width:52px;height:52px;flex:none;border:none;border-radius:14px;cursor:pointer;background:var(--color-accent-2-200);color:var(--color-accent-2-900);font:800 12px var(--font-body)">PDF</button>
+                    </sc-if>
+                    <sc-if value="{{ f.noPj }}" hint-placeholder-val="{{ false }}">
+                      <label title="Ajouter le justificatif" style="position:relative;width:52px;height:52px;flex:none;border-radius:14px;border:2px dashed var(--color-accent-500);display:flex;align-items:center;justify-content:center;color:var(--color-accent-800);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg><input type="file" accept="image/*,application/pdf" capture="environment" onChange="{{ f.onPj }}" aria-label="Photo ou scan du justificatif" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer"></label>
+                    </sc-if>
+                    <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ f.l }}</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ f.who }} · {{ f.d }}</div><div style="font-size:12px;font-weight:700;color:{{ f.pjFg }}">{{ f.pjTxt }}</div></div>
+                    <span style="font-size:15px;font-weight:800;white-space:nowrap">{{ f.m }}</span>
+                    <button onClick="{{ f.del }}" aria-label="Supprimer la note" style="width:36px;height:36px;flex:none;border:none;border-radius:50%;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-neutral-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                  </div>
+                  <sc-if value="{{ f.pending }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:8px">
+                      <button onClick="{{ f.ok }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Valider</button>
+                      <button onClick="{{ f.ko }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-neutral-500)">Refuser</button>
+                    </div>
+                  </sc-if>
+                  </div>
+                </sc-for>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;padding-top:4px">
+                  <sc-for list="{{ rh.ff.who }}" as="c" hint-placeholder-count="3">
+                    <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:44px;border:none;border-radius:999px;padding:0 16px;font:700 14px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px">
+                  <input value="{{ rh.ff.l }}" onInput="{{ rh.ff.onL }}" placeholder="Libellé (péage, parking…)" aria-label="Libellé de la note" class="input" style="min-height:48px;font-size:16px">
+                  <input value="{{ rh.ff.m }}" onInput="{{ rh.ff.onM }}" placeholder="€" inputmode="decimal" aria-label="Montant en euros" class="input" style="min-height:48px;font-size:16px;text-align:right">
+                </div>
+                <sc-if value="{{ rh.ff.NoPj }}" hint-placeholder-val="{{ true }}">
+                  <label style="position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:999px;border:2px dashed var(--color-accent-500);background:transparent;color:var(--color-accent-800);font:700 15px var(--font-body);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>Photo ou scan du justificatif<input type="file" accept="image/*,application/pdf" capture="environment" onChange="{{ rh.ff.OnPj }}" aria-label="Photo ou scan du justificatif" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer"></label>
+                </sc-if>
+                <sc-if value="{{ rh.ff.HasPj }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:10px;background:var(--color-surface);border-radius:18px;padding:6px">
+                    <sc-if value="{{ rh.ff.IsImg }}" hint-placeholder-val="{{ false }}"><img src="{{ rh.ff.Src }}" alt="Justificatif" style="width:44px;height:44px;flex:none;border-radius:12px;object-fit:cover;display:block"></sc-if>
+                    <sc-if value="{{ rh.ff.IsPdf }}" hint-placeholder-val="{{ false }}"><span style="width:44px;height:44px;flex:none;border-radius:12px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">PDF</span></sc-if>
+                    <span style="flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rh.ff.Name }}</span>
+                    <button onClick="{{ rh.ff.Clear }}" aria-label="Retirer le justificatif" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-neutral-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                  </div>
+                </sc-if>
+                <div style="font-size:12px;color:var(--color-neutral-700);margin-top:-4px">Justificatif obligatoire : photo ou scan du ticket, PNG, JPEG ou PDF, 3 Mo maximum.</div>
+                <button onClick="{{ rh.ff.add }}" class="btn btn-secondary" style="min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Ajouter la note</button>
+              </div>
+
+              <div style="background:var(--color-neutral-100);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px">
+                <div>
+                  <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em">Coût réel de la main d’œuvre</div>
+                  <div style="font-size:13px;color:var(--color-neutral-700)">Heures pointées × coût chargé de chacun</div>
+                </div>
+                <sc-for list="{{ rh.cc }}" as="c" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;justify-content:space-between;gap:10px;font-size:15px"><span style="font-weight:700">{{ c.l }}</span><span style="font-weight:800;white-space:nowrap">{{ c.cost }}</span></div>
+                    <div style="height:10px;border-radius:999px;background:var(--color-surface)"><div style="height:100%;border-radius:999px;width:{{ c.w }};background:{{ c.fill }}"></div></div>
+                    <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px"><span style="color:var(--color-neutral-700)">{{ c.hTxt }}</span><span style="font-weight:700;white-space:nowrap;color:{{ c.fg }}">{{ c.sub }}</span></div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;justify-content:space-between;gap:10px;font-size:14px;border-radius:18px;background:var(--color-surface);padding:10px 14px"><span>Coût horaire moyen réel</span><span style="font-weight:800">{{ rh.avgTxt }}</span></div>
+                <button style-active="transform:scale(0.97)" onClick="{{ rh.useAvg }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">{{ rh.useAvgTxt }}</button>
+              </div>
+
+              <button style-active="transform:scale(0.97)" onClick="{{ rh.sendCompta }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:54px;font-size:16px">Préparer l’e-mail au comptable</button>
+              <button style-active="transform:scale(0.97)" onClick="{{ rh.exportCsv }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:52px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Télécharger le fichier paie (CSV)</button>
+              <div style="font-size:13px;line-height:1.45;color:var(--color-neutral-700);text-align:center">Seuls les pointages validés sont comptés. Le bulletin reste établi par ton comptable.</div>
             </sc-if>
           </div>
         </sc-if>
@@ -1155,6 +1747,15 @@
                 </div>
               </div>
 
+              <sc-if value="{{ cal.hasWarn }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--color-accent-200);color:var(--color-accent-900);border-radius:28px;padding:16px 18px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-family:var(--font-heading);font-size:18px;letter-spacing:-.01em;margin-bottom:4px">{{ cal.warnTitle }}</div>
+                  <sc-for list="{{ cal.warn }}" as="w" hint-placeholder-count="1">
+                    <button onClick="{{ w.onPick }}" style="min-height:44px;border:none;border-top:1px solid var(--color-accent-300);background:transparent;padding:0;text-align:left;cursor:pointer;font:600 14px var(--font-body);color:inherit">{{ w.t }}</button>
+                  </sc-for>
+                  <button style-active="transform:scale(0.97)" onClick="{{ cal.openPl }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:48px;font-size:15px;margin-top:6px">Ouvrir le planning équipe</button>
+                </div>
+              </sc-if>
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px">
                 <div style="font-family:var(--font-heading);font-size:20px;text-transform:capitalize">{{ cal.dayLabel }}</div>
                 <button style-active="transform:scale(0.97)" onClick="{{ cal.goToday }}" class="btn btn-ghost" style="transition:transform .12s ease;min-height:44px;font-size:14px;color:var(--color-accent-700)">Aujourd'hui</button>
@@ -1163,14 +1764,30 @@
                 <div style="border:2px dashed var(--color-neutral-400);border-radius:22px;padding:16px;text-align:center;font-size:14px;color:var(--color-neutral-800)">Rien de prévu ce jour-là.</div>
               </sc-if>
               <sc-for list="{{ cal.events }}" as="e" hint-placeholder-count="2">
-                <div style="display:flex;align-items:center;gap:12px;background:var(--color-neutral-100);border-radius:22px;padding:10px 8px 10px 14px">
-                  <div style="width:6px;align-self:stretch;border-radius:999px;background:{{ e.c }}"></div>
-                  <div style="width:52px;flex:none;font-size:15px;font-weight:700">{{ e.time }}</div>
-                  <div style="flex:1;min-width:0">
-                    <div style="font-size:15px;font-weight:600;line-height:1.3">{{ e.title }}</div>
-                    <div style="font-size:13px;color:var(--color-neutral-700)">{{ e.kindLabel }} · {{ e.place }}</div>
+                <div style="display:flex;flex-direction:column;gap:8px;background:var(--color-neutral-100);border-radius:22px;padding:10px 8px 10px 14px">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:6px;align-self:stretch;border-radius:999px;background:{{ e.c }}"></div>
+                    <div style="width:52px;flex:none;font-size:15px;font-weight:700">{{ e.time }}</div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                      <div style="font-size:15px;font-weight:600;line-height:1.3">{{ e.title }}</div>
+                      <div style="font-size:13px;color:var(--color-neutral-700)">{{ e.kindLabel }} · {{ e.place }}</div>
+                      <sc-if value="{{ e.hasTeam }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size:13px;font-weight:700;color:var(--color-accent-2-800)">{{ e.team }}</div>
+                      </sc-if>
+                      <sc-if value="{{ e.virt }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size:12px;font-weight:700;color:var(--color-neutral-700)">Depuis le planning équipe</div>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ e.canDel }}" hint-placeholder-val="{{ true }}">
+                      <button style-active="transform:scale(0.97)" onClick="{{ e.onDel }}" title="Supprimer" style="transition:transform .12s ease;width:40px;height:40px;flex:none;border:none;background:transparent;border-radius:50%;color:var(--color-neutral-700);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                    </sc-if>
                   </div>
-                  <button style-active="transform:scale(0.97)" onClick="{{ e.onDel }}" title="Supprimer" style="transition:transform .12s ease;width:40px;height:40px;flex:none;border:none;background:transparent;border-radius:50%;color:var(--color-neutral-700);cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                  <sc-if value="{{ e.noTeam }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--color-accent-200);color:var(--color-accent-900);border-radius:16px;padding:4px 4px 4px 12px;margin-right:6px">
+                      <span style="font-size:13px;font-weight:700">Personne n’est affecté à ce chantier</span>
+                      <button style-active="transform:scale(0.97)" onClick="{{ e.assign }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:44px;font-size:13px;padding:0 16px;flex:none">Affecter</button>
+                    </div>
+                  </sc-if>
                 </div>
               </sc-for>
 
@@ -2055,6 +2672,8 @@
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.docs.bg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3a2 2 0 0 1-2-2V2"></path><path d="M9 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l4 4v10a2 2 0 0 1-2 2Z"></path><path d="M3 7.6v12.8A1.6 1.6 0 0 0 4.6 22h9.8"></path></svg></div>Documents</button>
         <button style-active="transform:scale(0.97)" onClick="{{ goCat }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.cat.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.cat.bg }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path></svg></div>Catalogue</button>
+        <button style-active="transform:scale(0.97)" onClick="{{ goRh }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.rh.fg }}">
+          <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.rh.bg }};position:relative"><sc-if value="{{ rhDot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:0;right:8px;width:10px;height:10px;border-radius:50%;background:var(--color-accent-700);box-shadow:0 0 0 2px var(--color-neutral-100)"></span></sc-if><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>Équipe</button>
         <button style-active="transform:scale(0.97)" onClick="{{ goSet }}" style="transition:transform .12s ease;min-height:52px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:{{ fr.bd }};align-items:center;justify-content:{{ fr.bj }};gap:{{ fr.bgap }};padding:{{ fr.bp }};border-radius:999px;font:700 {{ fr.bf }} var(--font-body);color:{{ tabs.set.fg }}">
           <div style="width:52px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:{{ tabs.set.bg }};position:relative"><sc-if value="{{ setDot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:0;right:8px;width:10px;height:10px;border-radius:50%;background:var(--color-accent-700);box-shadow:0 0 0 2px var(--color-neutral-100)"></span></sc-if><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>Réglages</button>
         <sc-if value="{{ fr.phone }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:var(--color-neutral-900)"></div></sc-if>
@@ -2218,6 +2837,79 @@
               </div>
             </sc-for>
             <button onClick="{{ help.close }}" class="btn btn-primary" style="min-height:52px;font-size:16px;width:100%">J'ai compris</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ nfv.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:33;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ nfv.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div role="dialog" aria-modal="true" aria-label="Justificatif" data-screen-label="Justificatif note de frais" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 30px;display:flex;flex-direction:column;gap:12px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:90%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div style="min-width:0"><div style="font-family:var(--font-heading);font-size:22px;line-height:1.15">{{ nfv.title }}</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ nfv.meta }}</div></div>
+              <button onClick="{{ nfv.close }}" aria-label="Fermer" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:var(--color-surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+            </div>
+            <sc-if value="{{ nfv.isImg }}" hint-placeholder-val="{{ false }}">
+              <img src="{{ nfv.src }}" alt="Justificatif" style="width:100%;max-height:480px;object-fit:contain;border-radius:22px;background:var(--color-surface);display:block">
+            </sc-if>
+            <sc-if value="{{ nfv.isPdf }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ nfv.src }}" download="{{ nfv.name }}" class="btn btn-secondary" style="min-height:52px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Télécharger {{ nfv.name }}</a>
+            </sc-if>
+            <label class="btn btn-ghost" style="position:relative;min-height:44px;font-size:15px;cursor:pointer">Remplacer le justificatif<input type="file" accept="image/*,application/pdf" capture="environment" onChange="{{ nfv.onPj }}" aria-label="Photo ou scan du justificatif" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer"></label>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ rhe.open }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ rhe.close }}" style="position:absolute;inset:0;background:color-mix(in srgb, var(--color-neutral-900) 45%, transparent)"></div>
+          <div role="dialog" aria-modal="true" aria-label="Écran de pointage salarié" data-screen-label="Pointage salarié" style="position:relative;width:100%;max-width:{{ fr.sheetW }};align-self:center;background:var(--color-bg);border-radius:36px 36px 0 0;padding:10px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:btpUp .32s cubic-bezier(.2,.8,.2,1);max-height:90%;overflow-y:auto">
+            <div style="width:44px;height:5px;border-radius:999px;background:var(--color-neutral-400);align-self:center"></div>
+            <span class="tag tag-accent-2" style="align-self:flex-start">Aperçu côté salarié</span>
+            <div>
+              <div style="font-family:var(--font-heading);font-size:28px;line-height:1.1">Bonjour {{ rhe.first }}</div>
+              <div style="font-size:14px;color:var(--color-neutral-800);margin-top:4px;text-transform:capitalize">{{ rhe.date }}</div>
+              <div style="font-size:14px;color:var(--color-neutral-800)">Prévu aujourd’hui : <span style="font-weight:800">{{ rhe.plan }}</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:14px;font-weight:800">Chantier</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ rhe.ch }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.onPick }}" aria-pressed="{{ c.on }}" style="min-height:52px;border:2px solid {{ c.bd }};border-radius:999px;padding:0 18px;font:700 15px var(--font-body);cursor:pointer;background:{{ c.bg }};color:{{ c.fg }}">{{ c.l }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div style="font-size:15px;font-weight:800">Heures du jour</div>
+              <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:999px;padding:3px">
+                <button onClick="{{ rhe.minus }}" aria-label="Moins d’heures" style="width:52px;height:52px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+                <div style="min-width:72px;text-align:center;font-family:var(--font-heading);font-size:24px">{{ rhe.hTxt }}</div>
+                <button onClick="{{ rhe.plus }}" aria-label="Plus d’heures" style="width:52px;height:52px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+              </div>
+            </div>
+            <button onClick="{{ rhe.togglePan }}" role="switch" aria-checked="{{ rhe.panier }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;border:none;border-radius:18px;background:var(--color-neutral-100);cursor:pointer;font:700 15px var(--font-body);color:var(--color-text);padding:0 16px">Repas pris sur le chantier<span style="width:48px;height:28px;border-radius:999px;padding:3px;display:flex;justify-content:{{ rhe.pJ }};background:{{ rhe.pBg }}"><span style="width:22px;height:22px;border-radius:50%;background:var(--color-neutral-100)"></span></span></button>
+            <button style-active="transform:scale(0.97)" onClick="{{ rhe.send }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:56px;font-size:17px;width:100%">Envoyer mon pointage</button>
+            <div style="background:var(--color-neutral-100);border-radius:24px;padding:14px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:15px;font-weight:800">Note de frais</div>
+              <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px">
+                <input value="{{ rhe.fl }}" onInput="{{ rhe.onFl }}" placeholder="Péage, parking…" aria-label="Libellé de la note" class="input" style="min-height:48px;font-size:16px">
+                <input value="{{ rhe.fm }}" onInput="{{ rhe.onFm }}" placeholder="€" inputmode="decimal" aria-label="Montant en euros" class="input" style="min-height:48px;font-size:16px;text-align:right">
+              </div>
+              <sc-if value="{{ rhe.fNoPj }}" hint-placeholder-val="{{ true }}">
+                  <label style="position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:999px;border:2px dashed var(--color-accent-500);background:transparent;color:var(--color-accent-800);font:700 15px var(--font-body);cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>Photo ou scan du justificatif<input type="file" accept="image/*,application/pdf" capture="environment" onChange="{{ rhe.fOnPj }}" aria-label="Photo ou scan du justificatif" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer"></label>
+                </sc-if>
+                <sc-if value="{{ rhe.fHasPj }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:10px;background:var(--color-surface);border-radius:18px;padding:6px">
+                    <sc-if value="{{ rhe.fIsImg }}" hint-placeholder-val="{{ false }}"><img src="{{ rhe.fSrc }}" alt="Justificatif" style="width:44px;height:44px;flex:none;border-radius:12px;object-fit:cover;display:block"></sc-if>
+                    <sc-if value="{{ rhe.fIsPdf }}" hint-placeholder-val="{{ false }}"><span style="width:44px;height:44px;flex:none;border-radius:12px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">PDF</span></sc-if>
+                    <span style="flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rhe.fName }}</span>
+                    <button onClick="{{ rhe.fClear }}" aria-label="Retirer le justificatif" style="width:44px;height:44px;flex:none;border:none;border-radius:50%;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-neutral-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                  </div>
+                </sc-if>
+              <button style-active="transform:scale(0.97)" onClick="{{ rhe.sendFrais }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Envoyer la note</button>
+            </div>
+            <div style="font-size:13px;line-height:1.45;color:var(--color-neutral-700);text-align:center">Le salarié ne voit que cet écran. Son pointage et ses notes de frais arrivent chez toi « à valider » avant d’entrer dans la paie.</div>
+            <button onClick="{{ rhe.close }}" class="btn btn-ghost" style="min-height:44px;font-size:15px">Fermer l’aperçu</button>
           </div>
         </div>
       </sc-if>
@@ -2410,6 +3102,17 @@
               <span style="font-size:14px;font-weight:600;color:var(--color-neutral-800)">Client</span>
               <input value="{{ fe.client }}" onInput="{{ fe.onClient }}" class="input" style="min-height:50px;font-size:16px;background:var(--color-neutral-100);border-color:transparent">
             </label>
+            <button onClick="{{ fe.togglePro }}" role="switch" aria-checked="{{ fe.pro }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;border:none;background:var(--color-neutral-100);border-radius:999px;padding:0 8px 0 18px;cursor:pointer;font:600 15px var(--font-body);color:var(--color-text);text-align:left">
+              <span>{{ fe.proTxt }}</span>
+              <span style="width:48px;height:28px;flex:none;border-radius:999px;padding:3px;display:flex;justify-content:{{ fe.proJ }};background:{{ fe.proBg }}"><span style="width:22px;height:22px;border-radius:50%;background:var(--color-neutral-100)"></span></span>
+            </button>
+            <label style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:14px;font-weight:600;color:var(--color-neutral-800)">SIREN ou SIRET du client</span>
+              <input value="{{ fe.siren }}" onInput="{{ fe.onSiren }}" inputmode="numeric" placeholder="9 ou 14 chiffres" class="input" style="min-height:50px;font-size:16px;background:var(--color-neutral-100);border-color:transparent">
+              <sc-if value="{{ fe.hasSirErr }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:13px;font-weight:700;color:var(--color-accent-800)">{{ fe.sirErr }}</span>
+              </sc-if>
+            </label>
             <div style="display:flex;flex-direction:column;gap:8px">
               <div style="font-size:14px;font-weight:600;color:var(--color-neutral-800)">Lignes</div>
               <sc-for list="{{ fe.lines }}" as="l" hint-placeholder-count="2">
@@ -2425,6 +3128,9 @@
                     <input value="{{ l.puTxt }}" onInput="{{ l.onPu }}" inputmode="decimal" aria-label="Prix unitaire HT" style="width:84px;min-height:40px;border:none;border-radius:999px;background:var(--color-surface);text-align:right;padding:0 10px;font:700 15px var(--font-body);color:var(--color-text)">
                     <span style="flex:1;text-align:right;font-size:15px;font-weight:700;color:var(--color-text);white-space:nowrap">{{ l.montant }}</span>
                   </div>
+                  <sc-if value="{{ l.showTva }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ l.onTva }}" title="Changer le taux de TVA" style="align-self:flex-start;min-height:36px;border:none;border-radius:999px;padding:0 14px;background:var(--color-surface);font:700 13px var(--font-body);color:var(--color-neutral-800);cursor:pointer">{{ l.tvaTxt }}</button>
+                  </sc-if>
                 </div>
               </sc-for>
               <button style-active="transform:scale(0.97)" onClick="{{ fe.addLine }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:46px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Ajouter une ligne</button>

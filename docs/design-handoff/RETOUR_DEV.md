@@ -259,3 +259,43 @@ restent à faire : voir **`DEMANDE_PA.md`**, avec le contrat d'intégration `win
 
 Corrigé côté app, à reporter dans le prototype (`doFacture`) : la facture était datée « 24/09 » en dur. Elle prend
 maintenant la date du jour (locale) et garde son contenu complet (`snap`).
+
+---
+
+## 11. Retour sur v13.1, v14, v14.1 et v14.2 (intégrées le 2026-09-30)
+
+Tout est intégré : barre récap alignée (vérifiée : barre et contenu de 404 à 1 124 px à 1 280 px), module Équipe,
+liens entre plannings, justificatifs, confirmation des statuts, statuts de la plateforme, instantané des factures,
+TVA par ligne, SIREN / SIRET client, dates réelles. Tests automatisés : `test/v14.spec.js` ; vérifiés dans le
+navigateur : `window.opener` nul pour WhatsApp, justificatif joint et envoyé dans IndexedDB.
+
+### 11.1 Branché côté app
+- **Menu de statut ↔ plateforme agréée** (`src/hooks/usePaBridge.js`) : quand une plateforme est configurée sur le
+  serveur, « Transmettre à la plateforme » et « Enregistrer l'encaissement » partent réellement (file hors ligne
+  comprise) et les statuts affichés (y compris Rejetée / Refusée / En litige et le motif) viennent du serveur.
+  Sans plateforme configurée : la simulation du prototype reste, avec un toast « Démo : aucune plateforme agréée
+  configurée, action simulée ». Plateforme configurée mais sans session : rien n'est simulé, un message dit quoi faire.
+  Vérifié de bout en bout avec la PA simulée : connexion OAuth, Transmettre, dépôt, statut « Transmise » venu du serveur.
+- Nouveau champ sur la facture : `paQueued` (action en attente d'envoi) et `paRemaining` (reste à encaisser).
+  **À designer :** les afficher (« En attente d'envoi », « payé X € · reste Y € »).
+
+### 11.2 Corrigé côté app (à reporter dans le prototype)
+- **Justificatifs de notes de frais** : le contrôle `/^image\/|pdf/` acceptait le SVG et tout type contenant « pdf ».
+  Remplacé par `/^(image\/(png|jpeg|webp)|application\/pdf)$/`, message « Photo (PNG, JPEG, WebP) ou PDF uniquement ».
+  L'attribut `accept="image/*,application/pdf"` peut rester (appareil photo), le contrôle fait foi.
+
+### 11.3 Points à corriger dans le prototype ou la fiche
+1. **`0002` n'est pas le SIRET.** En ISO 6523, `0002` = SIREN (SIRENE), `0009` = SIRET. Le XML de l'app met le SIREN
+   (9 premiers chiffres) en `0002` et, si un SIRET à 14 chiffres est saisi, le SIRET en `0009`. Corriger la mention
+   « BT-47 préfixé `0002` pour un SIRET » dans `MISES_A_JOUR.md` et `PLATEFORME_AGREEE.md`.
+2. **Codes de statut facultatifs** (v14.1 : « Transmise ← 200/201/202/209, Acceptée ← 204 ») : dans la liste officielle,
+   204 = Prise en charge, 205 = Approuvée, 209 = Complétée. L'app affiche « Acceptée » pour 205, 206 et 211, et
+   « Transmise » pour 200 à 204 et 209 (`server/pa/states.mjs`). À confirmer avec la PA retenue.
+3. **Date d'encaissement** : « Enregistrer l'encaissement » écrit encore `paidOn` en JJ/MM (sans l'année), alors que
+   v14.2 passe toutes les dates en JJ/MM/AAAA. En mode plateforme, la date envoyée est la date ISO du jour.
+4. **Clients particuliers** : pas de facture électronique (B2B uniquement) ; prévoir l'e-reporting. Le bouton
+   « Transmettre » ne devrait pas apparaître pour un client particulier (aujourd'hui, le serveur refuse avec un message).
+
+### 11.4 Toujours à designer (voir `DEMANDE_PA.md`)
+Écran de code d'accès, réglages de la plateforme (connecter / déconnecter, dernière relève), les 7 états de connexion
+dans la carte Facturation électronique, encaissement partiel, « En attente d'envoi ».

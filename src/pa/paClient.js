@@ -66,6 +66,9 @@ export const btpPA = {
   logout: () => api('DELETE', '/api/session'),
   async status() {
     if (!navigator.onLine) return { state: 'hors_ligne', queued: (await all()).length };
+    const cfg = await api('GET', '/api/pa/config');
+    if (cfg.status !== 200 || !cfg.data?.configured) return { state: 'non_configure' };
+    if (cfg.data.role !== 'owner') return { state: 'non_connecte', error: cfg.data.role ? 'Accès réservé au responsable de l’entreprise.' : 'Connexion à l’app requise.' };
     const r = await api('GET', '/api/pa/status');
     return r.status === 200 ? { ...r.data, queued: r.data.queued + (await all()).length } : { state: r.status === 503 ? 'non_configure' : 'non_connecte', error: r.data?.error };
   },

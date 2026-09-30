@@ -1,5 +1,10 @@
 # Demande à Claude Design : écrans de la facture électronique (plateforme agréée)
 
+> **État au 2026-09-30 (après v14.1 / v14.2) :** faits dans le prototype et branchés dans l'app : points 1, 2, 7, 10
+> (menu de statut, pastilles Rejetée / Refusée / En litige, SIREN client, blocages). **Restent :** 3 (« En attente
+> d'envoi », champ `doc.paQueued`), 4 (encaissement partiel, `doc.paRemaining`), 5 (états de connexion), 6 (réglages
+> de la plateforme), 8 (pas de « Transmettre » pour un particulier), 9 (écran de code d'accès).
+
 **Date :** 2026-09-30
 **Contexte :** la connexion réelle à une plateforme agréée (PA) est prête côté serveur et côté app (`docs/PA.md`).
 Le prototype affiche encore 4 statuts **simulés** que l'utilisateur fait avancer à la main. Il faut les écrans

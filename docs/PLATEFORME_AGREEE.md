@@ -149,6 +149,22 @@ Textes à ajouter (à relire) :
 
 ---
 
+### Déjà fait dans le prototype (v14.1)
+- `FAC_ST` = Émise, Transmise, Acceptée, Encaissée (0 à 3, inchangés) + **Rejetée (4), Refusée (5), En litige (6)**. Champ `motif` sur la facture.
+- Menu de statut d'une facture : Émise → « Transmettre à la plateforme » ; Transmise, Acceptée ou En litige → « Enregistrer l'encaissement » ; Rejetée → « Corriger et réémettre » (même numéro, ouvre la facture) ; Refusée → « Réémettre sous un nouveau numéro » (copie en Émise, champ `replaces`) ; Encaissée → information seule. Aucun passage manuel vers Transmise → Acceptée.
+- Démo : `FAC-2026-026` Rejetée, motif « SIRET du client absent de l'annuaire ». Les compteurs « transmises » et la frise de la carte Facturation électronique ignorent les statuts 4 à 6.
+
+### Correctifs bloquants (v14.2) : données de facture
+Constat : les factures ne gardaient ni lignes, ni TVA, ni SIREN client, et les dates étaient écrites en dur. Corrigé dans le prototype :
+- **Instantané complet à la création** (`doFacture`) : `lines[{ name, ref, kind, unit, tva, qty, pu }]`, `rem` (remise), `ht`, `t85`, `t21`, `ttcFull`, `ac` (acompte déduit, BT-113), `ttc` (net à payer), `micro`, `devisNo`, `chantier`, `siren`, `pro`, `date`. Les factures ne dépendent plus du devis après création.
+- **TVA par taux** dans l'éditeur de facture : chaque ligne garde son taux (bouton « TVA 8,5 % / 2,1 % »), ventilation recalculée avec la remise ; libellé « TVA 8,5 % + 2,1 % » si les deux taux sont présents. Avant : 8,5 % appliqué à tout.
+- **SIREN / SIRET client** : champ + interrupteur « Client particulier / professionnel » dans le devis (état `cliSiren`, persisté ; `clientType` existant) et dans l'éditeur de facture. Contrôle 9 ou 14 chiffres + clé de Luhn (`SIREN_OK`). Obligatoire si client professionnel. Enregistrement de la facture refusé si invalide.
+- **Vérification avant facture** : bloque si client pro sans SIREN, SIREN invalide, ou devis sans ligne.
+- **Transmission** : une facture Émise sans lignes ou sans SIREN valide (client pro) propose « Compléter la facture » au lieu de « Transmettre ».
+- **Dates** : `TODAY()` (JJ/MM/AAAA) pour toute création (devis, version, facture, rectificative) ; `DOC_D()` lit JJ/MM/AAAA ou l'ancien JJ/MM (année courante, ou précédente si la date tomberait plus de 30 jours dans le futur). Plus aucun `new Date(2026, …)` ni `'24/09'` / `'26/09'`.
+- Facture rectificative : champ `replaces` = numéro remplacé.
+- **Reste côté app** : mapper l'instantané vers le XML CII EN 16931 (BT-1 numéro, BT-2 date ISO, BT-47 SIREN client préfixé `0002` pour SIRET, BG-25 lignes, BG-23 ventilation TVA, BT-113 acompte), adresse de facturation du client distincte du chantier (champ à ajouter si besoin), et migration des anciennes factures sans lignes (les marquer « à compléter »).
+
 ## 7. Tests à écrire (`test/pa.spec.js`)
 
 - [ ] Double appel « Transmettre » (ou rejeu hors ligne) → un seul dépôt côté PA simulée (clé d'idempotence).
@@ -162,6 +178,9 @@ Textes à ajouter (à relire) :
 - [ ] TVA La Réunion : lignes 8,5 % et 2,1 % → ventilation par taux correcte, HT + TVA = TTC au centime.
 - [ ] Journaux : aucun contenu XML/PDF, `correlationId` présent sur chaque appel.
 - [ ] `refresh_token` expiré → état `reauth`, aucune perte de la file d'envoi.
+- [ ] Facture créée depuis un devis 8,5 % + 2,1 % avec remise 5 % : `lines`, `t85`, `t21`, `ht` identiques à `totals()` au centime.
+- [ ] Client pro sans SIREN, ou SIREN à clé fausse : création et transmission bloquées.
+- [ ] Date de facture = date du jour (JJ/MM/AAAA) ; ancienne date « 15/09 » lue correctement en janvier de l'année suivante.
 - [ ] Compte salarié → 403 sur toutes les routes `/api/pa/*`.
 
 ---

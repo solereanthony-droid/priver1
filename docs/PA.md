@@ -24,7 +24,9 @@ PWA ──HTTPS (cookie de session)──▶ server/ ──OAuth2 + TLS──▶
 | `server/pa/routes.mjs`, `server/auth.mjs` | `/api/session`, `/api/pa/*`, sessions « patron » / « salarié » |
 | `server/pa/mock.mjs` | PA simulée (tests, démonstration locale avec `PA_PROVIDER=mock`) |
 | `src/pa/paClient.js` | `window.btpPA` : file hors ligne IndexedDB, rejeu dans l'ordre avec la même clé d'idempotence |
-| `src/pa/invoicePayload.js` | Facture de l'app (avec son instantané) → format serveur |
+| `src/pa/invoicePayload.js` | Facture de l'app (format du prototype v14.2 : lignes, remise, acompte, SIREN/SIRET, date JJ/MM/AAAA) → format serveur |
+| `src/hooks/usePaBridge.js` | Relie le menu de statut du prototype à `btpPA` : envoi réel si une PA est configurée, simulation « Démo » sinon ; statuts affichés synchronisés depuis le serveur |
+| `GET /api/pa/config` | Public : `{ configured, role }` — l'app sait si une PA est configurée (sinon mode démo) et si une session est ouverte |
 
 ## 2. Configuration (variables d'environnement)
 

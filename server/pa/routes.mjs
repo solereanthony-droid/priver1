@@ -75,6 +75,8 @@ export function createPaRoutes({ service, sessions, send, sameOrigin, secureCook
       }
 
       if (!p.startsWith('/api/pa/')) throw new PaError(404, 'introuvable');
+      // Public : l'app sait si une plateforme est configurée (sinon, mode démo) et si une session est ouverte.
+      if (p === '/api/pa/config' && m === 'GET') { const ss = sessions.get(req); return out(res, 200, { configured: !!service, role: ss ? ss.role : null }); }
       const s = owner(req);
       if (!service) throw new PaError(503, 'Plateforme agréée non configurée sur le serveur.');
       const t = s.tenantId;

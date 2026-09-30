@@ -21,6 +21,12 @@ def section(text, start, end):
     i = text.index(start); j = text.index(end, i)
     return text[i + len(start):j]
 
+def fix(text, old, new, label, done=None):
+    """Correctif de l'app : ignoré si le prototype l'a déjà repris (new ou done présent), appliqué sinon."""
+    if new in text or (done and done in text):
+        return text
+    return sub(text, old, new, label=label)
+
 def sub(text, old, new, count=1, regex=False, label=''):
     n = len(re.findall(old, text, flags=re.S)) if regex else text.count(old)
     if n < count:
@@ -106,22 +112,34 @@ js = js.replace("{ n: 'inherit', div: 'inherit', bg: 'inherit' }", "{ n: '', div
 js = js.replace("window.open(href, '_blank')", "window.open(href, '_blank', 'noopener,noreferrer')")
 
 # Facturation et export CSV : en micro-entreprise (franchise en base, art. 293 B), pas de TVA et HT = TTC.
-js = sub(js, "const ht = total / 1.085, t85 = ht * 0.085 * 0.92, t21 = ht * 0.021 * 0.08;",
-         "const micro = s.regime === 'micro', ht = micro ? total : total / 1.085, t85 = micro ? 0 : ht * 0.085 * 0.92, t21 = micro ? 0 : ht * 0.021 * 0.08;", label='TVA facturation')
-js = sub(js, "const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(hh * 0.085 * 0.92), n(hh * 0.021 * 0.08),",
-         "const hh = micro ? r[1] : r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(micro ? 0 : hh * 0.085 * 0.92), n(micro ? 0 : hh * 0.021 * 0.08),", label='TVA export CSV')
+js = fix(js, "const ht = total / 1.085, t85 = ht * 0.085 * 0.92, t21 = ht * 0.021 * 0.08;",
+         "const micro = s.regime === 'micro', ht = micro ? total : total / 1.085, t85 = micro ? 0 : ht * 0.085 * 0.92, t21 = micro ? 0 : ht * 0.021 * 0.08;", 'TVA facturation')
+js = fix(js, "const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(hh * 0.085 * 0.92), n(hh * 0.021 * 0.08),",
+         "const hh = micro ? r[1] : r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(micro ? 0 : hh * 0.085 * 0.92), n(micro ? 0 : hh * 0.021 * 0.08),", 'TVA export CSV')
 
 # Schéma unifilaire (écran et PDF) : le libellé « IDn » était centré sur le trait vertical d'alimentation (x = 30).
 # Il passe à droite du trait, aligné à gauche.
-js = js.replace("tx(32, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, a: 'middle', fill: K.sage });",
-                "tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage });")
+js = fix(js, "tx(32, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, a: 'middle', fill: K.sage });",
+         "tx(36, yb - 22, 'ID' + (r + 1), { s: 10, w: 800, fill: K.sage });", 'libellé IDn')
 
 # Facture : date réelle et locale (le prototype écrivait « 24/09 » ; toISOString() serait en UTC, la veille à La Réunion avant 4 h) et instantané complet du contenu (lignes, taux, client,
 # remise, acompte) pour pouvoir produire la facture électronique EN 16931 (src/pa/invoicePayload.js).
-js = sub(js, "docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: '24/09', st: 0, ttc: T.ttc - T.ac },",
+js = fix(js, "docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: '24/09', st: 0, ttc: T.ttc - T.ac },",
          "docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), st: 0, ttc: T.ttc - T.ac, "
          "snap: { issued: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()), devisNo: st.editNo || LIVE_NO, client: st.client, chantier: st.chantier, clientType: st.clientType || 'part', regime: st.regime, remiseTxt: st.remiseTxt, acompte: st.acompte, prepaid: T.ac, ttc: T.ttc, "
-         "lines: st.lines.map(({ kind, name, ref, qty, unit, pu, tva }) => ({ kind, name, ref, qty, unit, pu, tva })) } },", label='création de facture')
+         "lines: st.lines.map(({ kind, name, ref, qty, unit, pu, tva }) => ({ kind, name, ref, qty, unit, pu, tva })) } },", 'création de facture', done='ttcFull:')
+
+# Menu de statut des factures (v14.1) : « Transmettre » et « Enregistrer l'encaissement » passent par la plateforme
+# agréée quand elle est configurée (src/hooks/usePaBridge.js) ; sinon le prototype simule (mode démo).
+js = sub(js, "run: () => { setSt(1); this.flash(s.offline ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }",
+         "run: () => { if (window.__btpPaSend && window.__btpPaSend('transmit', d)) { this.setState({ stCf: null }); return; } setSt(1); this.flash(s.offline ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }", label='Transmettre')
+js = sub(js, "run: () => { this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn:",
+         "run: () => { if (window.__btpPaSend && window.__btpPaSend('pay', d)) { this.setState({ stCf: null }); return; } this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn:", label='Enregistrer l’encaissement')
+
+# Justificatifs de notes de frais : mêmes formats que les autres imports (PNG, JPEG, WebP, PDF), pas de SVG ni de
+# type « …pdf… » approximatif. Les gros fichiers partent dans IndexedDB via usePersistence.
+js = fix(js, "if (!/^image\\/|pdf/.test(f.type)) return this.flash('Photo ou PDF uniquement');",
+         "if (!/^(image\\/(png|jpeg|webp)|application\\/pdf)$/.test(f.type)) return this.flash('Photo (PNG, JPEG, WebP) ou PDF uniquement');", 'justificatif')
 
 # Exports.
 js = sub(js, "\nconst docNo = ", "\nexport const docNo = ", label='docNo')
