@@ -29,7 +29,7 @@ reflète l'app réelle. Les sections « À designer » sont celles où une maque
 | 7.3 Détails du PDF | ✅ v12, vérifié sur le PDF généré (cadre ID sur 3 lignes, « 4 points lumineux » en entier, sections décalées) |
 | 8.1 `noopener` sur les liens externes | ⏳ Appliqué par l'app à chaque import ; à reporter dans le prototype |
 | 8.2 TVA de l'export CSV, données de démo | ⏳ Micro-entreprise corrigée par l'app (§ 9.1) ; données réelles toujours à brancher |
-| 8.3 Largeur de la barre récap (ordinateur) | ❓ Question en attente |
+| 8.3 Largeur de la barre récap (ordinateur) | ✅ Voulu (confirmé le 2026-09-30) : rien à changer |
 
 ---
 
@@ -217,6 +217,7 @@ Les 12 « Tests v13 » sont automatisés (`test/v13.spec.js`) ou vérifiés dans
 ### 8.3 Détail visuel (mode ordinateur)
 - La barre récap du devis ne passe plus sous le menu. En revanche, elle est plus large que la colonne de
   contenu : de 396 à 1 132 px pour une colonne de 528 à 1 000 px, sur un écran de 1 280 px. Est-ce voulu ?
+- **Réponse (2026-09-30) : oui, c'est voulu.** La barre reste plus large que la colonne ; rien à modifier.
 
 ---
 
@@ -244,6 +245,5 @@ trouvés et corrigés côté app.
   transformation des devis sont des données de démo fixes. L'export CSV ne sera juste qu'une fois calculé depuis
   les factures, taux par taux.
 - **Icône définitive** 512 × 512 + maskable.
-- **Largeur de la barre récap** en mode ordinateur (§ 8.3).
 - **Détail du schéma PDF** : le trait vertical du disjoncteur de branchement traverse le libellé « ID1 ».
   Décaler le libellé à droite du trait, ou l'afficher dans le cadre.
