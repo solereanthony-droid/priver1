@@ -7,7 +7,11 @@ import { useServiceWorker } from '../hooks/useServiceWorker.js';
 // Le prototype gère lui-même Échap, la mise à l'échelle, le thème et l'état du réseau (componentDidMount).
 export default function App({ regime = 'assujetti', acompte = 30, paName = 'FactuPro 974' }) {
   const [view, logic] = useLogic(BtpLogic, { regime, acompte, paName });
-  usePersistence(BtpLogic.KEY, logic.state, { snapshot: s => logic.snapshot(s), restore: d => logic.restore(d) });
+  usePersistence(BtpLogic.KEY, logic.state, {
+    snapshot: s => logic.snapshot(s),
+    restore: d => logic.restore(d),
+    onError: () => logic.flash('Stockage plein : les dernières modifications ne sont pas enregistrées. Supprime un plan importé.'),
+  });
   useServiceWorker();
   return view;
 }

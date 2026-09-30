@@ -105,6 +105,12 @@ js = js.replace("{ n: 'inherit', div: 'inherit', bg: 'inherit' }", "{ n: '', div
 # Liens externes (mailto:, wa.me) : noopener, pour que la page ouverte ne puisse pas rediriger l'onglet de l'app.
 js = js.replace("window.open(href, '_blank')", "window.open(href, '_blank', 'noopener,noreferrer')")
 
+# Facturation et export CSV : en micro-entreprise (franchise en base, art. 293 B), pas de TVA et HT = TTC.
+js = sub(js, "const ht = total / 1.085, t85 = ht * 0.085 * 0.92, t21 = ht * 0.021 * 0.08;",
+         "const micro = s.regime === 'micro', ht = micro ? total : total / 1.085, t85 = micro ? 0 : ht * 0.085 * 0.92, t21 = micro ? 0 : ht * 0.021 * 0.08;", label='TVA facturation')
+js = sub(js, "const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(hh * 0.085 * 0.92), n(hh * 0.021 * 0.08),",
+         "const hh = micro ? r[1] : r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(micro ? 0 : hh * 0.085 * 0.92), n(micro ? 0 : hh * 0.021 * 0.08),", label='TVA export CSV')
+
 # Exports.
 js = sub(js, "\nconst docNo = ", "\nexport const docNo = ", label='docNo')
 header = """// Logique métier du prototype « Chiffrage BTP 974 » (importée par scripts/import-handoff.py, ne pas modifier à la main :

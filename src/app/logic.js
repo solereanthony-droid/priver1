@@ -598,7 +598,7 @@ class Component extends DCLogic {
     const cl = [['SCI Les Filaos', 0.24], ['M. Grondin', 0.16], ['Mme Hoarau', 0.11], ['Commune de Saint-Paul', 0.09], ['M. et Mme Payet', 0.08], ['Mme Técher', 0.07]]
       .map(([n, r], i) => [n, r * (0.45 + ((seed * (i + 3) * 7) % 13) / 10)])
       .sort((a, b) => b[1] - a[1]).slice(0, 4);
-    const ht = total / 1.085, t85 = ht * 0.085 * 0.92, t21 = ht * 0.021 * 0.08;
+    const micro = s.regime === 'micro', ht = micro ? total : total / 1.085, t85 = micro ? 0 : ht * 0.085 * 0.92, t21 = micro ? 0 : ht * 0.021 * 0.08;
     const on = a => a ? ['var(--color-neutral-900)', 'var(--color-neutral-100)'] : ['var(--color-surface)', 'var(--color-neutral-900)'];
     const show = s.lcShow || { ca: true, enc: true, n1: false };
     const selI = isMonth ? mi - off : rows.length - 1;
@@ -686,7 +686,7 @@ class Component extends DCLogic {
       exportCsv: () => {
         const n = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
         const lines = [['Mois', 'CA TTC', 'CA HT', 'TVA 8,5 %', 'TVA 2,1 %', 'Encaissé', 'En attente'].join(';'),
-          ...sel.map((r, i) => { const hh = r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(hh * 0.085 * 0.92), n(hh * 0.021 * 0.08), n(r[1] - r[2]), n(r[2])].join(';'); })];
+          ...sel.map((r, i) => { const hh = micro ? r[1] : r[1] / 1.085; return [FULL[isMonth ? mi : off + i], n(r[1]), n(hh), n(micro ? 0 : hh * 0.085 * 0.92), n(micro ? 0 : hh * 0.021 * 0.08), n(r[1] - r[2]), n(r[2])].join(';'); })];
         const url = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }));
         const el = document.createElement('a'); el.href = url; el.download = 'facturation-' + (isMonth ? FULL[mi].replace(' ', '-') : p + '-mois') + '.csv'; document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         this.flash('Export CSV téléchargé');

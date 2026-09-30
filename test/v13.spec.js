@@ -135,6 +135,19 @@ describe('Export CSV pour le comptable', () => {
   });
 });
 
+describe('Export CSV en micro-entreprise', () => {
+  it('pas de TVA (art. 293 B) : colonnes TVA à 0, HT = TTC', async () => {
+    let blob = null;
+    vi.stubGlobal('document', { createElement: () => ({ click() {}, remove() {} }), body: { appendChild() {} } });
+    vi.stubGlobal('URL', { createObjectURL: b => { blob = b; return 'blob:x'; }, revokeObjectURL() {} });
+    const c = live({ tab: 'stats', regime: 'micro' });
+    V(c).st.exportCsv();
+    const rows = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()).slice(3)).split('\n').slice(1);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) { const [, ttc, ht, t85, t21] = r.split(';'); expect(ht).toBe(ttc); expect(t85).toBe('0,00'); expect(t21).toBe('0,00'); }
+  });
+});
+
 describe('Calcul de marge', () => {
   it('remise simulée au-delà du maximum → terracotta ; « Corriger les N lignes » supprime les alertes', () => {
     const c = live({ tab: 'marge' });

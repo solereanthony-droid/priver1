@@ -8,6 +8,29 @@ Ce document résume ce qui a été construit à partir du handoff : les écarts,
 comportements. Il liste aussi **ce qui manque encore côté design** pour que la prochaine version du prototype
 reflète l'app réelle. Les sections « À designer » sont celles où une maquette est attendue.
 
+
+> **État au 2026-09-30.** Les sections 2 à 7 ont été traitées par les versions v5 et v12 du prototype.
+> Elles restent ici pour l'historique. Le tableau ci-dessous résume l'état de chaque point, et la section 9 liste
+> ce qui reste ouvert.
+
+| Point | État |
+| --- | --- |
+| 2.1 Espacement haut en plein écran | ✅ Réglé en v5 (`max(20px, safe-area + 12px)`) |
+| 2.2 Graisses 800 / 900 | ✅ Revu en v5 (800 conservé, aucun 900) |
+| 2.3 Numéros à 4 chiffres | ✅ v5 : chasse fixe, ellipse sur le client uniquement |
+| 2.4 Formats d'import affichés avant le choix | ✅ v5 / v13 |
+| 3.1 Hors ligne | ✅ v5 (pastille, IA et synchronisation désactivées) ; v13 : pastille En ligne / Hors ligne à l'accueil |
+| 3.2 Erreurs de l'IA + compteur | ✅ v5 (encart par code, compteur n / 600) |
+| 3.3 Installer l'app | ✅ v5 (Réglages → Affichage) — **icône définitive toujours attendue** |
+| 3.4 Mise à jour disponible | ✅ v5 (pilule « Nouvelle version disponible ») |
+| 6 Questions ouvertes | ✅ Répondues en v5 (mode sombre, mise en page ordinateur, confirmation provisoire, compte) |
+| 7.1 Thème sombre, police du PDF | ✅ Corrigé dans le prototype en v12 |
+| 7.2 Assistant plan (9 pièces + terrasse) | ✅ Fiche de tests corrigée en v12 |
+| 7.3 Détails du PDF | ✅ v12, vérifié sur le PDF généré (cadre ID sur 3 lignes, « 4 points lumineux » en entier, sections décalées) |
+| 8.1 `noopener` sur les liens externes | ⏳ Appliqué par l'app à chaque import ; à reporter dans le prototype |
+| 8.2 TVA de l'export CSV, données de démo | ⏳ Micro-entreprise corrigée par l'app (§ 9.1) ; données réelles toujours à brancher |
+| 8.3 Largeur de la barre récap (ordinateur) | ❓ Question en attente |
+
 ---
 
 ## 1. Ce qui a été implémenté
@@ -194,3 +217,33 @@ Les 12 « Tests v13 » sont automatisés (`test/v13.spec.js`) ou vérifiés dans
 ### 8.3 Détail visuel (mode ordinateur)
 - La barre récap du devis ne passe plus sous le menu. En revanche, elle est plus large que la colonne de
   contenu : de 396 à 1 132 px pour une colonne de 528 à 1 000 px, sur un écran de 1 280 px. Est-ce voulu ?
+
+---
+
+## 9. Vérification complète et corrections du 2026-09-30
+
+Chaque point de ce document a été revérifié dans l'app (tests automatiques et navigateur). Deux bugs ont été
+trouvés et corrigés côté app.
+
+### 9.1 Corrigé côté app
+1. **Sauvegarde perdue en silence (grave).** Toute la sauvegarde tenait dans `localStorage` (environ 5 Mo par site).
+   Un plan importé de 2,6 Mo occupe environ 3,5 millions de caractères une fois encodé. Au **deuxième** plan, le quota
+   était dépassé : **plus rien n'était enregistré**, sans aucun message. Le plan et toutes les modifications
+   suivantes (client, lignes…) étaient perdus au rechargement.
+   **Correction :** les gros contenus (plans importés, fonds d'implantation) sont stockés dans IndexedDB, et
+   `localStorage` ne garde que des références (3 960 caractères au lieu de 3,4 millions dans le même scénario).
+   Les anciennes sauvegardes sont reprises automatiquement. Si l'enregistrement échoue quand même, un message
+   prévient : « Stockage plein : les dernières modifications ne sont pas enregistrées. Supprime un plan importé. »
+   **À designer :** valider ce texte, et prévoir éventuellement une jauge d'espace utilisé dans Réglages.
+2. **TVA affichée en micro-entreprise.** L'écran Facturation et l'export CSV calculaient la TVA (8,5 % / 2,1 %)
+   quel que soit le régime. En franchise en base (art. 293 B), la TVA est maintenant à 0 et le HT est égal au TTC.
+   **À reporter dans le prototype** (`statsVals`, lignes `ht / t85 / t21` et `exportCsv`).
+
+### 9.2 Toujours ouvert
+- **Données réelles** : l'historique de Facturation (octobre 2025 à septembre 2026), le panier moyen et la
+  transformation des devis sont des données de démo fixes. L'export CSV ne sera juste qu'une fois calculé depuis
+  les factures, taux par taux.
+- **Icône définitive** 512 × 512 + maskable.
+- **Largeur de la barre récap** en mode ordinateur (§ 8.3).
+- **Détail du schéma PDF** : le trait vertical du disjoncteur de branchement traverse le libellé « ID1 ».
+  Décaler le libellé à droite du trait, ou l'afficher dans le cadre.

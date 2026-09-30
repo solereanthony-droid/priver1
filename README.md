@@ -97,7 +97,8 @@ Configurés dans `.claude/settings.json` (scripts dans `.claude/hooks/`) :
 Sur ordinateur, l'app s'affiche dans le cadre téléphone 390 × 844 du prototype, mis à l'échelle.
 Sur téléphone (≤ 520 px) ou installée en PWA, elle occupe tout l'écran, sans cadre ni fausse barre d'état.
 
-Les données (devis, factures, réglages) sont gardées sur l'appareil (`localStorage`, clé `btp974-mobile-v1`).
+Les données (devis, factures, réglages) sont gardées sur l'appareil : `localStorage` (clé `btp974-mobile-v1`) pour
+l'état, IndexedDB (`btp974`) pour les gros contenus (plans importés, fonds d'implantation), voir `src/storage/blobStore.js`.
 
 **Hors ligne** : après une première visite, l'app fonctionne sans réseau (service worker `dist/sw.js`,
 généré au build avec la liste des fichiers). Seule l'IA a besoin du réseau ; sans elle, les replis locaux prennent le relais.

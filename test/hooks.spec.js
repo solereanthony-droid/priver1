@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import 'fake-indexeddb/auto';
 // Hooks React : adaptateur useLogic, sauvegarde locale et application complète dans un DOM simulé.
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React, { act } from 'react';
@@ -48,24 +49,25 @@ describe('useLogic', () => {
 describe('App', () => {
   beforeEach(() => { localStorage.clear(); vi.useRealTimers(); });
 
-  it('restaure la sauvegarde locale en ignorant les clés inattendues', () => {
+  it('restaure la sauvegarde locale en ignorant les clés inattendues', async () => {
     localStorage.setItem(BtpLogic.KEY, JSON.stringify({ client: 'Mme Test', tab: 'set', toast: 'piège' }));
     const { host, unmount } = mount(React.createElement(App));
+    await act(() => new Promise(r => setTimeout(r, 50)));   // restauration asynchrone
     expect(host.querySelector('[data-screen-label="01 Accueil"]')).not.toBeNull(); // « tab » non restauré
     act(() => host.querySelectorAll('nav button')[1].click());
     expect([...host.querySelectorAll('input')].some(i => i.value === 'Mme Test')).toBe(true);
     unmount();
   });
 
-  it('enregistre les changements après 400 ms', () => {
+  it('enregistre les changements après 400 ms', async () => {
     vi.useFakeTimers();
     const { host, unmount } = mount(React.createElement(App));
     act(() => host.querySelectorAll('nav button')[1].click());
     const input = [...host.querySelectorAll('input')].find(i => i.value === 'M. et Mme Payet');
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
     act(() => { set.call(input, 'SCI Nouveau'); input.dispatchEvent(new Event('input', { bubbles: true })); });
-    act(() => vi.advanceTimersByTime(450));
-    expect(JSON.parse(localStorage.getItem(BtpLogic.KEY)).client).toBe('SCI Nouveau');
+    await act(() => vi.advanceTimersByTimeAsync(450));
+    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem(BtpLogic.KEY)).client).toBe('SCI Nouveau'));
     unmount();
   });
 
