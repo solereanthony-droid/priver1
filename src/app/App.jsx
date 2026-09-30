@@ -14,6 +14,6 @@ export default function App({ regime = 'assujetti', acompte = 30, paName = 'Fact
     onError: () => logic.flash('Stockage plein : les dernières modifications ne sont pas enregistrées. Supprime un plan importé.'),
   });
   useServiceWorker();
-  usePaBridge(logic);
+  usePaBridge(logic, !!logic.state.locked);
   return view;
 }

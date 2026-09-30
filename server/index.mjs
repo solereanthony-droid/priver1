@@ -1,4 +1,4 @@
-// Petit serveur : sert l'app construite (dist/) et exécute les tâches IA via l'API Claude.
+// Serveur d'Alizé Pilote : sert l'app construite (dist/) et exécute les tâches IA via l'API Claude.
 // La clé (ANTHROPIC_API_KEY) ne quitte jamais le serveur.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -182,4 +182,4 @@ const server = http.createServer((req, res) => {
 });
 server.headersTimeout = 10_000;
 server.requestTimeout = 60_000;
-server.listen(PORT, HOST, () => console.log(`Chiffrage BTP 974 → http://${HOST}:${PORT} (modèle ${MODEL}${pa ? ', PA : ' + (process.env.PA_PROVIDER) : ''})`));
+server.listen(PORT, HOST, () => console.log(`Alizé Pilote → http://${HOST}:${PORT} (modèle ${MODEL}${pa ? ', PA : ' + (process.env.PA_PROVIDER) : ''})`));

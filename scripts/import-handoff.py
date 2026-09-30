@@ -129,21 +129,25 @@ js = fix(js, "docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — ac
          "snap: { issued: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()), devisNo: st.editNo || LIVE_NO, client: st.client, chantier: st.chantier, clientType: st.clientType || 'part', regime: st.regime, remiseTxt: st.remiseTxt, acompte: st.acompte, prepaid: T.ac, ttc: T.ttc, "
          "lines: st.lines.map(({ kind, name, ref, qty, unit, pu, tva }) => ({ kind, name, ref, qty, unit, pu, tva })) } },", 'création de facture', done='ttcFull:')
 
-# Menu de statut des factures (v14.1) : « Transmettre » et « Enregistrer l'encaissement » passent par la plateforme
-# agréée quand elle est configurée (src/hooks/usePaBridge.js) ; sinon le prototype simule (mode démo).
-js = sub(js, "run: () => { setSt(1); this.flash(s.offline ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }",
-         "run: () => { if (window.__btpPaSend && window.__btpPaSend('transmit', d)) { this.setState({ stCf: null }); return; } setSt(1); this.flash(s.offline ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }", label='Transmettre')
-js = sub(js, "run: () => { this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn:",
-         "run: () => { if (window.__btpPaSend && window.__btpPaSend('pay', d)) { this.setState({ stCf: null }); return; } this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn:", label='Enregistrer l’encaissement')
-
-# Justificatifs de notes de frais : mêmes formats que les autres imports (PNG, JPEG, WebP, PDF), pas de SVG ni de
-# type « …pdf… » approximatif. Les gros fichiers partent dans IndexedDB via usePersistence.
-js = fix(js, "if (!/^image\\/|pdf/.test(f.type)) return this.flash('Photo ou PDF uniquement');",
-         "if (!/^(image\\/(png|jpeg|webp)|application\\/pdf)$/.test(f.type)) return this.flash('Photo (PNG, JPEG, WebP) ou PDF uniquement');", 'justificatif')
+# Plateforme agréée (v15) : le menu de statut, l'encaissement, la file et l'écran de code passent par l'app
+# (src/hooks/usePaBridge.js) quand le serveur est configuré ; sans serveur (démo statique), le prototype simule.
+js = sub(js, "run: () => { const q = !!s.offline; this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? (q ? { ...x, paQueued: true } : { ...x, st: 1, paSentAt: TODAY() }) : x) }));",
+         "run: () => { if (globalThis.__btpPaSend && globalThis.__btpPaSend('transmit', d)) { this.setState({ stCf: null }); return; } const q = !!s.offline; this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? (q ? { ...x, paQueued: true } : { ...x, st: 1, paSentAt: TODAY() }) : x) }));", label='Transmettre')
+js = sub(js, "const left = r2(rest - amt), q = !!d.pro && !!s.offline;",
+         "if (d.pro && globalThis.__btpPaSend && globalThis.__btpPaSend('pay', d, { amount: amt, date: P0.date })) { this.setState({ stCf: null, stPay: null }); return; }\n            const left = r2(rest - amt), q = !!d.pro && !!s.offline;", label='encaissement')
+js = sub(js, "markPaid: () => { this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ?",
+         "markPaid: () => { if (d.pro && globalThis.__btpPaSend && globalThis.__btpPaSend('pay', d, { amount: d.paRemaining ?? d.ttc, date: TODAY() })) return; this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ?", label='Marquer encaissée')
+js = sub(js, "  paFlush() {", "  paFlush() {\n    if (globalThis.__btpPaLive) return;                 // file réelle rejouée par l'app (src/pa/paClient.js)", label='paFlush')
+js = sub(js, "const tryCode = c => {", "const tryCode = c => {\n      if (globalThis.__btpLogin && globalThis.__btpLogin(c, R)) return;   // sessions du serveur (server/auth.mjs)", label='code d’accès')
+# Jauge d'espace : localStorage (5 Mo) et IndexedDB rapporté au quota de l'appareil ; on montre la contrainte la plus serrée.
+js = sub(js, "    const Q = 5 * 1024 * 1024, pct = Math.min(100, Math.round(used / Q * 100)),",
+         "    const E = s.storeEst, lsR = used / (5 * 1024 * 1024), dbR = E && E.quota ? E.usage / E.quota : 0, useDb = dbR > lsR; if (useDb) used = E.usage;\n    const Q = useDb ? E.quota : 5 * 1024 * 1024, pct = Math.min(100, Math.round(used / Q * 100)),", label='jauge d’espace')
+# Réémission d'une facture refusée : date complète (JJ/MM/AAAA) comme les autres créations.
+js = fix(js, "date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), replaces: d.no", "date: TODAY(), replaces: d.no", 'date de réémission')
 
 # Exports.
 js = sub(js, "\nconst docNo = ", "\nexport const docNo = ", label='docNo')
-header = """// Logique métier du prototype « Chiffrage BTP 974 » (importée par scripts/import-handoff.py, ne pas modifier à la main :
+header = """// Logique métier du prototype « Alizé Pilote » (ex-Chiffrage BTP 974) (importée par scripts/import-handoff.py, ne pas modifier à la main :
 // corriger le prototype ou le script d'import).
 import React from 'react';
 import template from './template.html?raw';

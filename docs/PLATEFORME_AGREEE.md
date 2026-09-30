@@ -23,7 +23,7 @@
 | 210 | Refusée | Client | Refus métier de toute la facture, avec motif normalisé. Terminal. |
 | 212 | Encaissée | **Fournisseur (notre app)** | Paiement reçu, partiel ou total, avec date et montant. |
 
-Statuts facultatifs utiles pour l'app : 201 Émise, 202 Mise à disposition, 204 Approuvée, 207 En litige, 209 Reçue, 211 Paiement transmis. Après 210 ou 213, la facture est morte : il faut émettre une nouvelle facture (ou, pour un rejet de données, régénérer le fichier avec le même numéro selon la PA).
+Statuts facultatifs : la numérotation exacte est celle de la liste officielle XP Z12-012 (d'après le retour dev : 204 = Prise en charge, 205 = Approuvée, 209 = Complétée). Correspondance appliquée par l'app (`server/pa/states.mjs`) : « Transmise » pour 200 à 204 et 209, « Acceptée » pour 205, 206 et 211, « En litige » pour 207. À confirmer avec la PA retenue. Après 210 ou 213, la facture est morte : il faut émettre une nouvelle facture (ou, pour un rejet de données, régénérer le fichier avec le même numéro selon la PA).
 
 > À faire valider par l'expert-comptable de l'utilisateur : règles d'envoi du 212 (TVA sur les débits ou sur les encaissements, BTP) et mentions propres à La Réunion (TVA 8,5 % / 2,1 %, franchise 293 B).
 
@@ -87,7 +87,7 @@ listInbound(since)                          // factures reçues (fournisseurs de
 ### 4.1 Avant l'envoi (contrôles locaux, bloquants)
 À ajouter à la vérification avant facture existante (`facVerif`) :
 1. Numéro unique, séquentiel, jamais réutilisé (`FAC-<année>-NNN`).
-2. SIREN/SIRET vendeur et client présents et valides (clé de Luhn), identifiant préfixé du schéma ISO 6523 (`0002` pour SIRET).
+2. SIREN/SIRET vendeur et client présents et valides (clé de Luhn), identifiant avec son schéma ISO 6523 (`0002` = SIREN, `0009` = SIRET).
 3. Client joignable : `lookupRecipient()` a répondu dans les 24 h (cache).
 4. Cohérence EN 16931 : au moins une ligne ; total HT + TVA = TTC au centime ; catégorie TVA cohérente avec le taux (`S` + 8,5 % ou 2,1 % ; micro-entreprise : catégorie d'exonération avec la mention art. 293 B du CGI).
 5. Devise `EUR` (code ISO, pas « € »).
@@ -103,7 +103,7 @@ listInbound(since)                          // factures reçues (fournisseurs de
 - Machine d'états locale, **seul le serveur la fait avancer** à partir des réponses PA :
 
 ```
-brouillon → emise → en_file → deposee(200) → [emise_pa(201)] → recue(209)/mise_dispo(202) → approuvee(204) → encaissee(212)
+brouillon → emise → en_file → deposee(200) → transmise(201…204, 209) → acceptee(205, 206, 211) → encaissee(212)
                         │            └──────────▶ rejetee(213)  (terminal)
                         └── echec (réseau)       └──────────▶ refusee(210)  (terminal)
                                                  └──────────▶ en_litige(207) → completee(208) → …
@@ -129,8 +129,8 @@ Le prototype affiche aujourd'hui 4 statuts simulés : **Émise, Transmise, Accep
 | Prototype | Réel | Qui fait avancer |
 | --- | --- | --- |
 | Émise | `emise` (validée localement, pas encore déposée) ou `en_file` | Utilisateur : « Transmettre » |
-| Transmise | `deposee` (200) / `emise_pa` (201) / `recue` (209) / `mise_dispo` (202) | **PA uniquement** |
-| Acceptée | `approuvee` (204) | **Client via sa PA uniquement** |
+| Transmise | codes 200 à 204 et 209 | **PA uniquement** |
+| Acceptée | codes 205, 206, 211 | **Client via sa PA uniquement** |
 | Encaissée | `encaissee` (212), total ou partiel | Utilisateur : « Marquer encaissée » → envoi 212 |
 | *(absent)* | `rejetee` (213), `refusee` (210), `en_litige` (207), `echec` | PA / client / réseau |
 
@@ -163,7 +163,7 @@ Constat : les factures ne gardaient ni lignes, ni TVA, ni SIREN client, et les d
 - **Transmission** : une facture Émise sans lignes ou sans SIREN valide (client pro) propose « Compléter la facture » au lieu de « Transmettre ».
 - **Dates** : `TODAY()` (JJ/MM/AAAA) pour toute création (devis, version, facture, rectificative) ; `DOC_D()` lit JJ/MM/AAAA ou l'ancien JJ/MM (année courante, ou précédente si la date tomberait plus de 30 jours dans le futur). Plus aucun `new Date(2026, …)` ni `'24/09'` / `'26/09'`.
 - Facture rectificative : champ `replaces` = numéro remplacé.
-- **Reste côté app** : mapper l'instantané vers le XML CII EN 16931 (BT-1 numéro, BT-2 date ISO, BT-47 SIREN client préfixé `0002` pour SIRET, BG-25 lignes, BG-23 ventilation TVA, BT-113 acompte), adresse de facturation du client distincte du chantier (champ à ajouter si besoin), et migration des anciennes factures sans lignes (les marquer « à compléter »).
+- **Reste côté app** : mapper l'instantané vers le XML CII EN 16931 (BT-1 numéro, BT-2 date ISO, BT-47 : SIREN client en schéma `0002`, SIRET en schéma `0009`, BG-25 lignes, BG-23 ventilation TVA, BT-113 acompte), adresse de facturation du client distincte du chantier (champ à ajouter si besoin), et migration des anciennes factures sans lignes (les marquer « à compléter »).
 
 ## 7. Tests à écrire (`test/pa.spec.js`)
 

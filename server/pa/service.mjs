@@ -289,7 +289,7 @@ export function createPaService({ store, adapter, key, log = () => {}, now = Dat
 
   function status(tenantId) {
     const t = T(tenantId), c = t.conn;
-    return { state: c.state, paName: c.paName || null, lastSync: c.lastSync || null, retryAt: c.state === 'panne_pa' ? c.retryAt : null, queued: t.jobs.length };
+    return { state: c.state, paName: c.paName || null, connectedAt: c.connectedAt || null, lastSync: c.lastSync || null, retryAt: c.state === 'panne_pa' ? c.retryAt : null, queued: t.jobs.length };
   }
 
   const invoices = tenantId => Object.values(T(tenantId).invoices).map(view);

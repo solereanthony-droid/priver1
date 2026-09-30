@@ -67,17 +67,22 @@ export const btpPA = {
   async status() {
     if (!navigator.onLine) return { state: 'hors_ligne', queued: (await all()).length };
     const cfg = await api('GET', '/api/pa/config');
+    if (cfg.status !== 200) throw new Error('serveur injoignable');
     if (cfg.status !== 200 || !cfg.data?.configured) return { state: 'non_configure' };
     if (cfg.data.role !== 'owner') return { state: 'non_connecte', error: cfg.data.role ? 'Accès réservé au responsable de l’entreprise.' : 'Connexion à l’app requise.' };
     const r = await api('GET', '/api/pa/status');
     return r.status === 200 ? { ...r.data, queued: r.data.queued + (await all()).length } : { state: r.status === 503 ? 'non_configure' : 'non_connecte', error: r.data?.error };
   },
+  config: () => api('GET', '/api/pa/config'),
   async connect() {
-    const r = await api('POST', '/api/pa/connect');
-    if (r.status === 200 && r.data?.url) location.assign(r.data.url);
+    let r;
+    try { r = await api('POST', '/api/pa/connect'); } catch { r = { status: 0 }; }
+    if (r.status === 200 && r.data?.url) { location.assign(r.data.url); return r; }
+    emit('btp:pa-error', { message: r.status === 503 ? 'Aucune plateforme agréée n’est configurée sur le serveur : connexion impossible (mode démo).'
+      : r.status === 401 ? 'Connecte-toi à l’app avec ton code d’accès.' : r.status === 403 ? 'Réservé au responsable de l’entreprise.' : 'Connexion impossible pour le moment : réessaie.' });
     return r;
   },
-  disconnect: () => api('POST', '/api/pa/disconnect'),
+  async disconnect() { const r = await api('POST', '/api/pa/disconnect').catch(() => ({ status: 0 })); emit('btp:pa-update', {}); return r; },
   invoices: () => api('GET', '/api/pa/invoices'),
   transmit: invoice => enqueue('submit', invoice.no, '/api/pa/invoices', { invoice }),
   recordPayment: (no, amount, date) => enqueue('payment', no, `/api/pa/invoices/${encodeURIComponent(no)}/payments`, { amount, date }),

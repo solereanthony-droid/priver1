@@ -1,4 +1,6 @@
-# Chiffrage BTP 974
+# Alizé Pilote
+
+*(ex-Chiffrage BTP 974 ; la clé de sauvegarde locale `btp974-mobile-v1` est conservée pour ne perdre aucune donnée.)*
 
 Application mobile (PWA) de chiffrage pour artisans du BTP à La Réunion : devis (saisie, catalogue ou IA),
 contrôle de marge, factures et suivi de la facturation électronique, planning, projets, plans unifilaires

@@ -1,5 +1,5 @@
 // Convertit une facture de l'app au format attendu par le serveur PA.
-// Format du prototype (v14.2) : doc.lines, doc.rem (fraction), doc.ac (acompte déduit), doc.micro, doc.siren (SIREN ou
+// Format du prototype (v14.2 / v15.1) : doc.addr (adresse de facturation, BG-8), doc.lines, doc.rem (fraction), doc.ac (acompte déduit), doc.micro, doc.siren (SIREN ou
 // SIRET), doc.pro, doc.date (JJ/MM/AAAA), doc.chantier. L'ancien instantané de l'app (doc.snap) reste lu.
 // Le serveur recalcule tous les montants : seules les lignes, les taux et les identifiants comptent.
 const pad = n => String(n).padStart(2, '0');
@@ -36,7 +36,7 @@ export function toPaInvoice(doc, co, { buyerSiren = '', buyerName = '', buyerAdd
     no: doc.no, issueDate, dueDate: iso(due), currency: 'EUR', regime: micro ? 'micro' : 'assujetti',
     remisePct, prepaid: s ? s.prepaid || 0 : +doc.ac || 0,
     seller: { name: co.name, siret: String(co.siret || '').replace(/\s/g, ''), tva: String(co.tva || '').replace(/\s/g, ''), addr: parseAddress(co.addr) },
-    buyer: { type: pro ? 'pro' : 'part', name: buyerName || clientName(s ? s.client : doc.client), siren: String(buyerSiren || (s ? s.clientSiren : doc.siren) || '').replace(/\D/g, ''), addr: parseAddress(buyerAddress || (s ? s.chantier : doc.chantier)) },
+    buyer: { type: pro ? 'pro' : 'part', name: buyerName || clientName(s ? s.client : doc.client), siren: String(buyerSiren || (s ? s.clientSiren : doc.siren) || '').replace(/\D/g, ''), addr: parseAddress(buyerAddress || (s ? s.chantier : doc.addr || doc.chantier)) },
     lines: lines.map(l => ({ name: l.name, ref: l.ref, qty: l.qty, unit: l.unit, pu: l.pu, tva: l.tva })),
   };
 }

@@ -46,7 +46,7 @@ export function createPaRoutes({ service, sessions, send, sameOrigin, secureCook
         if (m === 'POST') {
           if (!sessions.enabled) throw new PaError(503, 'Codes d’accès non configurés sur le serveur.');
           const { code } = await readJson(req), r = sessions.login(String(code || ''), clientIp(req));
-          if (r.status !== 200) throw new PaError(r.status, r.status === 429 ? 'Trop d’essais : patiente une minute.' : 'Code incorrect.');
+          if (r.status !== 200) throw new PaError(r.status, r.status === 429 ? (r.retryAt ? `Trop d’essais : accès bloqué jusqu’à ${new Date(r.retryAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.` : 'Trop d’essais : patiente une minute.') : 'Code incorrect.');
           return out(res, 200, { role: r.role }, { 'Set-Cookie': sessions.cookie(r.id, secureCookie(req)) });
         }
         if (m === 'GET') { const s = sessions.get(req); return s ? out(res, 200, { role: s.role }) : out(res, 401, { error: 'non connecté' }); }
@@ -76,7 +76,7 @@ export function createPaRoutes({ service, sessions, send, sameOrigin, secureCook
 
       if (!p.startsWith('/api/pa/')) throw new PaError(404, 'introuvable');
       // Public : l'app sait si une plateforme est configurée (sinon, mode démo) et si une session est ouverte.
-      if (p === '/api/pa/config' && m === 'GET') { const ss = sessions.get(req); return out(res, 200, { configured: !!service, role: ss ? ss.role : null }); }
+      if (p === '/api/pa/config' && m === 'GET') { const ss = sessions.get(req); return out(res, 200, { configured: !!service, sessions: sessions.enabled, role: ss ? ss.role : null }); }
       const s = owner(req);
       if (!service) throw new PaError(503, 'Plateforme agréée non configurée sur le serveur.');
       const t = s.tenantId;

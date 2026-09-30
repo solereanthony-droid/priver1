@@ -9,7 +9,8 @@ function serviceWorker() {
     name: 'btp974-sw',
     apply: 'build',
     generateBundle(_, bundle) {
-      const files = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg',
+      const icons = fs.readdirSync(new URL('./public/icons', import.meta.url)).filter(f => f.endsWith('.png')).map(f => '/icons/' + f);
+      const files = ['/', '/index.html', '/manifest.webmanifest', ...icons,
         ...Object.keys(bundle).filter(f => !f.endsWith('.map')).map(f => '/' + f)];
       const version = createHash('sha256').update(files.sort().join('|')).digest('hex').slice(0, 12);
       const src = fs.readFileSync(new URL('./src/sw-template.js', import.meta.url), 'utf8')

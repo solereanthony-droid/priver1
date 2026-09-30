@@ -40,7 +40,7 @@ describe('Encaissements', () => {
     expect(after.due.map(d => d.no)).not.toContain('FAC-2026-028');
     expect(sp(after.paidTot)).toBe('3 320 €');
     expect(after.dueTot).not.toBe(before.dueTot);
-    expect(c.state.docs.find(d => d.no === 'FAC-2026-028').paidOn).toMatch(/^\d{2}\/\d{2}$/);
+    expect(c.state.docs.find(d => d.no === 'FAC-2026-028').paidOn).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);   // v15 : JJ/MM/AAAA
     expect(sp(JSON.stringify(V(live({ ...c.state, tab: 'home' }))))).toMatch(/dont 3 320 € encaissé/);
   });
 });

@@ -299,3 +299,49 @@ navigateur : `window.opener` nul pour WhatsApp, justificatif joint et envoyé da
 ### 11.4 Toujours à designer (voir `DEMANDE_PA.md`)
 Écran de code d'accès, réglages de la plateforme (connecter / déconnecter, dernière relève), les 7 états de connexion
 dans la carte Facturation électronique, encaissement partiel, « En attente d'envoi ».
+
+---
+
+## 12. Retour sur v15, v15.1 et v15.2 (intégrées le 2026-09-30)
+
+Tout est intégré : nom **Alizé Pilote** (titre, manifeste, `apple-mobile-web-app-title`, README ; clé de sauvegarde
+`btp974-mobile-v1` conservée), icônes `any` + `maskable` 192 / 512 (précachées pour le mode hors ligne), jauge d'espace,
+adresse de facturation, écran de code d'accès, 7 états de connexion, encaissement partiel, « En attente d'envoi ».
+Tests : `test/v15.spec.js` (liste v15), `test/auth.spec.js` ; parcours complet vérifié dans le navigateur avec le vrai
+serveur : écran de code → code patron → Réglages « Connecter mon compte » (OAuth) → « Transmettre » → « Transmise à
+<PA> le JJ/MM/AAAA » → encaissement partiel 500 € (« Payé 500,00 € · reste 585,00 € », 212 reçu par la PA) →
+« Verrouiller maintenant » ferme la session serveur.
+
+### 12.1 Branchements réalisés (tableau « Branchements côté app »)
+| Prototype | Dans l'app |
+| --- | --- |
+| `paConn()`, `paName()`, `paAcc` | `paSt`, `paAcc { name, since }` et `paAgo` alimentés par `btpPA.status()` |
+| « Connecter » / « Déconnecter » | `btpPA.connect()` / `disconnect()` ; échec (pas de PA, pas de session) → message clair |
+| « Transmettre » | `btpPA.transmit(toPaInvoice(doc, coData()))`, adresse de facturation `doc.addr` (BG-8) |
+| Encaissement (montant + date), « Marquer encaissée » | `btpPA.recordPayment(no, montant, 'AAAA-MM-JJ')` pour un client professionnel |
+| `paQueued`, `paPaid`, `paRemaining`, `paSentAt`, `errors`, `motif`, `st` | écrits depuis `invoices()`, `pending()` et `btp:pa-update` |
+| `paFlush()` | neutralisé quand le serveur répond (la vraie file est rejouée par l'app) |
+| Écran de code `lk` | avec des sessions sur le serveur : code vérifié par `login()`, verrou au démarrage sans session, `logout()` au verrouillage |
+| Jauge `store` | contrainte la plus serrée entre `localStorage` (5 Mo) et IndexedDB / quota de `navigator.storage.estimate()` |
+
+Sans serveur joignable (démo statique), le prototype garde toutes ses simulations.
+
+### 12.2 Sécurité du code d'accès (à reprendre dans le design)
+1. **4 chiffres, c'est court.** 10 000 combinaisons : la limite de 5 essais par minute et par IP ne suffisait pas
+   (quelques heures, moins avec plusieurs adresses). Ajouté côté serveur : verrou **global** progressif après 10 échecs
+   d'affilée (15 min, puis 30, 60… jusqu'à 24 h), message « Trop d'essais : accès bloqué jusqu'à hh:mm ».
+   **Proposition : passer le pavé à 6 chiffres** (6 points) pour le code patron.
+2. **`ownerCode` en clair dans la sauvegarde locale** (`KEEP`, démo `1974`) : lisible par quiconque accède au
+   navigateur. En mode serveur, il n'est pas utilisé (le serveur vérifie `APP_OWNER_CODE`). Pour la démo, le stocker
+   haché ou le retirer de `KEEP`.
+3. **Le verrouillage est un écran**, pas un chiffrement : les données locales (devis, factures, clients) restent
+   lisibles dans le stockage du navigateur. À mentionner dans l'aide (« Verrouiller » protège l'usage de l'app, pas
+   un téléphone perdu déverrouillé).
+
+### 12.3 Corrigé côté app (à reporter dans le prototype)
+- **Réémission d'une facture refusée** : la copie prenait encore une date JJ/MM (`toLocaleDateString` jour + mois) ;
+  remplacée par `TODAY()` (JJ/MM/AAAA).
+
+### 12.4 Toujours ouvert
+Données réelles (historique, panier moyen, transformation, CSV taux par taux), Factur-X PDF/A-3, e-reporting des
+ventes aux particuliers, vérification de la marque « Alizé Pilote » (INPI, domaines, stores).

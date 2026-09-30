@@ -26,13 +26,13 @@ PWA ──HTTPS (cookie de session)──▶ server/ ──OAuth2 + TLS──▶
 | `src/pa/paClient.js` | `window.btpPA` : file hors ligne IndexedDB, rejeu dans l'ordre avec la même clé d'idempotence |
 | `src/pa/invoicePayload.js` | Facture de l'app (format du prototype v14.2 : lignes, remise, acompte, SIREN/SIRET, date JJ/MM/AAAA) → format serveur |
 | `src/hooks/usePaBridge.js` | Relie le menu de statut du prototype à `btpPA` : envoi réel si une PA est configurée, simulation « Démo » sinon ; statuts affichés synchronisés depuis le serveur |
-| `GET /api/pa/config` | Public : `{ configured, role }` — l'app sait si une PA est configurée (sinon mode démo) et si une session est ouverte |
+| `GET /api/pa/config` | Public : `{ configured, sessions, role }` — l'app sait si une PA est configurée, si les sessions sont actives (écran de code) et si une session est ouverte |
 
 ## 2. Configuration (variables d'environnement)
 
 | Variable | Rôle |
 | --- | --- |
-| `APP_OWNER_CODE`, `APP_STAFF_CODE` | Codes d'accès « patron » (tout) et « salarié » (aucun accès PA). Longs et aléatoires. |
+| `APP_OWNER_CODE`, `APP_STAFF_CODE` | Codes d'accès « patron » (tout) et « salarié » (aucun accès PA). Le pavé de l'app saisit **4 chiffres** : choisir un code non trivial (pas 1974, 0000, 1234…). Avec ces variables, l'app s'ouvre sur l'écran de code. |
 | `PA_PROVIDER` | `xpz12` (vraie PA) ou `mock` (PA simulée). Absent : intégration désactivée (503). |
 | `PA_ENC_KEY` | Clé AES-256 en base64 (`openssl rand -base64 32`), depuis un coffre. **Sans elle, le serveur refuse de démarrer la PA.** |
 | `PA_NAME` | Nom affiché de la PA |
@@ -58,7 +58,8 @@ Démonstration locale : `APP_OWNER_CODE=… PA_PROVIDER=mock PA_ENC_KEY=$(openss
   (Node vérifie les certificats ; TLS 1.2 minimum par défaut).
 - Webhooks : HMAC-SHA256 sur le corps brut, comparaison à temps constant, horodatage à ± 5 min, identifiant
   d'événement mémorisé 24 h (rejeu refusé). Un webhook ne fait que déclencher une relève `getStatus()`.
-- Sessions : cookie `HttpOnly`, `SameSite=Strict`, `Secure` en HTTPS ; 5 essais de code par minute et par IP ;
+- Sessions : cookie `HttpOnly`, `SameSite=Strict`, `Secure` en HTTPS ; 5 essais de code par minute et par IP, et verrou
+  global progressif après 10 échecs d'affilée (15 min, 30 min… 24 h max) car le pavé de l'app saisit des codes courts ;
   compte salarié → 403 sur toutes les routes PA. Requêtes `POST` d'une autre origine refusées.
 - Journaux : champs autorisés uniquement (locataire, numéro, `flowId`, `correlationId`, code HTTP, statut, durée).
 - CSP de l'app inchangée : l'app n'appelle que son propre serveur.

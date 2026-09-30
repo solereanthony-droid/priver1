@@ -1,6 +1,6 @@
-# Mises à jour pour Claude Code : Chiffrage BTP 974
+# Mises à jour pour Claude Code : Alizé Pilote (ex-Chiffrage BTP 974)
 
-**Date :** 2026-09-30 (v14.2)
+**Date :** 2026-09-30 (v15.2)
 **Base :** le code livré après le retour de développement (`RETOUR_DEV.md`), c'est-à-dire le handoff jusqu'à la v4 (export PDF des plans).
 **Référence :** `Chiffrage BTP 974 Mobile.dc.html`, fourni dans ce dossier. Le gabarit `<x-dc>` et la classe `Component` restent la source de vérité.
 
@@ -15,7 +15,7 @@
 ## Nouvelles clés d'état persistées
 Liste complète `Component.KEEP` :
 ```
-'lines','client','cliSiren','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
+'lines','client','cliSiren','cliAddr','paAcc','ownerCode','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
 ```
 Nouvelles par rapport à la v4 : `userProj`, `orders`, `cmdSeq`, `catPref`. Les plans (`plans`) gagnent les champs `impl` (implantation) et `rooms` (équipement par pièce).
 
@@ -337,6 +337,108 @@ Ajouter à `Component.KEEP` : `'coutMO'`, `'trRel'`. Liste complète :
 
 ---
 
+## Mise à jour v15.2 : nom de l'app « Alizé Pilote » (2026-09-30)
+
+Le nom retenu est **Alizé Pilote** (l'alizé, vent de La Réunion qui porte et guide ; « pilote » : piloter son entreprise depuis l'app).
+- Prototype : en-tête de la barre latérale (mode ordinateur), pied de Réglages « Alizé Pilote · version démo », pied des PDF de plan « Édité avec Alizé Pilote le … » (HTML et canvas).
+- **À faire côté app** : `manifest.webmanifest` → `"name": "Alizé Pilote"`, `"short_name": "Alizé Pilote"` (12 caractères, tient sous l'icône) ; `<title>` ; `apple-mobile-web-app-title` ; textes des e-mails et partages qui citent l'ancien nom ; README. La clé de sauvegarde `btp974-mobile-v1` **ne change pas** (sinon les données locales seraient perdues).
+- Avant publication : vérifier la marque (INPI, classes 9 et 42), les domaines (.fr, .re, .com) et les stores.
+
+---
+
+## Mise à jour v15.1 : derniers écrans ouverts (2026-09-30)
+
+`totals()` inchangé. Ferme les derniers points « à designer » de RETOUR_DEV (§3.3, §9.1, §9.2) et l'adresse de facturation.
+
+### Icône de l'app (RETOUR_DEV §3.3 / §9.2)
+- Fichiers dans `icons/` : `icon-512.svg`, `icon-512.png`, `icon-192.png` (usage `any`) et `icon-maskable-512.svg`, `icon-maskable-512.png`, `icon-maskable-192.png` (usage `maskable`, motif dans la zone sûre de 80 %).
+- Motif : maison et éclair crème `#f5ead8` sur terracotta `#c67139`, pastille sauge `#7a8a5e`. Fond plein, sans coins arrondis (le système les applique).
+- Manifeste :
+```json
+"icons": [
+  { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+  { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+  { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+  { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+],
+"background_color": "#f5ead8", "theme_color": "#c67139"
+```
+- Ajouter `<link rel="apple-touch-icon" href="/icons/icon-192.png">` pour iOS. Aperçu de l'icône dans Réglages › Affichage › Installer l'app.
+
+### Jauge d'espace (RETOUR_DEV §9.1)
+- Réglages › Affichage et données › « Espace utilisé » : barre (sauge < 60 %, terracotta 60–85 %, terracotta foncé ≥ 85 %), « X Mo sur 5 Mo (sauvegarde locale) », nombre de plans importés et de justificatifs, usage de l'appareil via `navigator.storage.estimate()`.
+- À 85 % ou plus : « Presque plein : supprime un plan importé pour continuer à enregistrer. » + bouton « Voir les plans ».
+- Texte du toast d'échec validé : « Stockage plein : les dernières modifications ne sont pas enregistrées. Supprime un plan importé. »
+- **Dans l'app** : la base doit être la taille de la sauvegarde `localStorage` + IndexedDB (plans, fonds, justificatifs) rapportée au quota de `estimate()`, pas 5 Mo fixes.
+
+### Adresse de facturation du client
+- Nouvel état persisté `cliAddr` : champ « Adresse de facturation (si différente du chantier) » sous le SIREN dans le devis, et dans l'éditeur de facture.
+- Instantané de facture : `addr` = `cliAddr`, ou l'adresse du chantier si vide. À utiliser pour le XML (BG-8, adresse de l'acheteur).
+- Vérification avant facture : client professionnel sans adresse → « Adresse de facturation du client manquante. »
+
+### Tests v15.1
+- [ ] Icônes 192 et 512 valides dans le manifeste (Lighthouse « installable »), maskable correctement rognée en cercle.
+- [ ] Jauge : importer des plans fait monter le pourcentage ; au-delà de 85 %, l'encart et « Voir les plans » apparaissent.
+- [ ] Client pro sans adresse de facturation : vérification bloquée ; adresse saisie → présente dans `doc.addr` de la facture.
+
+---
+
+## Mise à jour v15 : retours RETOUR_DEV §11 et DEMANDE_PA (2026-09-30)
+
+`totals()` inchangé. Tous les points restants de `DEMANDE_PA.md` (3, 4, 5, 6, 8, 9) sont maquettés, ainsi que les corrections §11.2 et §11.3 du retour dev.
+
+### Corrections reportées
+- **Justificatifs** (§11.2) : contrôle `/^(image\/(png|jpeg|webp)|application\/pdf)$/`, message « Photo (PNG, JPEG, WebP) ou PDF uniquement ». `pdf` = `type === 'application/pdf'`.
+- **ISO 6523** (§11.3.1) : `0002` = SIREN, `0009` = SIRET. Mentions corrigées ici et dans `PLATEFORME_AGREEE.md`.
+- **Codes facultatifs** (§11.3.2) : `PLATEFORME_AGREEE.md` reprend la correspondance de `server/pa/states.mjs` (Transmise 200–204 et 209 ; Acceptée 205, 206, 211 ; à confirmer avec la PA).
+- **Date d'encaissement** (§11.3.3) : `paidOn` en JJ/MM/AAAA partout (menu de statut et écran Encaissements).
+- **Particuliers** (§11.3.4 / point 8) : plus de « Transmettre » pour un client particulier. Le menu propose « Enregistrer l'encaissement » avec la mention « Facture à un particulier : pas de facture électronique. Les ventes aux particuliers seront déclarées en e-reporting. » Ligne « Client particulier : pas de facture électronique (e-reporting) » sous la facture.
+
+### Nouveaux champs de facture lus par le gabarit
+`paQueued` (bool), `paPaid` (déjà encaissé), `paRemaining` (reste), `paSentAt` (JJ/MM/AAAA), `errors[]` (contrôles renvoyés par la PA), `motif`. L'app peut les écrire depuis `invoices()` / `btp:pa-update` ; le prototype les simule.
+Ligne d'état sous chaque facture (`paLine`, Documents et carte Facturation électronique), par ordre de priorité :
+1. « En attente d'envoi : la facture partira à la reconnexion. » (`paQueued`)
+2. « Payé X € · reste Y € » (encaissement partiel)
+3. « Transmise à <PA> le <date>. Ce n'est pas encore une acceptation du client. »
+4. « Rejetée par la plateforme : <motif>. Corrige la facture puis réémets-la. » / « Refusée par le client : <motif>. »
+5. « Client particulier : pas de facture électronique (e-reporting). »
+
+### Menu de statut (compléments)
+- **Encaissement partiel** (point 4) : champs « Montant encaissé (€) » (prérempli avec le reste) et « Date » (JJ/MM/AAAA, pas dans le futur). Montant > reste refusé. Reste > 0 : statut inchangé, `paPaid` / `paRemaining` mis à jour, toast « Encaissement partiel : reste X ». Reste = 0 : Encaissée. Le récap affiche « Déjà encaissé » et « Reste ». En mode plateforme : `recordPayment(no, montant, 'AAAA-MM-JJ')`.
+- **Hors ligne** (point 3) : « Transmettre » ou un encaissement pro hors ligne met `paQueued` ; le menu n'offre plus d'action tant que l'envoi attend. À la reconnexion (`online`, état `connecte`), `paFlush()` vide la file (dans l'app : `pending()` et l'événement `btp:pa-update`).
+- **Plateforme non prête** : Émise + état `non_configure` → « Choisir ma plateforme » ; `non_connecte` / `reauth` / `panne_pa` → « Connecter mon compte » (ouvre Réglages), avec le message adapté.
+- **Erreurs de contrôle** (point 10) : `errors[]` affichées dans un encart orange du menu (démo : FAC-2026-026, « SIREN du client absent ou invalide »).
+- Compte salarié : aucune action sur les statuts (« Réservé au patron »).
+
+### Carte « Facturation électronique » et Réglages (points 5 et 6)
+- `paConn()` : `hors_ligne` si pas de réseau, sinon `state.paSt` ?? prop `paState` ?? `connecte`. Les 7 états : `non_configure`, `non_connecte`, `connecte`, `sync`, `reauth`, `hors_ligne`, `panne_pa`, chacun avec libellé, pastille, action et message (« Reconnecte ton compte <PA>… », « <PA> ne répond pas, nouvel essai à hh:mm. »…). Dans l'app : brancher sur `btpPA.status()`.
+- `paName()` : nom du compte connecté (`paAcc.name`, persisté), sinon prop `paName`. Plus de « FactuPro 974 » en dur dans la logique.
+- Réglages › Facture électronique : plateforme, connexion, dernière relève, « Connecté depuis », envois en attente, bouton d'action, « Déconnecter », lien vers la liste officielle. `connect()` / `disconnect()` appellent `window.btpPA` s'il existe, sinon simulation. Section masquée pour un salarié.
+- Nouvelle prop (Tweaks) `paState` pour revoir chaque état.
+
+### Écran de code d'accès (point 9)
+- Superposition plein écran (`lk`), pavé 3 × 4, 4 points, « Code incorrect », blocage 60 s après 5 erreurs : « Trop d'essais : patiente une minute ».
+- Code patron (démo `1974`, clé persistée `ownerCode`) → rôle `owner`. Code d'un salarié (`rh.staff[].pin`) → rôle `staff` : ouvre directement son écran pointage / notes de frais ; « Se déconnecter » revient au code.
+- Réglages › Code d'accès : « Verrouiller maintenant ». Dans l'app : `login(code)`, `session()`, `logout()` ; le blocage réel est côté serveur.
+
+### SIREN (point 7)
+- Lien « Où le trouver ? annuaire-entreprises.data.gouv.fr » sous le champ (devis si client professionnel, éditeur de facture). Liens externes en `rel="noopener noreferrer"`.
+
+### Nouvelles clés
+`paAcc` ({ name, since }), `ownerCode`. États non persistés : `paSt`, `stPay`, `locked`, `lkCode`, `lkErr`, `lkTries`, `lkUntil`, `role`.
+
+### Tests v15
+- [ ] SVG ou fichier « x-pdf » refusé comme justificatif ; PNG, JPEG, WebP, PDF acceptés.
+- [ ] Facture particulier : aucun « Transmettre » ; encaissement possible avec la mention e-reporting.
+- [ ] Encaissement de 500 € sur 1 173 € : « Payé 500,00 € · reste 673,00 € », statut inchangé ; second encaissement de 673 € → Encaissée, `paidOn` JJ/MM/AAAA.
+- [ ] Montant supérieur au reste, ou date future : refusé.
+- [ ] Hors ligne : « Transmettre » → « En attente d'envoi », compteur Réglages = 1 ; retour en ligne → Transmise + « Transmise à <PA> le <date> ».
+- [ ] Prop `paState` = `non_configure` / `non_connecte` / `reauth` / `panne_pa` : carte, Réglages et menu affichent le bon libellé et la bonne action.
+- [ ] Déconnecter → `non_connecte` ; Connecter → `connecte`, « Connecté depuis » = date du jour.
+- [ ] Code 1974 → app complète ; code d'un salarié → écran salarié seul, sans réglages ni transmission ; 5 codes faux → blocage 1 minute.
+
+---
+
 ## Mise à jour v14.1 et v14.2 : statuts de la plateforme agréée et données de facture (2026-09-30)
 
 `totals()` inchangé. Détail technique complet et tests : **`PLATEFORME_AGREEE.md`** (même dossier), à lire avant de coder la connexion à la plateforme.
@@ -344,7 +446,7 @@ Ajouter à `Component.KEEP` : `'coutMO'`, `'trRel'`. Liste complète :
 ### v14.1 : statuts de facture alignés sur la réforme
 - `FAC_ST` : indices 0 à 3 inchangés (Émise, Transmise, Acceptée, Encaissée) + **4 Rejetée, 5 Refusée, 6 En litige**. Champ `motif` sur la facture. Couleurs dans `TONE`.
 - Menu de statut (`_cf`) d'une facture : seules les actions de l'artisan sont proposées. Émise → « Transmettre à la plateforme » ; Transmise / Acceptée / En litige → « Enregistrer l'encaissement » ; Rejetée → « Corriger et réémettre » (même numéro) ; Refusée → « Réémettre sous un nouveau numéro » (copie, champ `replaces`) ; Encaissée → information seule.
-- **Plus de passage manuel vers Transmise ou Acceptée** : en production, ces statuts viennent de la plateforme (200/201/202/209) et du client (204).
+- **Plus de passage manuel vers Transmise ou Acceptée** : en production, ces statuts viennent de la plateforme et du client ; correspondance retenue par l'app (`server/pa/states.mjs`) : « Transmise » pour 200 à 204 et 209, « Acceptée » pour 205, 206 et 211, à confirmer avec la PA retenue.
 - Carte Facturation électronique : compteurs et frise limités aux statuts 0 à 3.
 - Démo : `FAC-2026-026` Rejetée (« SIRET du client absent de l'annuaire »).
 
@@ -361,7 +463,7 @@ Ajouter à `Component.KEEP` : `'coutMO'`, `'trRel'`. Liste complète :
 - `cliSiren` absent des anciennes sauvegardes : vide par défaut.
 
 ### Reste à faire côté app
-- Générer le XML CII EN 16931 à partir de l'instantané (BT-1, BT-2 en date ISO, BT-47 préfixé `0002` pour un SIRET, BG-23, BG-25, BT-113) et le Factur-X PDF/A-3.
+- Générer le XML CII EN 16931 à partir de l'instantané (BT-1, BT-2 en date ISO, BT-47 : SIREN (9 premiers chiffres) avec le schéma `0002`, et SIRET (14 chiffres) avec le schéma `0009` s'il est saisi, BG-23, BG-25, BT-113) et le Factur-X PDF/A-3.
 - Adresse de facturation du client distincte du chantier (à designer si besoin).
 - Toute la connexion à la plateforme décrite dans `PLATEFORME_AGREEE.md` (OAuth2, idempotence, webhooks signés, file hors ligne).
 

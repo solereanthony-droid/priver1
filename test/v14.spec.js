@@ -87,8 +87,8 @@ describe('pont menu de statut ↔ plateforme agréée', () => {
   }
   const doc = { no: 'FAC-2026-040', type: 'fac', st: 0, date: '30/09/2026', client: 'SCI Les Filaos — acompte 30 % déduit', pro: true, siren: '552081317', chantier: '18 rue X, 97410 Saint-Pierre', rem: 0, ac: 0, ttc: 108.5, lines: [{ name: 'Prise', qty: 1, unit: 'u', pu: 100, tva: 8.5 }] };
 
-  it('aucune plateforme configurée : le prototype simule, avec la mention « Démo »', async () => {
-    const pa = { status: vi.fn(async () => ({ state: 'non_configure' })), invoices: vi.fn(), pending: vi.fn(async () => []), transmit: vi.fn() };
+  it('serveur injoignable (démo statique) : le prototype simule, avec la mention « Démo »', async () => {
+    const pa = { config: vi.fn(async () => { throw new Error('réseau'); }), status: vi.fn(async () => { throw new Error('réseau'); }), invoices: vi.fn(), pending: vi.fn(async () => []), transmit: vi.fn() };
     const { logic, unmount } = await mountBridge(pa, { docs: [doc] });
     expect(window.__btpPaSend('transmit', doc)).toBe(false);
     await act(() => new Promise(r => setTimeout(r, 5)));
@@ -97,11 +97,13 @@ describe('pont menu de statut ↔ plateforme agréée', () => {
     await unmount();
   });
 
-  it('plateforme configurée mais pas de session : rien n’est simulé, message clair', async () => {
-    const pa = { status: vi.fn(async () => ({ state: 'non_connecte', error: 'Connexion à l’app requise.' })), invoices: vi.fn(), pending: vi.fn(async () => []), transmit: vi.fn() };
+  it('plateforme configurée mais pas de session : rien n’est simulé, message clair, écran de code', async () => {
+    const pa = { config: vi.fn(async () => ({ status: 200, data: { configured: true, sessions: true, role: null } })), status: vi.fn(async () => ({ state: 'non_connecte', error: 'Connexion à l’app requise.' })), invoices: vi.fn(), pending: vi.fn(async () => []), transmit: vi.fn() };
     const { logic, unmount } = await mountBridge(pa, { docs: [doc] });
+    expect(logic.state.locked).toBe(true);
+    expect(logic.state.paSt).toBe('non_connecte');
     expect(window.__btpPaSend('transmit', doc)).toBe(true);
-    expect(logic.flashes.at(-1)).toMatch(/code d’accès/);
+    expect(logic.flashes.at(-1)).toMatch(/Connexion à l’app requise/);
     expect(pa.transmit).not.toHaveBeenCalled();
     await unmount();
   });
@@ -109,7 +111,8 @@ describe('pont menu de statut ↔ plateforme agréée', () => {
   it('plateforme connectée : envoi réel ; le statut affiché vient du serveur', async () => {
     let served = [];
     const pa = {
-      status: vi.fn(async () => ({ state: 'connecte', paName: 'PA test' })),
+      config: vi.fn(async () => ({ status: 200, data: { configured: true, sessions: false, role: 'owner' } })),
+      status: vi.fn(async () => ({ state: 'connecte', paName: 'PA test', connectedAt: Date.UTC(2026, 8, 30, 8) })),
       invoices: vi.fn(async () => ({ status: 200, data: { invoices: served } })),
       pending: vi.fn(async () => []),
       transmit: vi.fn(async () => ({ queued: true })),
@@ -123,6 +126,8 @@ describe('pont menu de statut ↔ plateforme agréée', () => {
     served = [{ no: 'FAC-2026-040', status: 'Rejetée', reason: 'Destinataire inconnu', errors: [], queued: false, remaining: 108.5 }];
     await act(async () => { window.dispatchEvent(new CustomEvent('btp:pa-update', { detail: {} })); await new Promise(r => setTimeout(r, 10)); });
     expect(logic.state.docs[0]).toMatchObject({ st: 4, motif: 'Destinataire inconnu', paQueued: false });
+    expect(logic.state.paSt).toBe('connecte');
+    expect(logic.state.paAcc).toMatchObject({ name: 'PA test', since: '30/09/2026' });
     await unmount();
   });
 });

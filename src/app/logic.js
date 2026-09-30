@@ -1,4 +1,4 @@
-// Logique métier du prototype « Chiffrage BTP 974 » (importée par scripts/import-handoff.py, ne pas modifier à la main :
+// Logique métier du prototype « Alizé Pilote » (ex-Chiffrage BTP 974) (importée par scripts/import-handoff.py, ne pas modifier à la main :
 // corriger le prototype ou le script d'import).
 import React from 'react';
 import template from './template.html?raw';
@@ -312,13 +312,13 @@ class Component extends DCLogic {
       { no: 'DEV-2026-038', type: 'devis', client: 'M. Grondin — Sainte-Marie', date: '02/09/2026', st: 3, ttc: 2146.8, marge: 22 },
       { no: 'FAC-2026-028', type: 'fac', client: 'SCI Les Filaos — acompte 30 %', date: '15/09/2026', st: 1, ttc: 1173, pro: true, siren: '812 453 678' },
       { no: 'FAC-2026-027', type: 'fac', client: 'M. Grondin — Sainte-Marie', date: '08/09/2026', st: 3, ttc: 2146.8 },
-      { no: 'FAC-2026-026', type: 'fac', client: 'Mme Técher — Saint-Paul', date: '01/09/2026', st: 4, ttc: 684, pro: true, siren: '', motif: 'SIRET du client absent de l’annuaire' },
+      { no: 'FAC-2026-026', type: 'fac', client: 'Mme Técher — Saint-Paul', date: '01/09/2026', st: 4, ttc: 684, pro: true, siren: '', motif: 'SIRET du client absent de l’annuaire', errors: ['SIREN du client absent ou invalide'] },
     ],
   };
   scrollRef = React.createRef();
 
   static KEY = 'btp974-mobile-v1';
-  static KEEP = ['lines','client','cliSiren','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
+  static KEEP = ['lines','client','cliSiren','cliAddr','paAcc','ownerCode','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
   componentDidMount() {
     this._bipH = e => { e.preventDefault(); this._bip = e; }; window.addEventListener('beforeinstallprompt', this._bipH);
     if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) this.setState({ installed: true });
@@ -338,6 +338,8 @@ class Component extends DCLogic {
     // Sauvegarde locale : voir restore() / snapshot() et le hook usePersistence.
   }
   componentDidUpdate(pp, ps) {
+    if (ps && ps.tab !== 'set' && this.state.tab === 'set' && navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => this.setState({ storeEst: { usage: e.usage || 0, quota: e.quota || 0 } })).catch(() => {});
+    if (ps && ps.offline && !this.state.offline && this.paConn() === 'connecte') this.paFlush();
     if (ps && (ps.activeSet !== this.state.activeSet || (ps.tab !== 'set' && this.state.tab === 'set'))) this.centerChip();
     if (!this._dragInit && (this._dragTry = (this._dragTry || 0) + 1) < 5) this.initDrag();
   }
@@ -458,9 +460,9 @@ class Component extends DCLogic {
 
   newDevis() {
     const s = this.state, T = this.totals(), no = docNo('DEV', s.devisSeq);
-    const docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
+    const docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', addr: s.cliAddr || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
     this.setState({ docs: [{ no, type: 'devis', live: true, client: 'Nouveau client', date: TODAY(), st: 0 }, ...docs],
-      devisSeq: s.devisSeq + 1, lines: [], client: '', cliSiren: '', chantier: '', acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' });
+      devisSeq: s.devisSeq + 1, lines: [], client: '', cliSiren: '', cliAddr: '', chantier: '', acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' });
     this.go('devis');
     this.flash(`${no} créé`);
   }
@@ -468,17 +470,17 @@ class Component extends DCLogic {
   openDevis(no) {
     const s = this.state, T = this.totals(), d = s.docs.find(x => x.no === no);
     if (d.live) return this.go('devis');
-    let docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
+    let docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', addr: s.cliAddr || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
     const lines0 = d.lines || this.genLines(d.ttc);
     const [cl, ch] = d.client.split(' — ');
     if (d.st < 2) {
       docs = docs.map(x => x.no === no ? { ...x, live: true } : x);
-      this.setState({ docs, lines: lines0.map(l => ({ ...l })), client: cl, cliSiren: d.siren || '', ...(d.pro != null ? { clientType: d.pro ? 'pro' : 'part' } : {}), chantier: ch || '', editNo: no, versionOf: d.versionOf || null, baseCount: d.baseCount || 0 });
+      this.setState({ docs, lines: lines0.map(l => ({ ...l })), client: cl, cliSiren: d.siren || '', cliAddr: d.addr || '', ...(d.pro != null ? { clientType: d.pro ? 'pro' : 'part' } : {}), chantier: ch || '', editNo: no, versionOf: d.versionOf || null, baseCount: d.baseCount || 0 });
     } else {
       const root = d.versionOf || no, n = s.docs.filter(x => x.versionOf === root).length + 2, nno = `${root}-V${n}`;
       const lines = lines0.map(l => ({ ...l, id: UID++, puTxt: undefined, orig: { qty: l.qty, pu: l.pu } }));
-      docs = [{ no: nno, type: 'devis', live: true, client: d.client, siren: d.siren, pro: d.pro, date: TODAY(), st: 0, versionOf: root, baseCount: lines.length }, ...docs];
-      this.setState({ docs, lines, client: cl, cliSiren: d.siren || '', chantier: ch || '', editNo: nno, versionOf: root, baseCount: lines.length });
+      docs = [{ no: nno, type: 'devis', live: true, client: d.client, siren: d.siren, addr: d.addr, pro: d.pro, date: TODAY(), st: 0, versionOf: root, baseCount: lines.length }, ...docs];
+      this.setState({ docs, lines, client: cl, cliSiren: d.siren || '', cliAddr: d.addr || '', chantier: ch || '', editNo: nno, versionOf: root, baseCount: lines.length });
       this.flash(`${d.status === 'Facturé' ? 'Devis facturé' : 'Devis accepté'} : version ${n} créée`);
     }
     this.go('devis');
@@ -489,7 +491,7 @@ class Component extends DCLogic {
     const ht = r2((d.ttc || 0) / (this.state.regime === 'micro' ? 1 : 1.085));
     const lines = (d.lines || [{ name: d.client.split(' — ')[1] ? 'Travaux : ' + d.client.split(' — ')[1] : 'Travaux selon devis', qty: 1, pu: ht }])
       .map(l => ({ id: UID++, name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva ?? 8.5, qtyTxt: String(l.qty).replace('.', ','), puTxt: String(l.pu).replace('.', ',') }));
-    this.setState({ facEdit: { no, client: d.client, siren: d.siren || '', pro: !!d.pro, rem: d.rem || 0, lines, acPct: d.acPct ?? (d.acompte ?? 0) } });
+    this.setState({ facEdit: { no, client: d.client, siren: d.siren || '', addr: d.addr || '', pro: !!d.pro, rem: d.rem || 0, lines, acPct: d.acPct ?? (d.acompte ?? 0) } });
   }
 
   facVals() {
@@ -506,8 +508,8 @@ class Component extends DCLogic {
     return {
       facOpen: true,
       fe: {
-        no: e.no, date: d.date, status, bg: TONE[status][0], fg: TONE[status][1], locked, pa: this.props.paName || 'FactuPro 974',
-        client: e.client, onClient: ev => setE({ client: ev.target.value }), siren: e.siren, onSiren: ev => setE({ siren: ev.target.value }), sirErr, hasSirErr: !!sirErr,
+        no: e.no, date: d.date, status, bg: TONE[status][0], fg: TONE[status][1], locked, pa: this.paName(),
+        client: e.client, onClient: ev => setE({ client: ev.target.value }), siren: e.siren, onSiren: ev => setE({ siren: ev.target.value }), addr: e.addr || '', onAddr: ev => setE({ addr: ev.target.value }), sirErr, hasSirErr: !!sirErr,
         pro: e.pro, proTxt: e.pro ? 'Client professionnel' : 'Client particulier', togglePro: () => setE({ pro: !e.pro }), proJ: e.pro ? 'flex-end' : 'flex-start', proBg: e.pro ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)',
         lines: e.lines.map(l => ({ ...l, montant: fmt(num(l.qtyTxt) * num(l.puTxt)), tvaTxt: micro ? '' : 'TVA ' + String(l.tva === 2.1 ? 2.1 : 8.5).replace('.', ',') + ' %', showTva: !micro, onTva: () => setL(l.id, { tva: l.tva === 2.1 ? 8.5 : 2.1 }),
           onName: ev => setL(l.id, { name: ev.target.value }), onQty: ev => setL(l.id, { qtyTxt: ev.target.value }), onPu: ev => setL(l.id, { puTxt: ev.target.value }),
@@ -523,7 +525,7 @@ class Component extends DCLogic {
         save: () => {
           if (sirErr) return this.flash(sirErr);
           const lines = e.lines.map(l => ({ name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva === 2.1 ? 2.1 : 8.5, qty: num(l.qtyTxt), pu: num(l.puTxt) }));
-          const fx = { client: e.client, siren: e.siren, pro: e.pro, lines, rem, ht, t85, t21, micro, ttcFull: ttc, ttc: r2(ttc - acA), acPct: acP };
+          const fx = { client: e.client, siren: e.siren, addr: e.addr || '', pro: e.pro, lines, rem, ht, t85, t21, micro, ttcFull: ttc, ttc: r2(ttc - acA), acPct: acP };
           if (!locked) {
             this.setState(st => ({ facEdit: null, docs: st.docs.map(x => x.no === e.no ? { ...x, ...fx } : x) }));
             this.flash(`${e.no} mise à jour`);
@@ -537,28 +539,65 @@ class Component extends DCLogic {
     };
   }
 
-  paVals(facs) {
-    const s = this.state, conn = s.paConn ?? 'ok', ago = s.paAgo ?? 4;
-    const n = i => facs.filter(f => f.st >= i && f.st <= 3).length;
-    const map = {
-      ok: { label: 'Connectée', sub: ago ? `il y a ${ago} min` : 'à l\u2019instant', dot: 'var(--color-accent-2-700)', halo: 'var(--color-accent-2-300)', action: 'Synchroniser' },
-      sync: { label: 'Synchronisation…', sub: 'en cours', dot: 'var(--color-accent-500)', halo: 'var(--color-accent-200)', action: '…' },
-      off: { label: 'Déconnectée', sub: 'envois en attente', dot: 'var(--color-accent-700)', halo: 'var(--color-accent-200)', action: 'Reconnecter' },
-    }[conn];
-    const sync = () => {
-      this.setState({ paConn: 'sync' });
-      setTimeout(() => {
-        this.setState(st => ({ paConn: 'ok', paAgo: 0, docs: st.docs.map(d => d.type === 'fac' && d.st === 0 ? { ...d, st: 1 } : d) }));
-        this.flash('Statuts à jour avec la plateforme');
-      }, 1200);
+  paName() { const s = this.state; return s.paAcc === null ? 'Non choisie' : (s.paAcc && s.paAcc.name) || this.props.paName || 'FactuPro 974'; }
+  paConn() { const s = this.state; if (s.offline) return 'hors_ligne'; return s.paSt ?? this.props.paState ?? 'connecte'; }
+  storeVals() {
+    const s = this.state; if (s.tab !== 'set') return { store: { w: '0%' } };
+    let used = 0; try { used = (localStorage.getItem(Component.KEY) || '').length * 2; } catch (e) {}
+    const E = s.storeEst, lsR = used / (5 * 1024 * 1024), dbR = E && E.quota ? E.usage / E.quota : 0, useDb = dbR > lsR; if (useDb) used = E.usage;
+    const Q = useDb ? E.quota : 5 * 1024 * 1024, pct = Math.min(100, Math.round(used / Q * 100)), mo = v => (v / 1048576).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mo';
+    const nPlans = this.plans().filter(p => p.kind === 'import').length, nPj = ((s.rh && s.rh.frais) || []).filter(f => f.pj).length;
+    const est = s.storeEst;
+    return { store: { txt: mo(used) + ' sur ' + mo(Q) + ' (sauvegarde locale)', pct: pct + ' %', w: Math.max(2, pct) + '%', fill: pct >= 85 ? 'var(--color-accent-700)' : pct >= 60 ? 'var(--color-accent-500)' : 'var(--color-accent-2-700)',
+      detail: nPlans + ' plan' + (nPlans > 1 ? 's' : '') + ' importé' + (nPlans > 1 ? 's' : '') + ' · ' + nPj + ' justificatif' + (nPj > 1 ? 's' : '') + (est ? ' · appareil : ' + mo(est.usage) + ' utilisés' : ''),
+      warn: pct >= 85, warnTxt: 'Presque plein : supprime un plan importé pour continuer à enregistrer.', goPlans: () => { this.setState({ docTab: 'plans' }); this.go('docs'); } } };
+  }
+  lockVals() {
+    const s = this.state; if (!s.locked) return { lk: { open: false, dots: [], keys: [] } };
+    const code = s.lkCode || '', now = Date.now(), wait = s.lkUntil && s.lkUntil > now ? Math.ceil((s.lkUntil - now) / 1000) : 0;
+    const R = this.rhData(), OWNER = s.ownerCode || '1974';
+    const tryCode = c => {
+      if (globalThis.__btpLogin && globalThis.__btpLogin(c, R)) return;   // sessions du serveur (server/auth.mjs)
+      if (c === OWNER) return this.setState({ locked: false, lkCode: '', lkErr: '', lkTries: 0, role: 'owner' });
+      const p = R.staff.find(x => x.pin && x.kind !== 'dir' && String(x.pin) === c);
+      if (p) return this.setState({ locked: false, lkCode: '', lkErr: '', lkTries: 0, role: 'staff', rhEmp: { who: p.id, ch: 'filaos', h: 8, panier: true } });
+      const t = (s.lkTries || 0) + 1;
+      if (t >= 5) { this.setState({ lkCode: '', lkTries: 0, lkErr: 'Trop d’essais : patiente une minute', lkUntil: Date.now() + 60000 }); clearTimeout(this._lkT); this._lkT = setTimeout(() => this.setState({ lkErr: '', lkUntil: 0 }), 60000); }
+      else this.setState({ lkCode: '', lkTries: t, lkErr: 'Code incorrect' });
     };
-    if (s.offline) Object.assign(map, { label: 'Hors ligne', sub: 'envoi à la reconnexion', dot: 'var(--color-neutral-600)', halo: 'var(--color-neutral-300)', action: 'Synchronisation hors ligne impossible' });
-    return { ...map, busy: conn === 'sync' || !!s.offline, name: this.props.paName || 'FactuPro 974',
-      onAction: sync,
+    const press = k => () => { if (wait) return; if (k === 'del') return this.setState({ lkCode: code.slice(0, -1), lkErr: '' }); const c = (code + k).slice(0, 4); this.setState({ lkCode: c, lkErr: '' }); if (c.length === 4) setTimeout(() => tryCode(c), 120); };
+    return { lk: { open: true, dots: [0, 1, 2, 3].map(i => ({ bg: i < code.length ? 'var(--color-neutral-900)' : 'transparent' })), err: s.lkErr || '', blocked: !!wait, op: wait ? 0.45 : 1,
+      keys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map(k => ({ l: k === 'del' ? 'Effacer' : k, show: k !== '', blank: k === '', on: press(k), fs: k === 'del' ? '15px' : '26px', lbl: k === 'del' ? 'Effacer le dernier chiffre' : k })) } };
+  }
+  paVals(facs) {
+    const s = this.state, conn = this.paConn(), ago = s.paAgo ?? 4, name = this.paName(), staff = s.role === 'staff';
+    const n = i => facs.filter(f => f.st >= i && f.st <= 3).length, queued = s.docs.filter(d => d.paQueued).length;
+    const retry = new Date(Date.now() + 10 * 60000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const sync = () => { this.setState({ paSt: 'sync' }); setTimeout(() => { this.setState({ paSt: 'connecte', paAgo: 0 }); this.flash('Statuts à jour avec ' + this.paName()); }, 1200); };
+    const connect = () => { if (window.btpPA && window.btpPA.connect) return window.btpPA.connect(); this.setState({ paSt: 'sync' }); setTimeout(() => { const nm = this.paName() === 'Non choisie' ? 'FactuPro 974' : this.paName(); this.setState({ paSt: 'connecte', paAgo: 0, paAcc: { name: nm, since: TODAY() } }); this.flash('Compte ' + nm + ' connecté'); }, 1200); };
+    const choose = () => { this.setState({ paAcc: { name: this.props.paName || 'FactuPro 974' }, paSt: 'non_connecte' }); this.flash('Plateforme choisie : connecte ton compte'); };
+    const disconnect = () => { if (window.btpPA && window.btpPA.disconnect) window.btpPA.disconnect(); this.setState({ paSt: 'non_connecte' }); this.flash('Compte ' + name + ' déconnecté'); };
+    const M = {
+      non_configure: { label: 'Non configurée', sub: 'aucune plateforme choisie', dot: 'var(--color-neutral-500)', halo: 'var(--color-neutral-200)', action: 'Choisir ma plateforme', on: choose, msg: 'Choisis ta plateforme agréée dans la liste officielle pour transmettre tes factures.' },
+      non_connecte: { label: 'Non connectée', sub: 'aucune relève', dot: 'var(--color-accent-700)', halo: 'var(--color-accent-200)', action: 'Connecter mon compte', on: connect, msg: 'Connecte ton compte ' + name + ' pour transmettre tes factures.' },
+      connecte: { label: 'Connectée', sub: ago ? 'il y a ' + ago + ' min' : 'à l’instant', dot: 'var(--color-accent-2-700)', halo: 'var(--color-accent-2-300)', action: 'Synchroniser', on: sync, msg: '' },
+      sync: { label: 'Synchronisation…', sub: 'en cours', dot: 'var(--color-accent-500)', halo: 'var(--color-accent-200)', action: '…', on: () => {}, msg: '' },
+      reauth: { label: 'Reconnexion requise', sub: 'session expirée', dot: 'var(--color-accent-700)', halo: 'var(--color-accent-200)', action: 'Reconnecter mon compte', on: connect, msg: 'Reconnecte ton compte ' + name + '. Les envois en attente sont conservés.' },
+      hors_ligne: { label: 'Hors ligne', sub: queued ? queued + ' envoi' + (queued > 1 ? 's' : '') + ' en attente' : 'envoi à la reconnexion', dot: 'var(--color-neutral-600)', halo: 'var(--color-neutral-300)', action: 'Synchronisation hors ligne impossible', on: () => {}, msg: 'En attente d’envoi : les factures partiront à la reconnexion.' },
+      panne_pa: { label: 'Plateforme indisponible', sub: 'nouvel essai à ' + retry, dot: 'var(--color-accent-700)', halo: 'var(--color-accent-200)', action: 'Réessayer maintenant', on: sync, msg: name + ' ne répond pas, nouvel essai à ' + retry + '.' },
+    }[conn] || {};
+    return { ...M, conn, busy: conn === 'sync' || conn === 'hors_ligne', name, onAction: M.on, hasMsg: !!M.msg, staff, notStaff: !staff,
+      canDisconnect: ['connecte', 'reauth', 'panne_pa'].includes(conn), disconnect, since: (s.paAcc && s.paAcc.since) || '—', queued: String(queued),
       tally: `${n(1)} / ${facs.length} transmises`,
       facs: facs.slice(0, 3).map(f => ({ ...f, ...(f._cf ? f._cf('pa') : {}), onOpen: () => this.openFac(f.no) })),
       steps: FAC_ST.slice(0, 4).map(l => ({ l, c: TONE[l][0] })),
     };
+  }
+  paFlush() {
+    if (globalThis.__btpPaLive) return;                 // file réelle rejouée par l'app (src/pa/paClient.js)
+    const q = this.state.docs.filter(d => d.paQueued); if (!q.length) return;
+    this.setState(st => ({ docs: st.docs.map(d => !d.paQueued ? d : d.st === 0 ? { ...d, paQueued: false, st: 1, paSentAt: TODAY() } : { ...d, paQueued: false }) }));
+    this.flash(q.length + ' envoi' + (q.length > 1 ? 's' : '') + ' parti' + (q.length > 1 ? 's' : '') + ' vers ' + this.paName());
   }
 
   margeVals(docs, T) {
@@ -1188,7 +1227,7 @@ class Component extends DCLogic {
         ${iss.length ? '<ul>' + iss.map(i => '<li>' + esc(i.t) + '</li>').join('') + '</ul>' : ''}
         <p class="small">${esc(md.txt)}. ${esc(planIdNote(p))}</p></section>`;
     } else if (String(p.mime).startsWith('image/')) body = `<div class="fig"><img src="${esc(p.src)}" alt=""></div>`;
-    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(p.name || 'Plan')}</title><style>
+    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Alizé Pilote</title><style>
       @page{size:A4 portrait;margin:12mm}
       *{box-sizing:border-box}body{margin:0;font:10pt/1.4 Figtree,system-ui,sans-serif;color:#201e1d;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       header{display:grid;grid-template-columns:1fr 1fr;gap:6mm;border:1.5pt solid #201e1d;border-radius:3mm;padding:4mm 5mm;margin-bottom:5mm}
@@ -1207,7 +1246,7 @@ class Component extends DCLogic {
         <div><h1>${esc(p.name || 'Plan')}</h1><table class="meta">${row('Type', isUni ? 'Schéma unifilaire' : 'Plan importé')}${row('Client', client)}${row('Chantier', chantier)}${row('Devis', p.devisNo)}${row('Facture', p.facNo)}${row('Date', today)}${row('Indice', 'A')}</table></div>
       </header>
       ${body}
-      <footer>${isUni ? 'Schéma établi selon la NF C 15-100 (série 2024). Document indicatif, à valider avant mise en service (Consuel).' : ''} Édité avec Chiffrage BTP 974 le ${today}.</footer>
+      <footer>${isUni ? 'Schéma établi selon la NF C 15-100 (série 2024). Document indicatif, à valider avant mise en service (Consuel).' : ''} Édité avec Alizé Pilote le ${today}.</footer>
     </body></html>`;
   }
 
@@ -1222,7 +1261,7 @@ class Component extends DCLogic {
     const rr = (g, x, y, w, hh, r) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, hh, r) : g.rect(x, y, w, hh); };
     const footer = (g, n) => { g.strokeStyle = '#c0b6a5'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(M, H - M - 8 * mm); g.lineTo(W - M, H - M - 8 * mm); g.stroke();
       if (isUni) txt(g, 'Schéma établi selon la NF C 15-100 (série 2024). Document indicatif, à valider avant mise en service (Consuel).', M, H - M - 2.5 * mm, 16, 400, '#645c50', 'left', W - 2 * M - 25 * mm);
-      txt(g, 'Édité avec Chiffrage BTP 974 le ' + today, M, H - M + 3 * mm, 16, 400, '#645c50');
+      txt(g, 'Édité avec Alizé Pilote le ' + today, M, H - M + 3 * mm, 16, 400, '#645c50');
       txt(g, 'Page ' + n, W - M, H - M - 3 * mm, 17, 600, '#645c50', 'right'); };
     let g = newPage();
     const hy = M, hh = 44 * mm; g.lineWidth = 3; g.strokeStyle = '#201e1d'; rr(g, M, hy, W - 2 * M, hh, 3 * mm); g.stroke();
@@ -1880,7 +1919,7 @@ class Component extends DCLogic {
     const csvRows = () => [['Salarié', 'Contrat', 'Heures normales', 'HS 25 %', 'HS 50 %', 'Paniers', 'Montant paniers', 'Indemnités trajet', 'Frais', 'Absences (j)'].join(';'), ...paie.map(y => y.csv.join(';'))].join('\n');
 
     const readPj = (e, cb) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > 3e6) return this.flash('Fichier trop lourd : 3 Mo maximum');
-      if (!/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(f.type)) return this.flash('Photo (PNG, JPEG, WebP) ou PDF uniquement'); const rd = new FileReader(); rd.onload = () => cb({ src: rd.result, name: f.name, pdf: /pdf/.test(f.type) }); rd.readAsDataURL(f); };
+      if (!/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(f.type)) return this.flash('Photo (PNG, JPEG, WebP) ou PDF uniquement'); const rd = new FileReader(); rd.onload = () => cb({ src: rd.result, name: f.name, pdf: f.type === 'application/pdf' }); rd.readAsDataURL(f); };
     const pjVals = (pj, set) => ({ NoPj: !pj, HasPj: !!pj, IsImg: !!pj && !pj.pdf, IsPdf: !!pj && !!pj.pdf, Src: pj ? pj.src : '', Name: pj ? pj.name : '', OnPj: e => readPj(e, set), Clear: () => set(null) });
     const pre = (p, o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [p + k, v]));
     const E = s.rhEmp, setE = p => this.setState(st => ({ rhEmp: { ...st.rhEmp, ...p } }));
@@ -1891,7 +1930,7 @@ class Component extends DCLogic {
       fl: E.fl || '', fm: E.fm || '', onFl: e => setE({ fl: e.target.value }), onFm: e => setE({ fm: e.target.value }), ...pre('f', pjVals(E.fpj, v => setE({ fpj: v }))),
       sendFrais: () => { const m = parseFloat(String(E.fm || '').replace(',', '.')); if (!(E.fl || '').trim() || !(m > 0)) return this.flash('Indique un libellé et un montant'); if (!E.fpj) return this.flash('Prends en photo le ticket ou la facture');
         setRh(r => ({ ...r, frais: [...r.frais, { id: 'f' + Date.now(), who: E.who, d: RH_D(new Date()), l: E.fl.trim(), m, pj: { ...E.fpj, by: 'sal' }, emp: true }] })); setE({ fl: '', fm: '', fpj: null }); this.flash('Note envoyée, à valider'); },
-      close: () => this.setState({ rhEmp: null }),
+      close: () => this.setState(s.role === 'staff' ? { rhEmp: null, role: null, locked: true } : { rhEmp: null }), closeTxt: s.role === 'staff' ? 'Se déconnecter' : 'Fermer l’aperçu', staffMode: s.role === 'staff',
       send: () => { setRh(r => ({ ...r, points: [...r.points, { id: 'pt' + Date.now(), who: E.who, d: RH_D(new Date()), ch: E.ch, h: E.h, panier: !!E.panier, emp: true }] }));
         this.setState({ rhEmp: null, rhTab: 'pt', rhWk: 0 }); this.flash(`Pointage de ${first(byId[E.who])} reçu, à valider`); } } : { open: false };
 
@@ -1996,7 +2035,7 @@ class Component extends DCLogic {
     const lateN = due.filter(d => now - D(d.date) > 30 * 86400000).length;
     const clientNames = [...new Set([...facs, ...docs.filter(d => d.type === 'devis' && d.st >= 2)].map(cn))];
     return { isEnc: s.tab === 'enc', enc: {
-      paidTot: fmt0(sum(paid)), paidN: pl(paid.length, 'facture'), dueTot: fmt0(sum(due)), dueN: pl(due.length, 'facture'),
+      paidTot: fmt0(sum(paid)), paidN: pl(paid.length, 'facture'), dueTot: fmt0(due.reduce((t, d) => t + (d.paRemaining ?? d.ttc), 0)), dueN: pl(due.length, 'facture'),
       caTot: fmt0(sum(facs)), caN: pl(facs.length, 'facture'), month: now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
       noPaid: !paid.length, noDue: !due.length, lateN: lateN ? pl(lateN, 'en retard').replace('retards', 'retard') : '',
       seeUnpaid: () => { this.setState({ docTab: 'fac', docFilter: { k: 'unpaid', label: 'non encaissées' } }); this.go('docs'); },
@@ -2008,7 +2047,7 @@ class Component extends DCLogic {
           onOpen: () => this.openFac(d.no),
           mail: () => this.draft({ title: 'Relance ' + d.no, subject: 'Relance facture ' + d.no + ' — ' + co.name, body }, sent),
           wa: () => this.draft({ title: 'Relance ' + d.no + ' · WhatsApp', channel: 'wa', body }, sent),
-          markPaid: () => { this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn: dm(new Date()) } : x) })); this.flash(`${d.no} marquée encaissée`); } }; }),
+          markPaid: () => { if (d.pro && globalThis.__btpPaSend && globalThis.__btpPaSend('pay', d, { amount: d.paRemaining ?? d.ttc, date: TODAY() })) return; this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn: TODAY(), paPaid: x.ttc, paRemaining: 0, paQueued: !!x.pro && !!st.offline } : x) })); this.flash(`${d.no} marquée encaissée`); } }; }),
       clients: clientNames.map(name => {
         const f = facs.filter(d => cn(d) === name), dv = docs.filter(d => d.type === 'devis' && d.st >= 2 && cn(d) === name);
         const devisTot = sum(dv), billed = sum(f), p = sum(f.filter(d => d.st === 3)), reste = Math.max(0, devisTot - billed);
@@ -2131,7 +2170,7 @@ class Component extends DCLogic {
         const P = { client: f.client.trim(), contact: f.client.trim(), tel: (f.tel || '').trim() || '—', addr: (f.addr || '').trim() || 'Adresse à compléter', type: (f.type || '').trim() || 'Travaux', debut: fr(f.debut) || new Date().toLocaleDateString('fr-FR'), fin: fr(f.fin) || '—', devis: [], facs: [], key, etapes: steps.map(t => [t, false]), note: (f.note || '').trim(), user: true };
         let no = null;
         if (f.mkDevis !== false) { no = docNo('DEV', s.devisSeq); P.devis.push(no);
-          const T = this.totals(), docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
+          const T = this.totals(), docs = s.docs.map(x => x.live ? { ...x, live: false, lines: s.lines, client: s.client + (s.chantier ? ' — ' + s.chantier : ''), siren: s.cliSiren || '', addr: s.cliAddr || '', pro: (s.clientType || 'part') === 'pro', ttc: T.ttc, marge: Math.round(T.pct) } : x);
           this.setState({ docs: [{ no, type: 'devis', live: true, client: P.client + ' — ' + P.type, date: TODAY(), st: 0 }, ...docs], devisSeq: s.devisSeq + 1, lines: [], client: P.client, chantier: P.addr, acompte: s.acompteDef ?? 30, editNo: no, versionOf: null, baseCount: 0, aiInput: '', aiMsg: '', remiseTxt: '0' }); }
         if (s.metier === 'elec' && f.mkPlan !== false) { const a = planFromLines([]); this.setState(st => ({ plans: [{ id: 'p' + (UID++), name: 'Schéma unifilaire — ' + P.client, kind: 'unifilaire', devisNo: no, facNo: null, date: new Date().toLocaleDateString('fr-FR'), ...a }, ...(st.plans ?? this.defaultPlans())] })); }
         if (f.mkRdv !== false && f.debut) this.setState(st => ({ events: [...this.events(), { id: UID++, ch: id, date: f.debut, time: '07:30', title: P.client + ' — ' + P.type, place: P.addr.split(',').pop().replace(/\d+/g, '').trim(), kind: 'chantier' }] }));
@@ -2223,23 +2262,45 @@ class Component extends DCLogic {
       const ttc = d.live ? T.ttc : d.ttc, list = d.type === 'devis' ? DEVIS_ST : FAC_ST, status = list[d.st];
       return { ...d, status, amount: fmt(ttc), ttc, bg: TONE[status][0], fg: TONE[status][1],
         hint: d.type === 'fac' ? 'Ouvrir la facture' : d.live ? 'En cours d\u2019édition' : d.st < 2 ? 'Modifier le devis' : 'Validé · modifier crée une nouvelle version',
+        ...(d.type === 'fac' ? (() => { const pn = this.paName(), t = d.paQueued ? ['En attente d’envoi : la facture partira à la reconnexion.', 'var(--color-accent-800)']
+            : d.paPaid && (d.paRemaining ?? 0) > 0 ? ['Payé ' + fmt(d.paPaid) + ' · reste ' + fmt(d.paRemaining), 'var(--color-accent-800)']
+            : d.st === 1 && d.paSentAt ? ['Transmise à ' + pn + ' le ' + d.paSentAt + '. Ce n’est pas encore une acceptation du client.', 'var(--color-neutral-700)']
+            : d.st === 4 && d.motif ? ['Rejetée par la plateforme : ' + d.motif + '. Corrige la facture puis réémets-la.', 'var(--color-accent-800)']
+            : d.st === 5 && d.motif ? ['Refusée par le client : ' + d.motif + '.', 'var(--color-accent-800)']
+            : !d.pro && d.st < 3 ? ['Client particulier : pas de facture électronique (e-reporting).', 'var(--color-neutral-700)'] : null;
+          return { hasPaLine: !!t, paLine: t ? t[0] : '', paLineFg: t ? t[1] : 'inherit' }; })() : { hasPaLine: false }),
         onOpen: () => d.type === 'fac' ? this.openFac(d.no) : this.openDevis(d.no),
-        _cf: ctx => { const open = !!s.stCf && s.stCf.no === d.no && s.stCf.ctx === ctx, stop = e => e && e.stopPropagation && e.stopPropagation(), fac = d.type === 'fac', pa = this.props.paName || 'FactuPro 974';
+        _cf: ctx => { const open = !!s.stCf && s.stCf.no === d.no && s.stCf.ctx === ctx, stop = e => e && e.stopPropagation && e.stopPropagation(), fac = d.type === 'fac', pa = this.paName();
+          const paConn = this.paConn(), rest = d.paRemaining ?? ttc, P0 = s.stPay && s.stPay.no === d.no ? s.stPay : { amt: String(r2(rest)).replace('.', ','), date: TODAY() };
+          const setPay = p => this.setState(st => ({ stPay: { ...P0, ...(st.stPay && st.stPay.no === d.no ? st.stPay : {}), no: d.no, ...p } }));
           const setSt = v => this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: v, motif: v === 0 ? null : x.motif } : x) }));
           const NOTE = { 'Brouillon': 'Le devis repasse en brouillon.', 'Envoyé': 'Le devis est marqué comme envoyé au client.', 'Accepté': 'Le devis est marqué comme signé par le client.', 'Facturé': 'Le devis est marqué comme facturé.' };
           const motif = d.motif ? ' : ' + d.motif : '';
           const A = !fac ? (() => { const nx = (d.st + 1) % list.length; return { next: list[nx], ok: (nx === 0 ? 'Repasser en ' : 'Passer en ') + list[nx].toLowerCase(), note: NOTE[list[nx]], run: () => { setSt(nx); this.flash(d.no + ' : ' + list[nx].toLowerCase()); } }; })()
-            : d.st === 0 && (!d.lines || !d.lines.length || (d.pro && !SIREN_OK(d.siren))) ? { next: 'Émise', ok: 'Compléter la facture', note: !d.lines || !d.lines.length ? 'La facture n’a pas de lignes détaillées : la plateforme la rejetterait (EN 16931).' : 'SIREN du client manquant ou invalide : la plateforme la rejetterait.', run: () => { this.setState({ stCf: null }); this.openFac(d.no); } }
-            : d.st === 0 ? { next: 'Transmise', ok: 'Transmettre à la plateforme', note: s.offline ? 'Hors ligne : la facture partira à la reconnexion.' : 'La facture est déposée sur ' + pa + '. Ce n’est pas encore une acceptation du client.', run: () => { if (window.__btpPaSend && window.__btpPaSend('transmit', d)) { this.setState({ stCf: null }); return; } setSt(1); this.flash(s.offline ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }
-            : [1, 2, 6].includes(d.st) ? { next: 'Encaissée', ok: 'Enregistrer l’encaissement', note: 'Le statut Encaissée (212) est envoyé à ' + pa + ' avec la date et le montant. Le passage à Acceptée vient du client, pas de toi.', run: () => { if (window.__btpPaSend && window.__btpPaSend('pay', d)) { this.setState({ stCf: null }); return; } this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: 3, paidOn: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) } : x) })); this.flash(d.no + ' encaissée'); } }
+            : s.role === 'staff' ? null
+            : d.paQueued ? null
+            : !d.pro && [0, 1, 2, 6].includes(d.st) ? { next: 'Encaissée', ok: 'Enregistrer l’encaissement', pay: true, note: 'Facture à un particulier : pas de facture électronique. Les ventes aux particuliers seront déclarées en e-reporting.' }
+            : d.st === 0 && (!d.lines || !d.lines.length || !SIREN_OK(d.siren)) ? { next: 'Émise', ok: 'Compléter la facture', note: !d.lines || !d.lines.length ? 'La facture n’a pas de lignes détaillées : la plateforme la rejetterait (EN 16931).' : 'Ce client n’est pas encore joignable par facture électronique. Vérifie son SIREN.', run: () => { this.setState({ stCf: null }); this.openFac(d.no); } }
+            : d.st === 0 && !['connecte', 'hors_ligne'].includes(paConn) ? { next: 'Émise', ok: paConn === 'non_configure' ? 'Choisir ma plateforme' : 'Connecter mon compte', note: paConn === 'non_configure' ? 'Aucune plateforme agréée n’est choisie : la facture ne peut pas partir.' : paConn === 'panne_pa' ? pa + ' ne répond pas. La facture partira au prochain essai.' : 'Connecte ton compte ' + pa + ' pour transmettre la facture.', run: () => { this.setState({ stCf: null }); this.go('set'); } }
+            : d.st === 0 ? { next: 'Transmise', ok: 'Transmettre à la plateforme', note: s.offline ? 'En attente d’envoi : la facture partira à la reconnexion.' : 'La facture est déposée sur ' + pa + '. Ce n’est pas encore une acceptation du client.', run: () => { if (globalThis.__btpPaSend && globalThis.__btpPaSend('transmit', d)) { this.setState({ stCf: null }); return; } const q = !!s.offline; this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? (q ? { ...x, paQueued: true } : { ...x, st: 1, paSentAt: TODAY() }) : x) })); this.flash(q ? d.no + ' en attente d’envoi' : d.no + ' transmise à ' + pa); } }
+            : [1, 2, 6].includes(d.st) ? { next: 'Encaissée', ok: 'Enregistrer l’encaissement', pay: true, note: 'Le statut Encaissée (212) est envoyé à ' + pa + ' avec la date et le montant. Encaissement partiel possible.' }
             : d.st === 4 ? { next: 'Émise', ok: 'Corriger et réémettre', note: 'Rejetée par la plateforme' + motif + '. Corrige la facture puis réémets-la : le numéro est conservé.', run: () => { setSt(0); this.openFac(d.no); } }
-            : d.st === 5 ? { next: 'Émise', ok: 'Réémettre sous un nouveau numéro', note: 'Refusée par le client' + motif + '. La facture reste dans l’historique ; une nouvelle facture est créée.', run: () => { const src = s.docs.find(x => x.no === d.no), no = docNo('FAC', s.facSeq); this.setState(st => ({ stCf: null, facSeq: st.facSeq + 1, docs: [{ ...src, no, st: 0, motif: null, date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), replaces: d.no }, ...st.docs] })); this.flash(no + ' créée, remplace ' + d.no); } }
+            : d.st === 5 ? { next: 'Émise', ok: 'Réémettre sous un nouveau numéro', note: 'Refusée par le client' + motif + '. La facture reste dans l’historique ; une nouvelle facture est créée.', run: () => { const src = s.docs.find(x => x.no === d.no), no = docNo('FAC', s.facSeq); this.setState(st => ({ stCf: null, facSeq: st.facSeq + 1, docs: [{ ...src, no, st: 0, motif: null, date: TODAY(), replaces: d.no }, ...st.docs] })); this.flash(no + ' créée, remplace ' + d.no); } }
             : null;
+          if (A && A.pay) A.run = () => { const amt = r2(parseFloat(String(P0.amt).replace(',', '.')) || 0), dt = DOC_D(P0.date);
+            if (!(amt > 0)) return this.flash('Indique le montant encaissé'); if (!/^\d{2}\/\d{2}\/\d{4}$/.test(P0.date) || dt > new Date()) return this.flash('Date au format JJ/MM/AAAA, pas dans le futur');
+            if (amt > r2(rest) + 0.005) return this.flash('Montant supérieur au reste à encaisser (' + fmt(rest) + ')');
+            if (d.pro && globalThis.__btpPaSend && globalThis.__btpPaSend('pay', d, { amount: amt, date: P0.date })) { this.setState({ stCf: null, stPay: null }); return; }
+            const left = r2(rest - amt), q = !!d.pro && !!s.offline;
+            this.setState(st => ({ stCf: null, stPay: null, docs: st.docs.map(x => x.no === d.no ? { ...x, paPaid: r2((x.paPaid || 0) + amt), paRemaining: left, paQueued: q, ...(left <= 0 ? { st: 3, paidOn: P0.date } : {}) } : x) }));
+            this.flash(left > 0 ? 'Encaissement partiel : reste ' + fmt(left) : d.no + ' encaissée'); };
           return { cfOpen: open, cfChev: open ? '180deg' : '0deg', cfTitle: (fac ? 'Facture ' : 'Devis ') + d.no,
-            cfRows: [['Client', d.client], ['Date', d.date], ['Montant TTC', fmt(ttc)], ...(d.motif ? [['Motif', d.motif]] : [])].map(([k, v]) => ({ k, v: v || '—' })),
+            cfPay: !!(A && A.pay), cfAmt: P0.amt, cfDate: P0.date, onCfAmt: e => setPay({ amt: e.target.value }), onCfDate: e => setPay({ date: e.target.value }),
+            cfErrs: (d.errors || []).map(t => ({ t })), cfHasErr: !!(d.errors && d.errors.length),
+            cfRows: [['Client', d.client], ['Date', d.date], ['Montant TTC', fmt(ttc)], ...(d.paPaid ? [['Déjà encaissé', fmt(d.paPaid)], ['Reste', fmt(d.paRemaining ?? 0)]] : []), ...(d.motif ? [['Motif', d.motif]] : [])].map(([k, v]) => ({ k, v: v || '—' })),
             cfCur: status, cfCurBg: TONE[status][0], cfCurFg: TONE[status][1], cfHasOk: !!A,
             cfNext: A ? A.next : '', cfNextBg: A ? TONE[A.next][0] : 'transparent', cfNextFg: A ? TONE[A.next][1] : 'inherit',
-            cfNote: A ? A.note : status === 'Encaissée' ? 'Statut final : le cycle de la facture est terminé.' : 'Ce statut est posé par la plateforme ou le client. Rien à faire de ton côté.',
+            cfNote: A ? A.note : d.paQueued ? 'En attente d’envoi : la facture partira à la reconnexion.' : s.role === 'staff' ? 'Réservé au patron.' : status === 'Encaissée' ? 'Statut final : le cycle de la facture est terminé.' : 'Ce statut est posé par la plateforme ou le client. Rien à faire de ton côté.',
             cfOkTxt: A ? A.ok : '', cfStop: stop,
             onCycle: e => { stop(e); this.setState({ stCf: open ? null : { no: d.no, ctx } }); },
             cfNo: e => { stop(e); this.setState({ stCf: null }); },
@@ -2341,7 +2402,7 @@ class Component extends DCLogic {
       dots: React.createElement('span', { style: { display: 'inline-flex', gap: 4 } }, [0, 1, 2].map(i => React.createElement('span', { key: i, style: { width: 8, height: 8, borderRadius: '50%', background: 'var(--color-accent)', animation: `btpDot 1s ${i * 0.15}s infinite ease-in-out` } }))),
       aiMsg: s.aiMsg, aiMsgBg: s.aiOk ? 'var(--color-accent-2-200)' : 'var(--color-accent-200)', aiMsgFg: s.aiOk ? 'var(--color-accent-2-900)' : 'var(--color-accent-900)',
       client: s.client, onClient: e => this.setState({ client: e.target.value }),
-      cliSiren: s.cliSiren || '', onCliSiren: e => this.setState({ cliSiren: e.target.value }), cliPro: (s.clientType || 'part') === 'pro',
+      cliSiren: s.cliSiren || '', onCliSiren: e => this.setState({ cliSiren: e.target.value }), cliAddr: s.cliAddr || '', onCliAddr: e => this.setState({ cliAddr: e.target.value }), cliPro: (s.clientType || 'part') === 'pro',
       cliSirErr: (s.cliSiren && !SIREN_OK(s.cliSiren)) ? 'SIREN (9 chiffres) ou SIRET (14 chiffres) invalide.' : ((s.clientType || 'part') === 'pro' && !s.cliSiren) ? 'Obligatoire pour un client professionnel (facture électronique).' : '',
       get hasCliSirErr() { return !!this.cliSirErr; }, cliTypeTxt: (s.clientType || 'part') === 'pro' ? 'professionnel' : 'particulier',
       toggleCliType: () => this.setState(st => ({ clientType: (st.clientType || 'part') === 'pro' ? 'part' : 'pro' })), cliTypeJ: (s.clientType || 'part') === 'pro' ? 'flex-end' : 'flex-start', cliTypeBg: (s.clientType || 'part') === 'pro' ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)',
@@ -2368,7 +2429,7 @@ class Component extends DCLogic {
       fv: (() => { const ch = s.fvChecks || {}, co = this.coData(), L = [['lignes', 'Lignes et quantités conformes aux travaux réalisés'], ['client', 'Nom et adresse du client'], ['montants', 'Montants, TVA et acompte']];
         const pro = (s.clientType || 'part') === 'pro', sv = s.cliSiren || '';
         const warn = [!(s.client || '').trim() ? 'Client non renseigné sur le devis.' : '', !co.siret ? 'SIRET manquant dans Réglages › Mon entreprise.' : '',
-          pro && !sv ? 'SIREN du client manquant : obligatoire pour un client professionnel.' : '', sv && !SIREN_OK(sv) ? 'SIREN du client invalide (9 chiffres, ou SIRET 14 chiffres).' : '', !s.lines.length ? 'Le devis n’a aucune ligne.' : ''].filter(Boolean);
+          pro && !sv ? 'SIREN du client manquant : obligatoire pour un client professionnel.' : '', pro && !(s.cliAddr || '').trim() ? 'Adresse de facturation du client manquante.' : '', sv && !SIREN_OK(sv) ? 'SIREN du client invalide (9 chiffres, ou SIRET 14 chiffres).' : '', !s.lines.length ? 'Le devis n’a aucune ligne.' : ''].filter(Boolean);
         const all = L.every(([k]) => ch[k]) && !warn.length;
         return { open: !!s.facVerif, devisNo: s.editNo || LIVE_NO, facNo: docNo('FAC', s.facSeq), client: s.client || '—', nLines: String(s.lines.length),
           ht: fmt(T.ht), tva: T.micro ? 'Non applicable' : fmt(T.t85 + T.t21), ttc: fmt(T.ttc), ac: T.ac ? '− ' + fmt(T.ac) : '—', net: fmt(T.ttc - T.ac), warn,
@@ -2383,7 +2444,7 @@ class Component extends DCLogic {
         const no = docNo('FAC', s.facSeq);
         this.setState(st => ({ facSeq: st.facSeq + 1, docTab: 'fac', recapOpen: false, plans: (st.plans ?? this.defaultPlans()).map(p => p.devisNo === (st.editNo || LIVE_NO) ? { ...p, facNo: no } : p),
           docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: TODAY(), st: 0, devisNo: st.editNo || LIVE_NO,
-            siren: st.cliSiren || '', pro: (st.clientType || 'part') === 'pro', chantier: st.chantier || '', micro: T.micro,
+            siren: st.cliSiren || '', addr: st.cliAddr || st.chantier || '', pro: (st.clientType || 'part') === 'pro', chantier: st.chantier || '', micro: T.micro,
             lines: st.lines.map(l => ({ name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva, qty: l.qty, pu: l.pu })),
             rem: Math.min(Math.max(parseFloat(String(st.remiseTxt).replace(',', '.')) || 0, 0), 100) / 100,
             ht: T.ht, t85: T.t85, t21: T.t21, ttcFull: T.ttc, acPct: st.acompte, ac: T.ac, ttc: r2(T.ttc - T.ac) }, ...st.docs.map(d => d.live ? { ...d, st: 3 } : d)] }));
@@ -2428,7 +2489,7 @@ class Component extends DCLogic {
           apply: () => { this.setState(st => ({ lines: st.lines.map(l => l.kind === 'mo' ? { ...l, pu: t, puTxt: undefined } : l) })); this.flash(`Main d'œuvre passée à ${t} € / h`); } }; })(),
       newDevis: () => this.newDevis(),
       timeOpts: { h: Array.from({ length: 24 }, (_, i) => { const v = String(i).padStart(2, '0'); return { v, l: v + ' h' }; }), m: Array.from({ length: 12 }, (_, i) => { const v = String(i * 5).padStart(2, '0'); return { v, l: v }; }) },
-      ...this.frameVals(), ...this.dayVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.rhVals(), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
+      ...this.frameVals(), ...this.storeVals(), ...this.lockVals(), lockNow: () => this.setState({ locked: true, lkCode: '', lkErr: '' }), ownerCode: this.state.ownerCode || '1974', ...this.dayVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.rhVals(), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
       fit: s.wideOn ? { w: '100vw', h: '100vh', t: 'none' } : (() => { const k = Math.max(0.5, s.fitK || 1); return { w: Math.round(390 * k) + 'px', h: Math.round(844 * k) + 'px', t: k < 1 ? `scale(${k.toFixed(3)})` : 'none' }; })(),
       pp: (() => { const hist = (s.aiHistory || []).filter(t => !m.ex.includes(t)), open = !!s.ppOpen;
         const pick = t => () => this.setState({ aiInput: t, aiMsg: '', ppOpen: false });
