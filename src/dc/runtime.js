@@ -147,8 +147,12 @@ function props(node, scope) {
     p[key] = v;
   }
   if (cls.trim()) p.className = cls.trim();
-  // Champs contrôlés : React déclenche onChange à chaque frappe (équivalent de onInput).
   const tag = node.tag.toLowerCase();
+  // Accessibilité : les pictos décoratifs sont masqués aux lecteurs d'écran, les boutons-icônes nommés par leur title.
+  if (tag === 'svg' && !('aria-hidden' in p) && !('role' in p) && !('aria-label' in p)) { p['aria-hidden'] = 'true'; p.focusable = 'false'; }
+  if (tag === 'button' && p.title && !('aria-label' in p) && !('aria-labelledby' in p)) p['aria-label'] = p.title;
+  if (tag === 'input' && (p.type === 'email' || p.type === 'tel') && !('spellCheck' in p)) p.spellCheck = false;
+  // Champs contrôlés : React déclenche onChange à chaque frappe (équivalent de onInput).
   if ((tag === 'input' || tag === 'textarea' || tag === 'select') && 'value' in p) {
     if (p.type === 'file') delete p.value;
     const h = handlers.onInput || handlers.onChange;

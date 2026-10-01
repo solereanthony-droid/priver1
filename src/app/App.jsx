@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import BtpLogic from './logic.js';
 import { useLogic } from '../hooks/useLogic.js';
 import { usePersistence } from '../hooks/usePersistence.js';
@@ -15,5 +16,11 @@ export default function App({ regime = 'assujetti', acompte = 30, paName = 'Fact
   });
   useServiceWorker();
   usePaBridge(logic, !!logic.state.locked);
+  // Thème sombre : barres de défilement, champs natifs et barre d'état du téléphone suivent le thème de l'app.
+  const st = logic.state, dark = st.themePref === 'dark' || (st.themePref === 'auto' && st.sysDark);
+  useEffect(() => {
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#1d1b18' : '#c67139');
+  }, [dark]);
   return view;
 }

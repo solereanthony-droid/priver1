@@ -20,7 +20,15 @@ test('sc-if et sc-for, y compris dans un <select>', () => {
 
 test('attributs SVG et entités', () => {
   assert.equal(html('<svg viewBox="0 0 24 24" stroke-width="2.75"><path d="M1 1"/></svg><span>&amp;&nbsp;x</span>', {}),
-    '<svg viewBox="0 0 24 24" stroke-width="2.75"><path d="M1 1"></path></svg><span>&amp; x</span>');
+    '<svg viewBox="0 0 24 24" stroke-width="2.75" aria-hidden="true" focusable="false"><path d="M1 1"></path></svg><span>&amp; x</span>');
+});
+
+test('accessibilité : pictos masqués, boutons-icônes nommés, pas de correcteur sur les e-mails', () => {
+  assert.equal(html('<button title="Fermer"><svg viewBox="0 0 24 24"></svg></button>', {}),
+    '<button title="Fermer" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"></svg></button>');
+  assert.equal(html('<button title="a" aria-label="b"><svg role="img" aria-label="c"></svg></button>', {}),
+    '<button title="a" aria-label="b"><svg role="img" aria-label="c"></svg></button>');
+  assert.match(html('<input type="email" value="{{ v }}" onInput="{{ f }}">', { v: '', f: () => {} }), /spellcheck="false"/i);
 });
 
 test('le gabarit du prototype s\'analyse sans perte de balises', () => {

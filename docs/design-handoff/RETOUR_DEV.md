@@ -345,3 +345,37 @@ Sans serveur joignable (démo statique), le prototype garde toutes ses simulatio
 ### 12.4 Toujours ouvert
 Données réelles (historique, panier moyen, transformation, CSV taux par taux), Factur-X PDF/A-3, e-reporting des
 ventes aux particuliers, vérification de la marque « Alizé Pilote » (INPI, domaines, stores).
+
+## 13. Audit Web Interface Guidelines (2026-10-01)
+
+Le prototype a été passé au crible des *Web Interface Guidelines* (accessibilité, focus, formulaires, animation,
+typographie, thème). Base saine : aucun `<div onClick>`, zoom autorisé, `prefers-reduced-motion` respecté,
+`tabular-nums` sur les montants, `aria-live` sur le toast, fenêtres en `role="dialog" aria-modal`, Échap géré.
+
+### 13.1 Corrigé côté app (rien à faire dans le prototype)
+- Les 161 SVG reçoivent `aria-hidden="true"` (pictos décoratifs) sauf s'ils ont un `role` ou un `aria-label`.
+- Les 35 boutons-icônes nommés seulement par `title` reçoivent le même texte en `aria-label` (le `title` n'est pas
+  lu de façon fiable sur mobile).
+- `spellcheck` coupé sur les champs e-mail et téléphone.
+- Thème sombre : `color-scheme` et `<meta name="theme-color">` suivent le thème choisi (barres de défilement,
+  champs natifs, barre d'état du téléphone).
+- `touch-action: manipulation` (pas de délai au double tap), surbrillance tactile neutralisée (le retour vient
+  déjà de `style-active`), `overscroll-behavior: contain` sur les fenêtres.
+- Anneau de focus clavier sur `select`, `textarea` et le champ de recherche des Documents (son `outline:none` en
+  ligne le supprimait).
+
+### 13.2 À reprendre dans le prototype
+1. **Champs sans libellé** : seul le `placeholder` les nomme (il disparaît à la saisie). Ajouter un `<label>` ou un
+   `aria-label` : texte de l'Assistant IA (l. ~268), Client et Adresse du chantier du devis (~319, ~330), titre
+   d'intervention du planning (~1836), recherche du catalogue (~2708), recherche du nouveau chantier (~3355),
+   « Ajouter une étape » (~3424).
+2. **Interrupteurs** (`role="switch"`, ex. « Masquer les prix unitaires », « Mode plein soleil ») : sans nom
+   accessible. Relier au texte voisin par `aria-labelledby` ou ajouter `aria-label`.
+3. **Titres** : aucun `<h1>`–`<h3>` ; les titres d'écran sont des `<div>`. Utiliser `<h1>` pour le titre d'écran et
+   `<h2>` pour les sections : les lecteurs d'écran naviguent par titres.
+4. **Champs e-mail / téléphone** : ajouter `autocomplete` (`tel`, `email`) sur la fiche du nouveau chantier ; pour
+   les destinataires d'e-mail, `autocomplete="off"` évite la proposition de sa propre adresse.
+5. **Placeholders** : terminer par « … » et montrer un exemple (« Client » → « Mme Payet… »).
+6. **Animations de largeur** (`transition: width/left`, 6 jauges) : préférer `transform: scaleX()` (fluide sur les
+   téléphones d'entrée de gamme).
+7. **Images** (justificatifs, plans importés) : `width`/`height` explicites pour éviter les sauts de mise en page.
