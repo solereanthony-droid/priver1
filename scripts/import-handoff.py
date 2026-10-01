@@ -80,6 +80,22 @@ if 'window.claude' in js: sys.exit('Nouvel appel window.claude dans le prototype
 js = sub(js, r"// ── Blocage après trop d'essais \(src/auth/lockout\.js\) ──\n.*?// ── Fin des utilitaires d'accès ──\n", '', regex=True, label='utilitaires d’accès')
 js = sub(js, "    this.setState({ restored: true, authMode: this.state.authMode || 'local' });\n", '', label='mode d’accès local')
 
+# Session d'onglet (v15.7) : dans l'app, lockDelay vient de la sauvegarde (lue après le montage) et le mode d'accès
+# du serveur (config) ; la reprise sans code n'est décidée qu'une fois les deux connus, jamais en mode serveur.
+js = fix(js, "      if (ss && ss.role && ms && Date.now() - ss.at < ms) setTimeout(() => { const ld = (this.state.lockDelay ?? 5) * 60000; if (ld && this.state.authMode !== 'server') this.setState({ locked: false, lkStep: 'login', role: ss.role, ...(ss.rhEmp ? { rhEmp: ss.rhEmp } : {}) }); }, 0);",
+         "      if (ss && ss.role) this._ss = ss;   // reprise décidée dans componentDidUpdate (sauvegarde lue, mode d'accès connu)", 'session d’onglet (lecture)')
+js = fix(js, "  componentDidUpdate(pp, ps) {\n",
+         "  componentDidUpdate(pp, ps) {\n    if (this._ss && this.state.restored && this.state.authMode) { const ss = this._ss, ld = (this.state.lockDelay ?? 5) * 60000; this._ss = null;\n      if (ld && Date.now() - ss.at < ld && this.state.authMode !== 'server' && this.state.locked) this.setState({ locked: false, lkStep: 'login', role: ss.role, ...(ss.rhEmp ? { rhEmp: ss.rhEmp } : {}) }); }\n",
+         'session d’onglet (reprise)', done='if (this._ss && this.state.restored')
+# Pas de poignée globale sur l'état (window.btpDemo, outil de démo du prototype) : elle déverrouillerait l'app depuis la console.
+js = js.replace("    window.btpDemo = { go: t => this.go(t), set: o => this.setState(o), get: () => this.state };\n", '')
+if 'window.btpDemo' in js: sys.exit('window.btpDemo a changé dans le prototype : adapter scripts/import-handoff.py')
+# Facture issue d'un devis accepté : la preuve d'accord du client (accProof, v15.6) est archivée avec elle
+# (le contenu va dans IndexedDB comme tout gros fichier, même empreinte → stocké une seule fois).
+js = fix(js, "date: TODAY(), st: 0, devisNo: st.editNo || LIVE_NO,",
+         "date: TODAY(), st: 0, devisNo: st.editNo || LIVE_NO, ...(dv => dv && dv.accProof ? { accProof: dv.accProof, accAt: dv.accAt } : {})(st.docs.find(x => x.no === (st.editNo || LIVE_NO))),",
+         'preuve d’accord archivée', done='accProof: dv.accProof')
+
 # Sauvegarde locale : gérée par usePersistence (restauration limitée aux clés de KEEP).
 js = sub(js, r"\n    try \{\n      const raw = localStorage\.getItem\(Component\.KEY\);.*?\n    \} catch \(e\) \{\}\n  \}\n  componentDidUpdate",
          "\n    // Sauvegarde locale : voir restore() / snapshot() et le hook usePersistence.\n  }\n  componentDidUpdate", regex=True, label='restauration')

@@ -288,6 +288,7 @@ function demoLines() {
 
 const DEVIS_ST = ['Brouillon', 'Envoyé', 'Accepté', 'Facturé'];
 const TODAY = () => new Date().toLocaleDateString('fr-FR');
+
 const DOC_D = x => { const p = String(x || '').split('/').map(Number), now = new Date(); if (!p[0] || !p[1]) return now; let y = p[2] || now.getFullYear(); const d = new Date(y, p[1] - 1, p[0]); if (!p[2] && d - now > 30 * 864e5) d.setFullYear(y - 1); return d; };
 const SIREN_OK = v => { const d = String(v || '').replace(/\D/g, ''); if (d.length !== 9 && d.length !== 14) return false; let t = 0; [...d].reverse().forEach((c, i) => { let n = +c; if (i % 2) { n *= 2; if (n > 9) n -= 9; } t += n; }); return t % 10 === 0; };
 const FAC_ST = ['Émise', 'Transmise', 'Acceptée', 'Encaissée', 'Rejetée', 'Refusée', 'En litige'];
@@ -320,7 +321,8 @@ class Component extends DCLogic {
   scrollRef = React.createRef();
 
   static KEY = 'btp974-mobile-v1';
-  static KEEP = ['lines','client','cliSiren','cliAddr','paAcc','ownerHash','lkGuard','lockDelay','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
+  static SKEY = 'btp974-session';
+  static KEEP = ['lines','client','cliSiren','cliAddr','paAcc','ownerHash','lkGuard','lockDelay','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','absInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
   componentDidMount() {
     this._bipH = e => { e.preventDefault(); this._bip = e; }; window.addEventListener('beforeinstallprompt', this._bipH);
     if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) this.setState({ installed: true });
@@ -340,13 +342,20 @@ class Component extends DCLogic {
     // Verrouillage automatique : après lockDelay minutes en arrière-plan (0 : dès que l'app passe en arrière-plan).
     this._vis = () => {
       const st = this.state, ms = (st.lockDelay ?? 5) * 60000;
-      if (document.visibilityState === 'hidden') { this._hidAt = Date.now(); if (!ms && !st.locked) this.lock(); }
+      if (document.visibilityState === 'hidden') { this._hidAt = Date.now(); if (!st.locked && st.role) try { sessionStorage.setItem(Component.SKEY, JSON.stringify({ role: st.role, rhEmp: st.role === 'staff' ? st.rhEmp : null, at: Date.now() })); } catch (e) {} if (!ms && !st.locked) this.lock(); }
       else if (this._hidAt && !st.locked && Date.now() - this._hidAt >= ms) this.lock();
     };
     document.addEventListener('visibilitychange', this._vis);
+    try { const ss = JSON.parse(sessionStorage.getItem(Component.SKEY) || 'null'), ms = (this.state.lockDelay ?? 5) * 60000;
+      if (ss && ss.role) this._ss = ss;   // reprise décidée dans componentDidUpdate (sauvegarde lue, mode d'accès connu)
+    } catch (e) {}
     // Sauvegarde locale : voir restore() / snapshot() et le hook usePersistence.
   }
   componentDidUpdate(pp, ps) {
+    if (this._ss && this.state.restored && this.state.authMode) { const ss = this._ss, ld = (this.state.lockDelay ?? 5) * 60000; this._ss = null;
+      if (ld && Date.now() - ss.at < ld && this.state.authMode !== 'server' && this.state.locked) this.setState({ locked: false, lkStep: 'login', role: ss.role, ...(ss.rhEmp ? { rhEmp: ss.rhEmp } : {}) }); }
+    // Session : reste ouverte au rechargement tant que le délai de verrouillage n'est pas écoulé (onglet seulement).
+    if (!this.state.locked && this.state.role) { const now = Date.now(); if (ps.locked || !this._sAt || now - this._sAt > 15000) { this._sAt = now; try { sessionStorage.setItem(Component.SKEY, JSON.stringify({ role: this.state.role, rhEmp: this.state.role === 'staff' ? this.state.rhEmp : null, at: now })); } catch (e) {} } }
     if (ps && ps.tab !== 'set' && this.state.tab === 'set' && navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => this.setState({ storeEst: { usage: e.usage || 0, quota: e.quota || 0 } })).catch(() => {});
     if (ps && ps.offline && !this.state.offline && this.paConn() === 'connecte') this.paFlush();
     if (ps && (ps.activeSet !== this.state.activeSet || (ps.tab !== 'set' && this.state.tab === 'set'))) this.centerChip();
@@ -400,12 +409,12 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    document.removeEventListener('visibilitychange', this._vis); clearTimeout(this._lkT);
     window.removeEventListener('btp:update-ready', this._upd);
     window.removeEventListener('beforeinstallprompt', this._bipH); window.removeEventListener('online', this._net); window.removeEventListener('offline', this._net);
     cancelAnimationFrame(this._fitRaf);
     window.removeEventListener('keydown', this._esc);
     window.removeEventListener('resize', this._fit);
-    document.removeEventListener('visibilitychange', this._vis); clearTimeout(this._lkT);
     window.removeEventListener('pointermove', this._pm); window.removeEventListener('pointerup', this._pu); cancelAnimationFrame(this._spyRaf); clearTimeout(this._sv); clearTimeout(this._t); if (this._rec) this._rec.abort(); }
 
   go = tab => { this.setState(st => ({ rulesOpen: false, tab, prevTab: st.tab !== tab ? st.tab : st.prevTab, recapOpen: false })); const el = this.scrollRef.current; if (el) el.scrollTop = 0; };
@@ -570,7 +579,7 @@ class Component extends DCLogic {
   // Étapes : login ; setup / setup2 (premier Code patron) ; old / new / new2 (changer le Code patron) ;
   // who (« C'est bien toi, Kévin ? »). Mode serveur : le serveur vérifie les codes (usePaBridge) ; sinon,
   // empreintes locales et blocage après trop d'essais enregistré dans la sauvegarde (src/auth/lockout.js).
-  lock() { this.setState({ locked: true, lkChange: false, lkStep: 'login', lkCode: '', lkErr: '', lkTmp: '', lkOld: '', lkWho: null, lkBusy: false, role: null, rhEmp: null, rhPin: null }); }
+  lock() { try { sessionStorage.removeItem(Component.SKEY); } catch (e) {} this.setState({ locked: true, lkChange: false, lkStep: 'login', lkCode: '', lkErr: '', lkTmp: '', lkOld: '', lkWho: null, lkBusy: false, role: null, rhEmp: null, rhPin: null }); }
   lkStepOf(s = this.state) { return s.locked && (s.lkStep || 'login') === 'login' && s.authMode === 'local' && !s.ownerHash ? 'setup' : s.lkStep || 'login'; }
   unlockAs(role, staffId) {
     if (role === 'staff') {
@@ -874,6 +883,45 @@ class Component extends DCLogic {
         this.flash('Export CSV téléchargé');
       },
       toFacs: () => this.setState({ docTab: 'fac' }, () => this.go('docs')),
+      ...(() => {
+        const now = new Date(), age = d => (now - DOC_D(d.date)) / 864e5, docs = s.docs || [];
+        const facs = docs.filter(d => d.type === 'fac'), dvs = docs.filter(d => d.type === 'devis' && !d.live);
+        const late = facs.filter(d => [1, 2, 6].includes(d.st) && age(d) > 30), bad = facs.filter(d => d.st === 4 || d.st === 5), q = facs.filter(d => d.paQueued), rel = dvs.filter(d => d.st === 1 && age(d) > 10);
+        const sumT = a => a.reduce((t, d) => t + (d.paRemaining ?? d.ttc ?? 0), 0);
+        const pl = (n, w, ws) => n + ' ' + (n > 1 ? (ws || w + 's') : w);
+        const alerts = [
+          late.length && { dot: 'var(--color-accent-700)', t: pl(late.length, 'facture') + ' impayée' + (late.length > 1 ? 's' : '') + ' depuis plus de 30 jours', v: fmt0(sumT(late)), on: () => this.go('enc') },
+          bad.length && { dot: 'var(--color-accent-700)', t: pl(bad.length, 'facture') + ' rejetée' + (bad.length > 1 ? 's' : '') + ' ou refusée' + (bad.length > 1 ? 's' : '') + ' à corriger', v: fmt0(sumT(bad)), on: toDocs('fac', { k: 'status', v: 'Rejetée', label: 'rejetées' }) },
+          q.length && { dot: 'var(--color-accent-500)', t: pl(q.length, 'envoi') + ' en attente vers la plateforme', v: '', on: () => this.go('set') },
+          rel.length && { dot: 'var(--color-accent-500)', t: pl(rel.length, 'devis', 'devis') + ' envoyé' + (rel.length > 1 ? 's' : '') + ' sans réponse depuis 10 jours', v: fmt0(rel.reduce((t, d) => t + (d.ttc || 0), 0)), on: toDocs('devis', { k: 'status', v: 'Envoyé', label: 'envoyés' }) },
+        ].filter(Boolean);
+        const LV = { ok: ['Conforme', 'var(--color-accent-2-200)', 'var(--color-accent-2-900)'], warn: ['À surveiller', 'var(--color-accent-200)', 'var(--color-accent-900)'], bad: ['Alerte', 'var(--color-accent-700)', 'var(--color-neutral-100)'], info: ['', 'transparent', 'inherit'] };
+        const lvl = (v, ok, warn, up) => up ? (v >= ok ? 'ok' : v >= warn ? 'warn' : 'bad') : (v <= ok ? 'ok' : v <= warn ? 'warn' : 'bad');
+        const K = (label, value, sub, l, onTap) => ({ label, value, sub, pill: LV[l][0], pillBg: LV[l][1], pillFg: LV[l][2], hasPill: l !== 'info', onTap });
+        const waitPct = total ? Math.round(wait / total * 100) : 0;
+        const sent = dvs.filter(d => d.st >= 1), signed = dvs.filter(d => d.st >= 2), tPct = sent.length ? Math.round(signed.length / sent.length * 100) : 0;
+        const carnet = dvs.filter(d => d.st === 2).reduce((t, d) => t + (d.ttc || 0), 0), weeks = isMonth ? 4.33 : p * 4.33, perW = total / weeks, cW = perW ? Math.round(carnet / perW * 10) / 10 : 0;
+        const mg = dvs.filter(d => typeof d.marge === 'number'), mAvg = mg.length ? Math.round(mg.reduce((t, d) => t + d.marge, 0) / mg.length) : 0;
+        const blocks = [
+          { t: 'Trésorerie', q: 'Est-ce que l’argent rentre ?', k: [
+            K('Encaissé', fmt0(total - wait), 'sur ' + fmt0(total) + ' facturés', 'info', () => this.go('enc')),
+            K('Reste à encaisser', fmt0(wait), waitPct + ' % du CA · cible < 10 %', lvl(waitPct, 10, 20), () => this.go('enc')),
+            K('Délai de paiement', '23 j', 'moyenne · cible 30 j', lvl(23, 30, 45), toDocs('fac', { k: 'status', v: 'Acceptée', label: 'acceptées, à encaisser' })),
+            K('TVA à reverser', fmt0(t85 + t21), micro ? 'franchise 293 B' : 'estimation', 'info', null) ] },
+          { t: 'Activité', q: 'Aurai-je du travail dans 3 mois ?', k: [
+            K('Transformation', tPct + ' %', signed.length + ' signés sur ' + sent.length + ' · cible 40 %', lvl(tPct, 40, 30, true), () => this.go('transfo')),
+            K('Carnet de commandes', fmt0(carnet), (String(cW).replace('.', ',')) + ' sem. de travail · cible 4', lvl(cW, 4, 2, true), toDocs('devis', { k: 'status', v: 'Accepté', label: 'acceptés' })),
+            K('Devis à relancer', String(rel.length), 'sans réponse depuis 10 j', rel.length ? (rel.length > 2 ? 'bad' : 'warn') : 'ok', toDocs('devis', { k: 'status', v: 'Envoyé', label: 'envoyés' })) ] },
+          { t: 'Rentabilité', q: 'Est-ce que je gagne de l’argent ?', k: [
+            K('Marge moyenne', mAvg + ' %', 'sur les devis · cible 30 %', lvl(mAvg, 30, 22, true), () => this.go('marge')),
+            K('Panier moyen', fmt0(total / nb), 'TTC par facture', 'info', () => this.go('panier')),
+            K('Factures émises', String(nb), isMonth ? FULL[mi] : 'sur ' + p + ' mois', 'info', toDocs('fac', null)) ] },
+        ].map(b => ({ ...b, k: b.k.map(x => ({ ...x, tap: !!x.onTap, onTap: x.onTap || (() => {}), cur: x.onTap ? 'pointer' : 'default' })) }));
+        const nAl = blocks.flatMap(b => b.k).filter(x => x.pill === 'Alerte').length, nW = blocks.flatMap(b => b.k).filter(x => x.pill === 'À surveiller').length;
+        return { alerts, hasAlerts: alerts.length > 0, noAlerts: !alerts.length, blocks,
+          health: nAl ? nAl + ' alerte' + (nAl > 1 ? 's' : '') + (nW ? ' · ' + nW + ' à surveiller' : '') : nW ? nW + ' indicateur' + (nW > 1 ? 's' : '') + ' à surveiller' : 'Tous les indicateurs sont dans la cible',
+          healthBg: nAl ? 'var(--color-accent-700)' : nW ? 'var(--color-accent-200)' : 'var(--color-accent-2-200)', healthFg: nAl ? 'var(--color-neutral-100)' : nW ? 'var(--color-accent-900)' : 'var(--color-accent-2-900)' };
+      })(),
     } };
   }
 
@@ -1206,9 +1254,11 @@ class Component extends DCLogic {
     if (!/^(image\/(png|jpeg|webp|gif)|application\/pdf)$/.test(f.type)) return this.flash('Format accepté : image PNG, JPEG, WebP ou PDF');
     if (f.size > 3 * 1024 * 1024) return this.flash('Fichier trop lourd : 3 Mo maximum');
     const rd = new FileReader();
-    rd.onload = () => { const id = 'p' + Date.now(), cur = this.curNo();
-      this.setState(st => ({ plans: [{ id, name: f.name.replace(/\.[^.]+$/, ''), kind: 'import', mime: f.type, src: rd.result, fileName: f.name, devisNo: cur, facNo: null, date: new Date().toLocaleDateString('fr-FR') }, ...(st.plans ?? this.defaultPlans())] }));
+    rd.onload = () => { const add = dims => { const id = 'p' + Date.now(), cur = this.curNo();
+      this.setState(st => ({ plans: [{ id, name: f.name.replace(/\.[^.]+$/, ''), kind: 'import', mime: f.type, src: rd.result, fileName: f.name, iw: dims.w || undefined, ih: dims.h || undefined, devisNo: cur, facNo: null, date: new Date().toLocaleDateString('fr-FR') }, ...(st.plans ?? this.defaultPlans())] }));
       this.openPlan(id); this.flash('Plan importé et lié à ' + cur); };
+      if (!/^image\//.test(f.type)) return add({ w: 0, h: 0 });
+      const im = new Image(); im.onload = () => add({ w: im.naturalWidth, h: im.naturalHeight }); im.onerror = () => add({ w: 0, h: 0 }); im.src = rd.result; };
     rd.readAsDataURL(f);
   }
   cmpPlan(p, lines) {
@@ -1509,9 +1559,9 @@ class Component extends DCLogic {
   frameVals() {
     const s = this.state, wide = !!s.wideOn, dark = s.themePref === 'dark' || (s.themePref === 'auto' && s.sysDark);
     const fr = wide ? { wide: true, phone: false, op: '0', w: '100vw', h: '100vh', r: '0', p: '0', ir: '0', dir: 'row-reverse', sp: '0 max(0px, calc((100% - 248px - 760px) / 2))',
-        nbt: 'none', nbr: '1px solid var(--color-divider)', nw: '248px', np: '28px 14px', nc: '1fr', ng: '4px', bd: 'row', bj: 'flex-start', bgap: '10px', bp: '0 8px', bf: '15px', sheetW: '560px', barL: 'calc(248px + max(0px, (100% - 248px - 760px) / 2) + 20px)', barR: 'calc(max(0px, (100% - 248px - 760px) / 2) + 20px)', barB: '24px' }
+        nbt: 'none', nbr: '1px solid var(--color-divider)', nw: '248px', np: '28px 14px', nc: '1fr', ng: '4px', ncFlow: 'row', bd: 'row', bj: 'flex-start', bgap: '10px', bp: '0 8px', bf: '15px', sheetW: '560px', barL: 'calc(248px + max(0px, (100% - 248px - 760px) / 2) + 20px)', barR: 'calc(max(0px, (100% - 248px - 760px) / 2) + 20px)', barB: '24px' }
       : { wide: false, phone: true, op: '16px', w: '390px', h: '844px', r: '56px', p: '10px', ir: '46px', dir: 'column', sp: '0',
-        nbt: '1px solid var(--color-divider)', nbr: 'none', nw: 'auto', np: '8px 6px 26px', nc: 'repeat(5,minmax(0,1fr))', ng: '2px', bd: 'column', bj: 'center', bgap: '3px', bp: '0', bf: '11px', sheetW: '100%', barL: '12px', barR: '12px', barB: '96px' };
+        nbt: '1px solid var(--color-divider)', nbr: 'none', nw: 'auto', np: '8px 6px 26px', nc: 'none', ncFlow: 'column', ng: '2px', bd: 'column', bj: 'center', bgap: '3px', bp: '0', bf: '11px', sheetW: '100%', barL: '12px', barR: '12px', barB: '96px' };
     const seg = (cur, opts, set) => opts.map(([k, l]) => { const a = cur === k; return { l, bg: a ? 'var(--color-neutral-900)' : 'transparent', fg: a ? 'var(--color-neutral-100)' : 'var(--color-neutral-800)', onPick: () => set(k) }; });
     return { fr, theme: dark ? 'dark' : 'light',
       themeOpts: seg(s.themePref || 'light', [['light', 'Clair'], ['dark', 'Sombre'], ['auto', 'Auto']], v => this.setState({ themePref: v })),
@@ -1775,7 +1825,7 @@ class Component extends DCLogic {
         prev: () => pick(i - 1), next: () => pick(i + 1), close: () => this.setState({ planSel: null }),
         edit: () => { const sc = this.scrollRef.current, el = sc && sc.querySelector('[data-circ="' + c.id + '"]'); if (el) sc.scrollTo({ top: el.offsetTop - 120, behavior: 'smooth' }); } } : { cals: [], errs: [] };
     }
-    return { ...base, isPlan: true, pl: { ...extra, name: p.name, isUni, isImg: !isUni && !isPdf, isPdf, src: safeSrc(p.src), fileName: p.fileName || '',
+    return { ...base, isPlan: true, pl: { ...extra, name: p.name, isUni, isImg: !isUni && !isPdf, isPdf, src: safeSrc(p.src), fileName: p.fileName || '', iw: p.iw || 1200, ih: p.ih || 900, ar: (p.iw || 4) + ' / ' + (p.ih || 3),
       canImpl: !isUni && !isPdf && isElec && /^data:image\/(png|jpeg|webp)/.test(p.src || ''),
       implSub: (() => { const u = all.find(x => x.kind === 'unifilaire' && x.devisNo === p.devisNo); return u ? `Utilise les ${u.circuits.length} circuits du schéma de ${p.devisNo}` : `Crée le schéma depuis ${p.devisNo || 'le devis'} et pose ce plan en fond`; })(),
       implTxt: all.some(x => x.kind === 'unifilaire' && x.implFrom === p.id) ? 'Reprendre l’implantation' : 'Implanter sur ce plan',
@@ -2104,7 +2154,7 @@ class Component extends DCLogic {
       wkLabel: `du ${RH_D(mon).slice(0, 5)} au ${RH_D(new Date(mon.getTime() + 4 * 864e5)).slice(0, 5)}`, tot, days,
       hasPending: pending.length > 0, pending,
       f: { date: 'Pour aujourd’hui, ' + new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: '2-digit' }),
-        who: people.map(p => ({ l: first(p), on: F.who === p.id, ...chipC(F.who === p.id), onPick: () => setF({ who: p.id, ch: planCh(p.id) || F.ch }) })), ch: chOpts(F.ch, k => setF({ ch: k })),
+        who: people.map(p => ({ l: first(p), on: F.who === p.id, ...chipC(F.who === p.id), onPick: () => setF({ who: p.id, ch: planCh(p.id) || F.ch }) })), ch: chOpts(F.ch, k => setF({ ch: k })).map(c => ({ ...c, ring: c.on ? 'var(--color-accent-2-700)' : 'var(--color-neutral-500)', dot: c.on ? 'var(--color-accent-2-700)' : 'transparent' })),
         planHint: planCh(F.who) ? 'prévu : ' + RH_CH[planCh(F.who)][0] : 'rien de prévu',
         hTxt: hh(F.h), minus: () => setF({ h: Math.max(0.5, F.h - 0.5) }), plus: () => setF({ h: Math.min(12, F.h + 0.5) }),
         panier: !!F.panier, pJ: F.panier ? 'flex-end' : 'flex-start', pBg: F.panier ? 'var(--color-accent-2-700)' : 'var(--color-neutral-400)', togglePan: () => setF({ panier: !F.panier }),
@@ -2119,8 +2169,10 @@ class Component extends DCLogic {
         return { who: first(byId[a.who]), type: a.type, dates: `du ${a.du.slice(0, 5)} au ${a.au.slice(0, 5)} · ${wd(a.du, a.au)} j ouvrés`, st, pending: st === 'Demandée',
           stBg: st === 'Validée' ? 'var(--color-accent-2-200)' : st === 'Refusée' ? 'var(--color-neutral-200)' : 'var(--color-accent-200)', stFg: st === 'Validée' ? 'var(--color-accent-2-900)' : st === 'Refusée' ? 'var(--color-neutral-800)' : 'var(--color-accent-900)',
           ok: () => setSt('Validée'), ko: () => setSt('Refusée') }; }),
+      absInfo: (() => { const on = s.absInfo ?? true; return { on, label: on ? 'Masquer les règles d’absence' : 'Voir les règles d’absence', toggle: () => this.setState({ absInfo: !on }),
+        rows: [['Congés payés', 'Dans le BTP, c’est la caisse de congés payés qui les verse au salarié. L’app transmet les jours au comptable.'], ['Intempéries', 'Arrêt de chantier pour pluie cyclonique ou forte chaleur, à déclarer à la caisse pour être indemnisé.'], ['Apprenti', 'Les jours de CFA comptent comme du temps de travail.']].map(([t, d]) => ({ t, d })) }; })(),
       af: { who: staffPick(AF.who, v => setAF({ who: v })),
-        types: ['Congés payés', 'Maladie', 'Intempéries', 'Formation', 'Sans solde'].map(t => { const a = AF.type === t; return { l: t, on: a, bg: a ? 'var(--color-accent-2-200)' : 'var(--color-surface)', fg: a ? 'var(--color-accent-2-900)' : 'var(--color-neutral-900)', bd: a ? 'var(--color-accent-2-700)' : 'transparent', onPick: () => setAF({ type: t }) }; }),
+        types: [['Congés payés', 'payés par la caisse'], ['Maladie', 'arrêt de travail'], ['Intempéries', 'chantier arrêté'], ['Formation', 'CFA, stage'], ['Sans solde', 'non rémunéré']].map(([t, sub]) => { const a = AF.type === t; return { l: t, sub, on: a, bg: a ? 'var(--color-accent-2-200)' : 'var(--color-surface)', fg: a ? 'var(--color-accent-2-900)' : 'var(--color-neutral-900)', bd: a ? 'var(--color-accent-2-700)' : 'transparent', dot: a ? 'var(--color-accent-2-700)' : 'transparent', ring: a ? 'var(--color-accent-2-700)' : 'var(--color-neutral-500)', onPick: () => setAF({ type: t }) }; }),
         du: AF.du, au: AF.au, onDu: e => setAF({ du: e.target.value }), onAu: e => setAF({ au: e.target.value }),
         add: () => { if (!AF.du || !AF.au) return this.flash('Choisis les dates de début et de fin'); if (AF.au < AF.du) return this.flash('La date de fin est avant la date de début');
           setRh(r => ({ ...r, abs: [...r.abs, { id: 'a' + Date.now(), who: AF.who, type: AF.type, du: iso(AF.du), au: iso(AF.au), st: 'Validée' }] })); this.setState({ absF: null }); this.flash('Absence enregistrée et reportée au planning'); } },
@@ -2365,7 +2417,7 @@ class Component extends DCLogic {
     const counts = { projets: projets.length, devis: devis.length, planning: this.upcoming(), mat: left };
     const cur = s.toolOpen ? defs[s.toolOpen] : null;
     return {
-      tools: Object.keys(defs).map(k => ({ label: defs[k].label, short: { projets: 'Projets', devis: 'Devis', planning: 'Planning', mat: 'Matériel' }[k], count: counts[k], p1: P[k][0], p2: P[k][1], p3: P[k][2], bg: s.toolOpen === k ? 'var(--color-neutral-900)' : 'var(--color-surface)', fg: s.toolOpen === k ? 'var(--color-neutral-100)' : 'var(--color-neutral-900)',
+      tools: Object.keys(defs).map(k => ({ label: defs[k].label, short: { projets: 'Projets', devis: 'Devis', planning: 'Planning', mat: 'Matériel' }[k], count: counts[k], p1: P[k][0], p2: P[k][1], p3: P[k][2], bg: s.toolOpen === k ? 'var(--color-neutral-900)' : 'var(--color-neutral-100)', fg: s.toolOpen === k ? 'var(--color-neutral-100)' : 'var(--color-neutral-900)', bd: s.toolOpen === k ? 'var(--color-neutral-900)' : 'var(--color-neutral-400)', sel: s.toolOpen === k,
         onOpen: () => { this.setState({ toolOpen: k }); this.go('outil'); } })),
       toolOpen: s.tab === 'outil' && !!cur, closeTool: () => this.go('home'),
       tool: cur ? { ...cur, rows: cur.rows.map(r => ({ isCheck: false, op: 1, onTap: () => {}, ...r })), cta: cur.cta || '' } : { rows: [] },
@@ -2396,7 +2448,15 @@ class Component extends DCLogic {
           const setSt = v => this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: v, motif: v === 0 ? null : x.motif } : x) }));
           const NOTE = { 'Brouillon': 'Le devis repasse en brouillon.', 'Envoyé': 'Le devis est marqué comme envoyé au client.', 'Accepté': 'Le devis est marqué comme signé par le client.', 'Facturé': 'Le devis est marqué comme facturé.' };
           const motif = d.motif ? ' : ' + d.motif : '';
-          const A = !fac ? (() => { const nx = (d.st + 1) % list.length; return { next: list[nx], ok: (nx === 0 ? 'Repasser en ' : 'Passer en ') + list[nx].toLowerCase(), note: NOTE[list[nx]], run: () => { setSt(nx); this.flash(d.no + ' : ' + list[nx].toLowerCase()); } }; })()
+          const proof = (s.stCf && s.stCf.no === d.no && s.stCf.proof) || null;
+          const A = !fac ? (() => { const nx = s.stCf && s.stCf.no === d.no && s.stCf.to != null ? s.stCf.to : (d.st < list.length - 1 ? d.st + 1 : d.st - 1);
+            const fwd = nx > d.st, warn = fwd && nx >= 2 && d.st < 1 ? 'Devis pas encore envoyé : envoie-le au client avant de le passer en ' + list[nx].toLowerCase() + '.'
+              : fwd && nx === 3 && d.st < 2 ? 'Le client n’a pas encore accepté ce devis : passe-le d’abord en accepté, avec son e-mail de validation.' : '';
+            const needProof = !warn && fwd && nx === 2;
+            const base = { next: list[nx], ok: (nx < d.st ? 'Revenir à ' : 'Passer en ') + list[nx].toLowerCase(), note: NOTE[list[nx]], warn, needProof };
+            if (warn) return { ...base, off: true, run: () => this.flash(warn) };
+            if (needProof && !proof) return { ...base, off: true, note: 'Joins l’e-mail de validation du client (capture ou PDF) pour passer en accepté.', run: () => this.flash('Joins d’abord l’e-mail de validation du client') };
+            return { ...base, run: () => { this.setState(st => ({ stCf: null, docs: st.docs.map(x => x.no === d.no ? { ...x, st: nx, ...(needProof ? { accProof: proof, accAt: TODAY() } : nx < 2 ? { accProof: null, accAt: null } : {}) } : x) })); this.flash(d.no + ' : ' + list[nx].toLowerCase()); } }; })()
             : s.role === 'staff' ? null
             : d.paQueued ? null
             : !d.pro && [0, 1, 2, 6].includes(d.st) ? { next: 'Encaissée', ok: 'Enregistrer l’encaissement', pay: true, note: 'Facture à un particulier : pas de facture électronique. Les ventes aux particuliers seront déclarées en e-reporting.' }
@@ -2421,7 +2481,19 @@ class Component extends DCLogic {
             cfCur: status, cfCurBg: TONE[status][0], cfCurFg: TONE[status][1], cfHasOk: !!A,
             cfNext: A ? A.next : '', cfNextBg: A ? TONE[A.next][0] : 'transparent', cfNextFg: A ? TONE[A.next][1] : 'inherit',
             cfNote: A ? A.note : d.paQueued ? 'En attente d’envoi : la facture partira à la reconnexion.' : s.role === 'staff' ? 'Réservé au patron.' : status === 'Encaissée' ? 'Statut final : le cycle de la facture est terminé.' : 'Ce statut est posé par la plateforme ou le client. Rien à faire de ton côté.',
-            cfOkTxt: A ? A.ok : '', cfStop: stop,
+            cfOkTxt: A ? A.ok : '', cfStop: stop, cfDevis: !fac, cfFac: fac,
+            cfOpts: !fac ? list.map((l, i) => { const cur = i === d.st, tgt = !cur && A && list.indexOf(A.next) === i; return { l, cur, tgt, pick: e => { stop(e); if (!cur) this.setState({ stCf: { no: d.no, ctx, to: i } }); },
+              bg: tgt ? TONE[l][0] : cur ? 'var(--color-surface)' : 'transparent', fg: tgt ? TONE[l][1] : 'var(--color-text)', bd: tgt ? TONE[l][0] : cur ? 'var(--color-neutral-500)' : 'var(--color-neutral-400)', fw: tgt || cur ? 800 : 600, tag: cur ? 'actuel' : (i >= 2 && d.st < 1) || (i === 3 && d.st < 2) ? 'bloqué' : '' }; }) : [],
+            cfSame: !fac && A && list.indexOf(A.next) === d.st,
+            cfWarn: A && A.warn ? A.warn : '', cfHasWarn: !!(A && A.warn), cfNeedProof: !!(A && A.needProof), cfOkOp: A && A.off ? 0.45 : 1,
+            cfHasProof: !!proof, cfProofName: proof ? proof.name : '', cfNoProof: !proof, cfValReq: d.valReqAt ? 'Demande envoyée le ' + d.valReqAt + ', en attente de la réponse.' : 'Aucune demande envoyée.',
+            cfDropProof: e => { stop(e); this.setState(st => ({ stCf: { ...st.stCf, proof: null } })); },
+            cfOnProof: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > 3e6) return this.flash('Fichier trop lourd : 3 Mo maximum');
+              if (!/^(image\/(png|jpeg|webp)|application\/pdf)$/.test(f.type)) return this.flash('Capture (PNG, JPEG, WebP) ou PDF uniquement');
+              const rd = new FileReader(); rd.onload = () => this.setState(st => ({ stCf: { ...(st.stCf || { no: d.no, ctx }), proof: { src: rd.result, name: f.name, pdf: f.type === 'application/pdf' } } })); rd.readAsDataURL(f); },
+            cfAskVal: e => { stop(e); const nm = (d.client || '').split(' — ')[0];
+              this.draft({ title: 'Validation du devis ' + d.no, subject: 'Devis ' + d.no + ' : votre accord', body: `Bonjour ${nm},\n\nVous trouverez ci-joint le devis ${d.no} d’un montant de ${fmt(ttc)} TTC.\n\nPour valider ce devis, merci de répondre à cet e-mail avec la mention « Bon pour accord », ou de nous retourner le devis daté et signé.\n\nCordialement,\n${this.coData().name || ''}`, attach: [d.no + '.pdf'] },
+                () => this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ? { ...x, valReqAt: TODAY() } : x) }))); },
             onCycle: e => { stop(e); this.setState({ stCf: open ? null : { no: d.no, ctx } }); },
             cfNo: e => { stop(e); this.setState({ stCf: null }); },
             cfOk: e => { stop(e); if (A) A.run(); } }; } };
@@ -2563,7 +2635,7 @@ class Component extends DCLogic {
       doFacture: () => {
         const no = docNo('FAC', s.facSeq);
         this.setState(st => ({ facSeq: st.facSeq + 1, docTab: 'fac', recapOpen: false, plans: (st.plans ?? this.defaultPlans()).map(p => p.devisNo === (st.editNo || LIVE_NO) ? { ...p, facNo: no } : p),
-          docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: TODAY(), st: 0, devisNo: st.editNo || LIVE_NO,
+          docs: [{ no, type: 'fac', client: `${st.client || 'Client'} — acompte ${st.acompte} % déduit`, date: TODAY(), st: 0, devisNo: st.editNo || LIVE_NO, ...(dv => dv && dv.accProof ? { accProof: dv.accProof, accAt: dv.accAt } : {})(st.docs.find(x => x.no === (st.editNo || LIVE_NO))),
             siren: st.cliSiren || '', addr: st.cliAddr || st.chantier || '', pro: (st.clientType || 'part') === 'pro', chantier: st.chantier || '', micro: T.micro,
             lines: st.lines.map(l => ({ name: l.name, ref: l.ref, kind: l.kind, unit: l.unit, tva: l.tva, qty: l.qty, pu: l.pu })),
             rem: Math.min(Math.max(parseFloat(String(st.remiseTxt).replace(',', '.')) || 0, 0), 100) / 100,

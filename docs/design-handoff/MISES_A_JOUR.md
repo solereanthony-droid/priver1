@@ -1,8 +1,14 @@
 # Mises à jour pour Claude Code : Alizé Pilote (ex-Chiffrage BTP 974)
 
-**Date :** 2026-09-30 (v15.2)
+**Date :** 2026-10-01 (v15.8)
 **Base :** le code livré après le retour de développement (`RETOUR_DEV.md`), c'est-à-dire le handoff jusqu'à la v4 (export PDF des plans).
 **Référence :** `Chiffrage BTP 974 Mobile.dc.html`, fourni dans ce dossier. Le gabarit `<x-dc>` et la classe `Component` restent la source de vérité.
+
+## v15.3 à v15.8 (2026-10-01)
+
+Détail complet dans `MISE_A_JOUR_v15.md` : tableau de bord Facturation (v15.3), sécurité et accessibilité RETOUR_DEV §12–13 (v15.4), écran de verrouillage MISE_A_JOUR_VERROU (v15.5), changement d'état d'un devis avec e-mail de validation (v15.6), session d'onglet (v15.7), finitions d'interface Équipe et Outils + bouton Verrouiller (v15.8).
+
+---
 
 ## Comment appliquer
 1. Remplacer le gabarit et la classe `Component` par ceux du fichier fourni. Les règles de ton retour sont respectées : chemins simples dans `{{ }}`, pas de ressource externe, pas de `<script>` dans le gabarit, pas de prompt IA ajouté.

@@ -435,3 +435,29 @@ le serveur). « Code maître » n'est plus employé : on dit **Code patron**.
 - Tests : `test/lock.spec.js` (app), `test/auth.spec.js` et `test/pa.spec.js` (serveur). Parcours vérifié dans le
   navigateur, avec le serveur puis sans serveur : premier code, code salarié, « C'est bien toi ? », changement du
   Code patron, rechargement ; aucun code en clair dans `localStorage`.
+
+## 15. Retour sur v15.3 à v15.8 (intégrées le 2026-10-01)
+
+Tout est importé par `scripts/import-handoff.py`, sans retouche à la main : tableau de bord Facturation, accessibilité
+§ 13.2, écran de verrouillage (fiche `MISE_A_JOUR_VERROU.md` appliquée telle quelle, l'import redonne le code de l'app),
+changement d'état d'un devis avec e-mail de validation, session d'onglet, cadenas de l'Accueil, finitions Équipe et
+Outils. Tests : `test/v15_8.spec.js` et les suites existantes (`npm test` vert). Parcours vérifié dans le navigateur,
+avec et sans serveur.
+
+### 15.1 Adapté côté app (dans le script d'import, rien à faire dans le prototype)
+1. **Session d'onglet (v15.7)** : le prototype décide au montage. Dans l'app, la sauvegarde (donc `lockDelay`) est lue
+   juste après, et le mode serveur n'est connu qu'après la réponse du serveur : avec « Immédiat » ou un serveur, l'app
+   se serait rouverte sans code. La reprise est donc décidée dès que la sauvegarde est lue et le mode connu ; jamais
+   en mode serveur (le code y est toujours redemandé au rechargement, la session du serveur est fermée).
+2. **`window.btpDemo` retiré** : il exposait `setState` à la console (`btpDemo.set({ locked: false, role: 'owner' })`
+   ouvrait l'app sans code). À garder hors du prototype livré, ou derrière un réglage de démonstration.
+3. **Preuve d'accord (v15.6)** : `accProof` va dans IndexedDB comme tout fichier importé (rien de lourd dans
+   `localStorage`) et la facture créée depuis le devis en garde une copie (`accProof`, `accAt`), stockée une seule
+   fois. Le fichier n'est jamais affiché (seul son nom l'est) ; type et taille sont déjà contrôlés à l'import.
+
+### 15.2 À noter
+- **Code redemandé moins souvent (v15.7)** : sans serveur, un rechargement dans le délai de verrouillage rouvre l'app
+  sans code. C'est plus souple que la règle « à chaque ouverture » décidée le 2026-10-01, mais cohérent avec le
+  verrouillage automatique ; fermer l'onglet ou l'app redemande toujours le code.
+- **Toujours ouvert** : délai de paiement du tableau de bord fixe (`23 j`), cibles des indicateurs non réglables,
+  données réelles (historique, panier moyen, transformation, CSV taux par taux).

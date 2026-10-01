@@ -1,6 +1,6 @@
 /* Généré par scripts/import-handoff.py depuis le <helmet> du prototype : ne pas modifier à la main. */
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--color-neutral-300)}
+html,body{margin:0;background:var(--color-neutral-300);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-800)}
 input::placeholder{color:var(--color-neutral-600)}
 button:focus-visible,input:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}

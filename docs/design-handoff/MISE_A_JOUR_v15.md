@@ -1,4 +1,4 @@
-# Mise à jour pour Claude Code : Alizé Pilote (ex-Chiffrage BTP 974) · v15 → v15.2
+# Mise à jour pour Claude Code : Alizé Pilote (ex-Chiffrage BTP 974) · v15 → v15.8
 
 **Date :** 2026-09-30
 **Base :** l'app telle qu'intégrée après `RETOUR_DEV-5.md` (v14.2 comprise).
@@ -14,11 +14,129 @@
 
 **`totals()` inchangé.** Aucune règle de calcul (TVA, remise, acompte, marge) ne bouge : `test/logic.spec.js` doit passer tel quel.
 
+## v15.8 : finitions d'interface (2026-10-01)
+
+`totals()` inchangé. Nouvelle clé persistée : `absInfo`.
+
+### Bouton Verrouiller (Accueil)
+- Cadenas rond 44 px (`--color-accent-200` / `--color-accent-900`, survol `--color-accent-300`) à droite du choix du métier, dans un groupe `flex` gap 8 px. `onClick = lockNow` → `lock()` (efface aussi la session d'onglet). `aria-label="Verrouiller l'app"`.
+- Démo : le code patron choisi au premier lancement reste enregistré (`ownerHash`) ; ne pas le réinitialiser entre deux démonstrations.
+
+### Onglets des écrans Outils (Projets, Devis, Planning, Matériel)
+- `role="tablist"` / `role="tab"` + `aria-selected` (`t.sel`). Hauteur 64 px, bordure 2 px (`t.bd` : `--color-neutral-400`, ou `--color-neutral-900` si actif ; `--color-neutral-700` au survol), fond `--color-neutral-100` (actif : `--color-neutral-900`).
+- Compteur en Caprasimo 22 px, libellé Figtree 700 13 px (avant : 15 px / 11 px). Sous-titre de l'écran 15 px 600 `--color-neutral-800`.
+- `body` : `-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility`.
+
+### Équipe › Nouvelle absence
+- Titres de groupe « Salarié » et « Type d'absence » (13 px 700 `--color-neutral-800`).
+- Types en `role="radiogroup"` : grille `repeat(auto-fill, minmax(140px, 1fr))`, cases de 60 px, rayon 18 px, rond de sélection 18 px (point 8 px sauge si choisi), libellé + précision : Congés payés « payés par la caisse », Maladie « arrêt de travail », Intempéries « chantier arrêté », Formation « CFA, stage », Sans solde « non rémunéré ». Champs ajoutés à `af.types[]` : `sub`, `ring`, `dot`.
+
+### Équipe › Règles d'absence (repliables)
+- Même modèle que les particularités des formes juridiques : lien « ? Masquer les règles d'absence » / « Voir les règles d'absence » (`aria-expanded`), encadré sauge `--color-accent-2-200` avec rubriques en petites capitales (Congés payés, Intempéries, Apprenti) et la note « Règles 2026, à confirmer avec ton comptable. »
+- `rh.absInfo` = { on, label, toggle, rows[] } ; état `absInfo` persisté (ouvert par défaut).
+
+### Équipe › Ajouter des heures (même style que Nouvelle absence)
+- Plus d'encadré intérieur ni de traits : titres simples « Salarié », « Chantier » (avec « prévu : … » à droite), « Durée ».
+- Chantiers en `role="radiogroup"`, cases 52 px avec rond de sélection (champs `ring`, `dot` ajoutés à `f.ch[]`).
+- Durée : − / + de 48 px dans une barre arrondie `--color-surface` ; heures en Caprasimo 32 px.
+- Panier repas : interrupteur dans un bloc `--color-surface` rayon 18 px, 56 px de haut.
+
+### Tests v15.8
+- [ ] Cadenas de l'Accueil → écran de code ; recharger → code toujours demandé.
+- [ ] Lecteur d'écran : onglets annoncés « onglet, sélectionné » ; types d'absence et chantiers annoncés comme boutons radio.
+- [ ] Règles d'absence masquées → toujours masquées après rechargement.
+- [ ] Ajouter des heures : choisir un salarié présélectionne son chantier prévu ; ajout d'une ligne inchangé.
+
+## v15.7 : moins de demandes de code (2026-10-01)
+
+Constat : le code était redemandé à chaque rechargement (`locked: true` au démarrage), même quelques secondes après l'avoir saisi.
+- Session d'onglet `sessionStorage['btp974-session']` = { role, rhEmp (salarié seulement), at }. Écrite au déverrouillage, toutes les 15 s d'activité au plus et au passage en arrière-plan ; effacée par `lock()`.
+- Au chargement : si `at` date de moins de `lockDelay` minutes (5 par défaut), l'app s'ouvre directement avec le même rôle. Délai « Immédiat » (0) : code toujours demandé. Onglet ou app fermés : `sessionStorage` vidé, code demandé.
+- Aucun code ni empreinte dans cette session ; mode `server` non concerné (`session()` côté serveur fait foi).
+- Tests : saisir le code, recharger → pas de code ; attendre plus que le délai, recharger → code ; « Verrouiller maintenant », recharger → code.
+
+- **Bouton Verrouiller** (cadenas rond 44 px, fond `--color-accent-200`) en haut à droite de l'Accueil, à côté du choix du métier : appelle `lock()` (efface la session d'onglet). « Verrouiller maintenant » reste dans Réglages.
+- Démo : le code patron choisi au premier lancement reste enregistré (`ownerHash` dans `KEEP`) ; ne pas le réinitialiser entre deux démonstrations.
+
+## v15.6 : changement d'état d'un devis (2026-10-01)
+
+- **Choix libre** : les 4 états du devis sont des pastilles (`cfOpts`, `role="radio"`) ; l'état suivant est présélectionné (le précédent si le devis est Facturé). Le bouton dit « Passer en … » ou « Revenir à … ». Factures inchangées (flèche actuel → suivant).
+- **Blocages** (`A.warn`, bandeau d'alerte terracotta, bouton à 45 % d'opacité, pastille marquée « bloqué ») :
+  - Brouillon → Accepté ou Facturé : « Devis pas encore envoyé : envoie-le au client avant de le passer en … »
+  - Envoyé → Facturé : « Le client n'a pas encore accepté ce devis : passe-le d'abord en accepté, avec son e-mail de validation. »
+- **Passage en Accepté = e-mail de validation obligatoire** : encart sauge avec « Demander la validation par e-mail » (brouillon d'e-mail au client, devis en pièce jointe, demande de réponse « Bon pour accord » ; à l'envoi, `valReqAt` = date du jour) et « Joindre la réponse du client » (capture PNG / JPEG / WebP ou PDF, 3 Mo max). Sans pièce jointe, le bouton reste inactif.
+- Nouveaux champs du devis : `valReqAt`, `accProof` ({ src, name, pdf }), `accAt`. Retour à Brouillon ou Envoyé efface `accProof` et `accAt`.
+- **À faire côté app** : stocker `accProof` en IndexedDB (comme les justificatifs), et l'archiver avec la facture issue du devis (preuve d'accord du client).
+- Tests : Brouillon → Accepté refusé avec l'alerte ; Envoyé → Accepté impossible sans pièce jointe, possible avec ; Accepté → Brouillon efface la preuve.
+
+## v15.5 : écran de verrouillage (MISE_A_JOUR_VERROU.md appliquée)
+
+La fiche `MISE_A_JOUR_VERROU.md` (2026-10-01) est appliquée **telle quelle** au prototype : utilitaires d'accès avec leurs commentaires de bornes (« Blocage après trop d'essais » … « Fin des utilitaires d'accès »), `lock()`, `lkSubmit()`, `lockVals()`, `lockSetVals()`, `staffCode()`, migration au chargement, verrouillage automatique, et les trois blocs du gabarit (§ 5.1, 5.2, 5.3). `scripts/import-handoff.py` peut donc s'exécuter sur ce prototype.
+- Remplace la v15.4 sur ce point : plus d'empreinte `OWNER_H` ni de code `974974` ; codes à 6 chiffres pour tous (PBKDF2) ; `lkTries` supprimé.
+- Seuls écarts par rapport au texte de la fiche, pour rester cohérent avec §13.2 : le titre « Code d'accès » de Réglages est un `<h2>` et le `<h1>` de l'écran de code reçoit `line-height:inherit`.
+- `KEEP` = liste du § 3 de la fiche.
+- Tests : ceux du § 8 de `MISE_A_JOUR_VERROU.md`.
+
+## v15.4 : retour RETOUR_DEV §12 et §13 (2026-10-01)
+
+`totals()` inchangé.
+
+### §12.2 Sécurité du code d'accès
+- **Code patron à 6 chiffres** (6 points sur l'écran). Code salarié : 4 chiffres (`rh.staff[].pin`). Le pavé teste un code salarié à 4 chiffres, puis le code patron à 6.
+- **`ownerCode` retiré de `KEEP`** : le prototype ne garde qu'une empreinte (`Component.OWNER_H`, FNV-1a, démo `974974`). C'est une protection de démo, pas une sécurité : en production, seul le serveur vérifie (`APP_OWNER_CODE`).
+- **Blocage progressif** (reflet du serveur) : 5 erreurs → 1 min (« Trop d'essais : patiente une minute ») ; 10 erreurs d'affilée → 15 min, puis 30, 60… jusqu'à 24 h, message « Trop d'essais : accès bloqué jusqu'à hh:mm ». Nouvel état non persisté `lkFails`.
+- **Aide** sous Réglages › Code d'accès : « "Verrouiller" protège l'usage de l'app. Il ne chiffre pas les données : un téléphone perdu et déverrouillé reste lisible. Verrouille aussi ton téléphone. »
+- Libellé de l'écran : « Patron : 6 chiffres · salarié : 4 chiffres ».
+
+### §12.3 Réémission d'une facture refusée
+- La copie prend `TODAY()` (JJ/MM/AAAA). Plus aucun `toLocaleDateString` jour + mois pour une date de document.
+
+### §13.2 Accessibilité
+1. **Champs nommés** : `aria-label` sur l'assistant IA, Client, Adresse du chantier, titre d'intervention, deux recherches du catalogue (`type="search"`), « Ajouter une étape ».
+2. **Interrupteurs** : `aria-label` sur Masquer les prix unitaires, Retenue de garantie 5 %, Réserve de propriété, Mode plein soleil. Les 4 autres (`role="switch"` avec texte à l'intérieur) ont déjà un nom.
+3. **Titres** : 14 `<h1>` (titre d'écran, taille 32, « Code d'accès », « Bonjour … ») et 74 `<h2>` (titres de section 20 à 28 px). Style en ligne `margin:0;font-weight:400;line-height:inherit;letter-spacing:normal` pour un rendu identique (la feuille Organic met h1/h2 à 1,12 et −0,015 em).
+4. **autocomplete** : `name`, `tel`, `street-address` sur la fiche nouveau chantier et le devis ; destinataires d'e-mail et coordonnées du comptable en `autocomplete="off"` + `spellcheck="false"`.
+5. **Placeholders** : terminés par « … » avec un exemple (« Client : Mme Payet… », « Adresse du chantier : 12 rue des Letchis… », « SIREN ou SIRET : 812 453 678… »…).
+6. **Jauges** : les 6 animations de largeur passent en `scale: <pct> 1` + `transform-origin: left` (propriété CSS `scale`, pourcentage accepté) ; le curseur de marge en `translate: <pct> 0` sur un calque pleine largeur. Les extrémités arrondies se tassent légèrement pendant l'animation, c'est attendu.
+7. **Images** : `width`/`height` explicites sur les miniatures de justificatifs (44 × 44, 64 × 64) et l'aperçu (600 × 480, hauteur fixe 480 px, `object-fit: contain`). Plans importés : dimensions lues à l'import (`iw`, `ih` sur le plan, nouveaux champs) et `aspect-ratio` ; anciens plans : 4 / 3 par défaut.
+
+### Tests v15.4
+- [ ] Code `974974` → app complète ; code salarié à 4 chiffres → écran salarié ; `ownerCode` absent de la sauvegarde locale.
+- [ ] 10 codes faux → « accès bloqué jusqu'à hh:mm » (15 min).
+- [ ] Facture refusée réémise : date JJ/MM/AAAA.
+- [ ] Lecteur d'écran : navigation par titres sur chaque écran ; tous les champs et interrupteurs annoncés.
+- [ ] Jauges (marge, espace, projet, implantation, fiche entreprise) animées sans saut ; curseur de marge suit la barre.
+- [ ] Import d'un plan 1600 × 900 : pas de saut de mise en page, `iw`/`ih` enregistrés.
+
+## v15.3 : écran Facturation en tableau de bord (2026-10-01)
+
+Écran `05 Facturation` réorganisé en tableau de pilotage, sur le modèle des 4 blocs d'un tableau de bord du bâtiment (activité, marge, trésorerie, RH) avec 3 ou 4 indicateurs par bloc et un statut par rapport à une cible. Calculs de `totals()` inchangés ; tout est dans `statsVals()` → `st.*`.
+
+**Ordre de l'écran**
+1. Sélecteur de période (inchangé).
+2. **Bandeau santé** (`st.health`) : « N alertes · N à surveiller » ou « Tous les indicateurs sont dans la cible ».
+3. Grille 2 colonnes sur grand écran (1 sur téléphone) : carte CA (inchangée) + **« À traiter »** (`st.alerts`) : factures impayées depuis plus de 30 jours, factures rejetées ou refusées, envois en attente vers la plateforme, devis envoyés sans réponse depuis 10 jours. Chaque ligne mène à l'écran concerné.
+4. **3 blocs d'indicateurs** (`st.blocks`), chacun avec sa question :
+   - Trésorerie, « Est-ce que l'argent rentre ? » : Encaissé, Reste à encaisser (cible < 10 % du CA), Délai de paiement (cible 30 j), TVA à reverser.
+   - Activité, « Aurai-je du travail dans 3 mois ? » : Transformation (cible 40 %), Carnet de commandes en semaines de travail (cible 4), Devis à relancer.
+   - Rentabilité, « Est-ce que je gagne de l'argent ? » : Marge moyenne (cible 30 %), Panier moyen, Factures émises.
+   - Pastille par indicateur : Conforme (sauge), À surveiller (orange clair), Alerte (terracotta). Seuils dans `lvl()`.
+5. Grille responsive : Évolution, Statut sur la plateforme, Meilleurs clients, TVA collectée + export CSV (blocs inchangés). L'ancienne grille de 4 tuiles est remplacée par les blocs.
+
+**À faire côté app**
+- Brancher les valeurs réelles : délai de paiement (aujourd'hui `23 j` fixe) = moyenne (date d'encaissement − date de transmission) ; transformation, carnet et marge depuis `docs` (déjà calculés ainsi).
+- Les cibles (10 %, 30 j, 40 %, 4 semaines, 30 %) sont des valeurs par défaut : prévoir de les rendre réglables dans Réglages (à designer si besoin).
+
+**Tests**
+- [ ] Une facture Transmise datée de plus de 30 jours apparaît dans « À traiter » et le bandeau passe en alerte si le reste à encaisser dépasse 20 %.
+- [ ] Aucune alerte → « Rien d'urgent… » et bandeau sauge.
+- [ ] Mode ordinateur : CA et « À traiter » côte à côte ; téléphone : empilés.
+
 ## Clés persistées
-Nouvelles depuis v14.2 : `cliAddr`, `paAcc`, `ownerCode`.
+Nouvelles depuis v14.2 : `cliAddr`, `paAcc` (`ownerCode` retiré en v15.4 ; champs de plan `iw`, `ih`).
 Liste complète `Component.KEEP` :
 ```
-'lines','client','cliSiren','cliAddr','paAcc','ownerCode','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
+'lines','client','cliSiren','cliAddr','paAcc','ownerHash','lkGuard','lockDelay','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','absInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'
 ```
 États non persistés ajoutés : `paSt`, `stPay`, `storeEst`, `locked`, `lkCode`, `lkErr`, `lkTries`, `lkUntil`, `role`.
 Nouvelle prop (Tweaks, revue design uniquement) : `paState` (`connecte` par défaut).
@@ -143,7 +261,7 @@ Ligne d'état sous chaque facture (`paLine`, Documents et carte Facturation éle
 - [ ] Encaissement partiel 500 € sur 1 173 € → « Payé 500,00 € · reste 673,00 € » ; solde → Encaissée, `paidOn` JJ/MM/AAAA ; montant > reste ou date future refusés.
 - [ ] Hors ligne : Transmettre → « En attente d'envoi » ; retour réseau → Transmise.
 - [ ] 7 états de connexion : carte, Réglages et menu de statut cohérents.
-- [ ] Code 1974 → app complète ; code salarié → écran salarié seul ; 5 erreurs → blocage 1 min.
+- [ ] Premier lancement → « Choisis ton code patron » (6 chiffres) ; code salarié à 6 chiffres → « C'est bien toi, … ? » ; voir § 8 de MISE_A_JOUR_VERROU.md.
 - [ ] Lien « Où le trouver ? » (SIREN) et lien liste officielle des PA en `noopener noreferrer`.
 
 ## Toujours ouvert
