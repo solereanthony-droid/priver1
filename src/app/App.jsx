@@ -12,6 +12,7 @@ export default function App({ regime = 'assujetti', acompte = 30, paName = 'Fact
   usePersistence(BtpLogic.KEY, logic.state, {
     snapshot: s => logic.snapshot(s),
     restore: d => logic.restore(d),
+    onLoad: () => logic.setState({ restored: true }),   // l'écran de code attend la sauvegarde (Code patron, blocage)
     onError: () => logic.flash('Stockage plein : les dernières modifications ne sont pas enregistrées. Supprime un plan importé.'),
   });
   useServiceWorker();

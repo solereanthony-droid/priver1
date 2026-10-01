@@ -103,29 +103,12 @@ describe('v15.1 : adresse de facturation', () => {
   });
 });
 
-describe('v15 : écran de code d’accès (sans serveur : contrôle local de démo)', () => {
-  it('1974 → patron ; code salarié → écran salarié ; 5 erreurs → blocage 1 min', async () => {
-    vi.useFakeTimers();
-    const c = live({ locked: true });
-    const type = code => { for (const k of code) c.renderVals().lk.keys.find(x => x.l === k).on(); vi.advanceTimersByTime(200); };
-    type('1974');
-    expect(c.state).toMatchObject({ locked: false, role: 'owner' });
-    const pin = String(c.rhData().staff.find(x => x.pin && x.kind !== 'dir').pin);
-    c.state = { ...c.state, locked: true, role: null };
-    type(pin);
-    expect(c.state.role).toBe('staff');
-    c.state = { ...c.state, locked: true, role: null };
-    for (let i = 0; i < 5; i++) type('0000');
-    expect(c.renderVals().lk.blocked).toBe(true);
-    expect(c.renderVals().lk.err).toMatch(/patiente une minute/);
-    vi.useRealTimers();
-  });
-});
+// Écran de code d’accès sans serveur : voir test/lock.spec.js (codes à 6 chiffres, empreintes, blocage progressif).
 
 describe('branchements de l’app', () => {
   async function mountBridge(pa, state) {
     window.btpPA = pa;
-    const logic = { state, flashes: [], flash(m) { this.flashes.push(m); }, coData: () => ({ name: 'JH', siret: '73282932000074', tva: 'FR44732829320', addr: '4 rue des Flamboyants, 97460 Saint-Paul' }),
+    const logic = { state, flashes: [], flash(m) { this.flashes.push(m); }, unlockAs(role, staffId) { this.setState({ locked: false, role, staffId }); }, coData: () => ({ name: 'JH', siret: '73282932000074', tva: 'FR44732829320', addr: '4 rue des Flamboyants, 97460 Saint-Paul' }),
       setState(u) { const p = typeof u === 'function' ? u(this.state) : u; this.state = { ...this.state, ...p }; } };
     function Host() { usePaBridge(logic, !!logic.state.locked); return null; }
     const root = createRoot(document.createElement('div'));
@@ -153,13 +136,17 @@ describe('branchements de l’app', () => {
     const pa = connected({ login: vi.fn(async code => code === '424242' ? { status: 200, data: { role: 'owner' } } : code === '999999' ? { status: 429, data: {} } : { status: 401, data: {} }) });
     const { logic, unmount } = await mountBridge(pa, { docs: [] });
     expect(logic.state.locked).toBe(true);
-    expect(globalThis.__btpLogin('0000', { staff: [] })).toBe(true);
+    expect(logic.state.authMode).toBe('server');
+    expect(globalThis.__btpLogin('000000')).toBe(true);
     await act(() => new Promise(r => setTimeout(r, 10)));
     expect(logic.state.lkErr).toBe('Code incorrect');
-    globalThis.__btpLogin('999999', { staff: [] }); await act(() => new Promise(r => setTimeout(r, 10)));
+    globalThis.__btpLogin('999999'); await act(() => new Promise(r => setTimeout(r, 10)));
     expect(logic.state.lkErr).toMatch(/patiente une minute/);
-    globalThis.__btpLogin('424242', { staff: [] }); await act(() => new Promise(r => setTimeout(r, 10)));
+    globalThis.__btpLogin('424242'); await act(() => new Promise(r => setTimeout(r, 10)));
     expect(logic.state).toMatchObject({ locked: false, role: 'owner' });
+    pa.login = vi.fn(async () => ({ status: 200, data: { role: 'staff', staffId: 'k' } }));
+    globalThis.__btpLogin('730481'); await act(() => new Promise(r => setTimeout(r, 10)));
+    expect(logic.state).toMatchObject({ role: 'staff', staffId: 'k' });          // la session désigne le salarié
     await unmount();
   });
 });

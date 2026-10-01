@@ -240,10 +240,11 @@ describe('Facture EN 16931', () => {
 });
 
 describe('Routes /api/pa/*', () => {
-  let server, base;
+  let server, base, staffCode;
   beforeEach(async () => {
     await setup();
-    const sessions = createSessions({ ownerCode: 'patron-code-1234', staffCode: 'salarie-code-1234' });
+    const sessions = await createSessions({ ownerCode: '582916' });
+    staffCode = await sessions.newStaffCode('k', 'Kévin');
     const send = (res, status, body, type, extra = {}) => { res.writeHead(status, { 'Content-Type': type, ...extra }); res.end(body); };
     const routes = createPaRoutes({ service: svc, sessions, send, sameOrigin: () => true, secureCookie: () => false, clientIp: () => '1.1.1.1' });
     server = http.createServer((req, res) => routes.handle(req, res));
@@ -254,23 +255,23 @@ describe('Routes /api/pa/*', () => {
   const login = async code => (await fetch(base + '/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })).headers.get('set-cookie')?.split(';')[0];
 
   it('compte salarié → 403 sur toutes les routes /api/pa/*, sans session → 401', async () => {
-    const staff = await login('salarie-code-1234');
+    const staff = await login(staffCode);
     expect(staff).toMatch(/^btp_sid=/);
     for (const [m, p] of [['GET', '/api/pa/status'], ['POST', '/api/pa/connect'], ['POST', '/api/pa/disconnect'], ['GET', '/api/pa/invoices'], ['POST', '/api/pa/invoices'], ['POST', '/api/pa/invoices/FAC-2026-029/payments']]) {
       const init = { method: m, headers: { Cookie: staff, 'Content-Type': 'application/json' }, body: m === 'POST' ? '{}' : undefined };
       expect((await fetch(base + p, init)).status, p).toBe(403);
       expect((await fetch(base + p, { ...init, headers: { 'Content-Type': 'application/json' } })).status, p).toBe(401);
     }
-    expect(await (await fetch(base + '/api/pa/config', { headers: { Cookie: staff } })).json()).toEqual({ configured: true, sessions: true, role: 'staff' });
-    expect(await (await fetch(base + '/api/pa/config')).json()).toEqual({ configured: true, sessions: true, role: null });
-    const owner = await login('patron-code-1234');
+    expect(await (await fetch(base + '/api/pa/config', { headers: { Cookie: staff } })).json()).toEqual({ configured: true, sessions: true, role: 'staff', staffId: 'k' });
+    expect(await (await fetch(base + '/api/pa/config')).json()).toEqual({ configured: true, sessions: true, role: null, staffId: null });
+    const owner = await login('582916');
     const r = await fetch(base + '/api/pa/status', { headers: { Cookie: owner } });
     expect(r.status).toBe(200);
     expect(await r.json()).toMatchObject({ state: 'connecte', paName: 'PA de test' });
   });
 
   it('cookie de session HttpOnly et SameSite=Strict ; mauvais code limité à 5 essais par minute', async () => {
-    const r = await fetch(base + '/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: 'patron-code-1234' }) });
+    const r = await fetch(base + '/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: '582916' }) });
     expect(r.headers.get('set-cookie')).toMatch(/HttpOnly; SameSite=Strict/);
     const codes = [];
     for (let i = 0; i < 6; i++) codes.push((await fetch(base + '/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: 'x' }) })).status);
@@ -278,8 +279,23 @@ describe('Routes /api/pa/*', () => {
     expect(codes.at(-1)).toBe(429);
   });
 
+  it('codes d’accès : nouveau Code salarié et changement du Code patron réservés au patron', async () => {
+    const post = (p, body, cookie) => fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) }, body: JSON.stringify(body) });
+    const staff = await login(staffCode), owner = await login('582916');
+    expect((await post('/api/session/staff-code', { id: 'm', name: 'Mathis' })).status).toBe(401);
+    expect((await post('/api/session/staff-code', { id: 'm', name: 'Mathis' }, staff)).status).toBe(403);
+    const r = await post('/api/session/staff-code', { id: 'm', name: 'Mathis' }, owner);
+    const { code } = await r.json();
+    expect(code).toMatch(/^\d{6}$/);
+    expect(await (await post('/api/session', { code })).json()).toEqual({ role: 'staff', staffId: 'm' });
+    expect((await post('/api/session/owner-code', { old: '000000', code: '730481' }, owner)).status).toBe(401);
+    expect((await post('/api/session/owner-code', { old: '582916', code: '730481' }, owner)).status).toBe(200);
+    expect((await fetch(base + '/api/session', { headers: { Cookie: staff } })).status).toBe(401);   // autres sessions fermées
+    expect((await fetch(base + '/api/session', { headers: { Cookie: owner } })).status).toBe(200);
+  });
+
   it('dépôt via l’API : 202, puis « Transmise » dans la liste', async () => {
-    const owner = await login('patron-code-1234');
+    const owner = await login('582916');
     const r = await fetch(base + '/api/pa/invoices', { method: 'POST', headers: { Cookie: owner, 'Content-Type': 'application/json', 'Idempotency-Key': 'aaaaaaaaaaaaaaaa1' }, body: JSON.stringify({ invoice: invoice() }) });
     expect(r.status).toBe(202);
     for (let i = 0; i < 20 && inv()?.state !== 'deposee'; i++) { await new Promise(res => setTimeout(res, 20)); await svc.tick(); }

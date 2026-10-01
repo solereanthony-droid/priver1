@@ -7,7 +7,7 @@ import { toPaInvoice, isoDate } from '../pa/invoicePayload.js';
 // - Serveur injoignable (démo statique, sans API) : le prototype garde sa simulation, avec la mention « Démo ».
 const FAC_IDX = { 'Émise': 0, 'Transmise': 1, 'Acceptée': 2, 'Encaissée': 3, 'Rejetée': 4, 'Refusée': 5, 'En litige': 6 };
 const LIVE = new Set(['connecte', 'sync', 'panne_pa', 'reauth']);
-const MEMO = 'btp974-pa-live';
+const MEMO = 'btp974-pa-live', AUTH_MEMO = 'btp974-auth-server';
 const frDate = t => t ? new Date(t).toLocaleDateString('fr-FR') : undefined;
 
 export function usePaBridge(logic, locked) {
@@ -15,12 +15,14 @@ export function usePaBridge(logic, locked) {
 
   useEffect(() => {
     const pa = window.btpPA;
-    if (!pa) return;
+    if (!pa) { logic.setState({ authMode: 'local' }); return; }
     let status = null, stopped = false;
     const flash = m => logic.flash(m);
     const remember = v => { try { localStorage.setItem(MEMO, v ? '1' : '0'); } catch { /* stockage indisponible */ } };
     const wasLive = () => { try { return localStorage.getItem(MEMO) === '1'; } catch { return false; } };
     const setLive = v => { window.__btpPaLive = v; };
+    const rememberServer = v => { try { localStorage.setItem(AUTH_MEMO, v ? '1' : '0'); } catch { /* stockage indisponible */ } };
+    const wasServer = () => { try { return localStorage.getItem(AUTH_MEMO) === '1'; } catch { return false; } };
 
     async function sync() {
       try { status = await pa.status(); } catch { status = null; }
@@ -71,22 +73,27 @@ export function usePaBridge(logic, locked) {
       return true;
     };
 
-    // Écran de code d'accès : avec des sessions sur le serveur, c'est lui qui vérifie le code et bloque après 5 essais.
-    window.__btpLogin = (code, R) => {
-      if (!cfgRef.current?.sessions) return false;
+    // Écran de code d'accès en mode serveur : le serveur vérifie le code et applique le blocage après trop d'essais.
+    // La session porte l'identifiant du salarié (un Code salarié par salarié).
+    window.__btpLogin = code => {
+      if (logic.state.authMode !== 'server') return false;
       (async () => {
         let r;
         try { r = await pa.login(code); } catch { r = { status: 0 }; }
         if (r.status === 200) {
-          const staffer = r.data.role === 'staff' ? (R?.staff || []).find(x => x.pin && x.kind !== 'dir' && String(x.pin) === code) : null;
-          cfgRef.current = { ...cfgRef.current, role: r.data.role };
-          logic.setState({ locked: false, lkCode: '', lkErr: '', lkTries: 0, role: r.data.role, ...(staffer ? { rhEmp: { who: staffer.id, ch: 'filaos', h: 8, panier: true } } : {}) });
+          cfgRef.current = { ...(cfgRef.current || { sessions: true }), role: r.data.role };
+          logic.unlockAs(r.data.role, r.data.staffId);
           sync();
-        } else if (r.status === 429) logic.setState({ lkCode: '', lkTries: 0, lkErr: 'Trop d’essais : patiente une minute', lkUntil: Date.now() + 60000 });
+        } else if (r.status === 429) logic.setState({ lkCode: '', lkErr: (r.data?.error || 'Trop d’essais : patiente une minute').replace(/\.$/, ''), lkUntil: Date.now() + 60000 });
         else logic.setState({ lkCode: '', lkErr: r.status === 0 ? 'Serveur injoignable : réessaie' : 'Code incorrect' });
       })();
       return true;
     };
+    // Changer le Code patron et créer un Code salarié : faits par le serveur (Promise), ou false sans serveur.
+    window.__btpOwnerCode = (old, code) => logic.state.authMode !== 'server' ? false
+      : pa.changeOwnerCode(old, code).catch(() => ({ status: 0, data: { error: 'Serveur injoignable : réessaie.' } }));
+    window.__btpStaffCode = (id, name) => logic.state.authMode !== 'server' ? false
+      : pa.newStaffCode(id, name).catch(() => ({ status: 0, data: { error: 'Serveur injoignable : réessaie.' } }));
 
     const onError = e => flash(e.detail.no ? `${e.detail.no} : ${(e.detail.errors && e.detail.errors[0]) || e.detail.message}` : e.detail.message);
     const onUpdate = () => { sync(); };
@@ -101,26 +108,30 @@ export function usePaBridge(logic, locked) {
       history.replaceState(null, '', location.pathname);
     }
 
+    // Mode d'accès : avec des sessions sur le serveur, c'est lui qui vérifie les codes ; sinon, contrôle local (démo).
+    // L'écran de code s'affiche à chaque ouverture : une session restée ouverte est fermée.
+    // Serveur injoignable au démarrage alors qu'il gérait les codes : on reste en mode serveur (pas de code local).
     (async () => {
-      try {
-        const c = await pa.config();
-        if (c.status === 200) {
-          cfgRef.current = c.data;
-          // Sessions activées sur le serveur : sans session, l'app s'ouvre sur l'écran de code.
-          if (c.data.sessions) logic.setState(c.data.role ? { role: c.data.role, locked: false } : { locked: true, lkCode: '', lkErr: '' });
-        }
-      } catch { cfgRef.current = null; }
+      let c = null;
+      try { c = await pa.config(); } catch { c = null; }
+      if (c?.status === 200) {
+        cfgRef.current = c.data;
+        rememberServer(!!c.data.sessions);
+        if (c.data.role) { pa.logout?.().catch(() => {}); cfgRef.current = { ...c.data, role: null }; }
+      } else cfgRef.current = null;
+      const mode = c?.status === 200 ? (c.data.sessions ? 'server' : 'local') : wasServer() ? 'server' : 'local';
+      logic.setState(mode === 'server' ? { authMode: mode, locked: true } : { authMode: mode });
       sync();
     })();
     const timer = setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 30_000);
     return () => {
       stopped = true; clearInterval(timer);
-      delete window.__btpPaSend; delete window.__btpLogin; delete window.__btpPaLive;
+      delete window.__btpPaSend; delete window.__btpLogin; delete window.__btpOwnerCode; delete window.__btpStaffCode; delete window.__btpPaLive;
       window.removeEventListener('btp:pa-error', onError); window.removeEventListener('btp:pa-update', onUpdate); window.removeEventListener('online', onUpdate);
     };
   }, [logic]);
 
-  // « Verrouiller maintenant » ou déconnexion du salarié : la session du serveur est fermée aussi.
+  // « Verrouiller maintenant », verrouillage automatique ou déconnexion du salarié : la session du serveur est fermée aussi.
   useEffect(() => {
     if (locked && cfgRef.current?.sessions && cfgRef.current.role && window.btpPA) {
       cfgRef.current = { ...cfgRef.current, role: null };

@@ -168,7 +168,9 @@ function compressed(file, st, enc) {
 }
 
 // ── Sessions et plateforme agréée (facture électronique) ──
-const sessions = createSessions({ ownerCode: process.env.APP_OWNER_CODE || '', staffCode: process.env.APP_STAFF_CODE || '', tenantId: process.env.TENANT_ID || 'default' });
+// Codes d'accès : APP_OWNER_CODE fixe le Code patron au premier démarrage, puis les empreintes vivent dans auth.json.
+if (process.env.APP_STAFF_CODE) console.warn('APP_STAFF_CODE est ignoré : chaque salarié a son propre code, créé par le patron dans l’app.');
+const sessions = await createSessions({ ownerCode: process.env.APP_OWNER_CODE || '', file: path.resolve(process.env.AUTH_DATA_FILE || path.join(here, 'data', 'auth.json')), tenantId: process.env.TENANT_ID || 'default' });
 const pa = await createPaFromEnv(process.env, { dataDir: path.join(here, 'data') });
 const secureCookie = req => !!req.socket.encrypted || (TRUST_PROXY && String(req.headers['x-forwarded-proto'] || '').startsWith('https'));
 const paRoutes = createPaRoutes({ service: pa?.service || null, sessions, send, sameOrigin, secureCookie, clientIp, appUrl: process.env.APP_URL || '/' });
@@ -176,7 +178,7 @@ const paRoutes = createPaRoutes({ service: pa?.service || null, sessions, send, 
 const server = http.createServer((req, res) => {
   const route = req.url.split('?')[0];
   if (route === '/api/ai') handleAi(req, res).catch(e => { console.error(e); send(res, 500, '{}'); });
-  else if (route === '/api/session' || route.startsWith('/api/pa/')) paRoutes.handle(req, res);
+  else if (route === '/api/session' || route.startsWith('/api/session/') || route.startsWith('/api/pa/')) paRoutes.handle(req, res);
   else if (route.startsWith('/api/')) send(res, 404, JSON.stringify({ error: 'introuvable' }));
   else serveStatic(req, res);
 });

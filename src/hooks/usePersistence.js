@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import * as blobs from '../storage/blobStore.js';
 
-// Sauvegarde locale : recharge au montage (restore), puis enregistre snapshot(state) 400 ms après chaque changement.
+// Sauvegarde locale : recharge au montage (restore, puis onLoad, sauvegarde ou non), puis enregistre snapshot(state) 400 ms après chaque changement.
 // Les gros contenus (plans importés, fonds d'implantation) vont dans IndexedDB ; localStorage ne garde que le JSON
 // et des références. Si l'enregistrement échoue quand même (stockage plein ou bloqué), onError prévient l'utilisateur
 // une fois, puis de nouveau après un enregistrement réussi.
-export function usePersistence(key, state, { snapshot, restore, onError }) {
+export function usePersistence(key, state, { snapshot, restore, onError, onLoad }) {
   const loaded = useRef(false);
   const last = useRef('');
   const cache = useRef(new Map());
@@ -30,7 +30,7 @@ export function usePersistence(key, state, { snapshot, restore, onError }) {
           if (!cancelled) restore(data);
         }
       } catch { /* sauvegarde illisible : on repart des valeurs par défaut */ }
-      if (!cancelled) loaded.current = true;
+      if (!cancelled) { loaded.current = true; if (onLoad) onLoad(); }
     })();
     return () => { cancelled = true; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps

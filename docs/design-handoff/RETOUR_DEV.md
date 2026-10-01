@@ -327,6 +327,8 @@ serveur : écran de code → code patron → Réglages « Connecter mon compte �
 Sans serveur joignable (démo statique), le prototype garde toutes ses simulations.
 
 ### 12.2 Sécurité du code d'accès (à reprendre dans le design)
+> **Traité le 2026-10-01** : voir la section 14 (codes à 6 chiffres, plus aucun code en clair, portée du verrou).
+
 1. **4 chiffres, c'est court.** 10 000 combinaisons : la limite de 5 essais par minute et par IP ne suffisait pas
    (quelques heures, moins avec plusieurs adresses). Ajouté côté serveur : verrou **global** progressif après 10 échecs
    d'affilée (15 min, puis 30, 60… jusqu'à 24 h), message « Trop d'essais : accès bloqué jusqu'à hh:mm ».
@@ -379,3 +381,56 @@ typographie, thème). Base saine : aucun `<div onClick>`, zoom autorisé, `prefe
 6. **Animations de largeur** (`transition: width/left`, 6 jauges) : préférer `transform: scaleX()` (fluide sur les
    téléphones d'entrée de gamme).
 7. **Images** (justificatifs, plans importés) : `width`/`height` explicites pour éviter les sauts de mise en page.
+
+## 14. Écran de verrouillage : codes à 6 chiffres, aucun code en clair (2026-10-01)
+
+Suite de la § 12.2. Les décisions sont écrites dans `GLOSSARY.md` (Code d'accès, Code patron, Code salarié, Écran de
+verrouillage, Verrouillage automatique, Code à renouveler) et dans deux ADR : `docs/adr/0001` (le verrou protège
+l'usage de l'app, pas les données de l'appareil) et `docs/adr/0002` (codes gérés dans l'app, vérifiés un par un par
+le serveur). « Code maître » n'est plus employé : on dit **Code patron**.
+
+### 14.1 Ce que fait l'app
+- **Ce que protège le verrou** : il sépare les rôles sur un téléphone partagé et empêche un tiers d'ouvrir l'app.
+  Il ne chiffre pas les devis, factures et clients. Texte dans Réglages : « Le code protège l'accès à l'app, pas les
+  données du téléphone : verrouille aussi ton téléphone. »
+- **6 chiffres partout** (patron et salariés) : 6 points, validation automatique au 6ᵉ chiffre. 000000, 123456,
+  654321… sont refusés pour le Code patron et ne sont jamais générés.
+- **Aucun code en clair** : empreinte PBKDF2 dans la sauvegarde locale (mode démo), empreinte scrypt sur le serveur
+  (`server/data/auth.json`, 0600). Le code de démo `1974` est supprimé.
+- **Écran de code à chaque ouverture**, en démo comme avec le serveur (le rechargement ne déverrouille plus). Le
+  blocage après trop d'essais est le même dans les deux modes et survit au rechargement : 5 essais par minute, puis
+  après 10 échecs d'affilée « Trop d'essais : accès bloqué jusqu'à hh:mm » (15 min, 30, 60… jusqu'à 24 h).
+- **Premier lancement sans serveur** : « Choisis ton code patron », puis « Confirme ton code patron ». Avec un serveur,
+  le premier code vient de `APP_OWNER_CODE` (6 chiffres obligatoires).
+- **Code salarié propre à chacun** : créé au hasard par le patron (Équipe → fiche du salarié → « Créer son code » /
+  « Nouveau code »), affiché **une seule fois** avec « Envoyer par WhatsApp » et « C'est noté ». Ensuite, la fiche
+  montre « Accès pointage · code actif depuis le JJ/MM/AAAA ». Avec un serveur, c'est lui qui génère le code et la
+  session porte l'identifiant du salarié (corrige l'ancien `APP_STAFF_CODE` commun). Un nouveau code ferme les
+  sessions de ce salarié.
+- **« C'est bien toi, Kévin ? »** après un code salarié : « Oui, c'est moi » ouvre son pointage, « Non, ce n'est pas
+  moi » revient à l'écran de code.
+- **Changer le code patron** (Réglages → Code d'accès) : code actuel, nouveau code, confirmation, « Annuler ». Avec
+  un serveur, il faut être en ligne (bouton « Connexion requise pour changer le code ») et les autres appareils sont
+  déconnectés.
+- **Verrouillage automatique** (Réglages → Code d'accès) : Immédiat, 1 min, 5 min (par défaut), 15 min en arrière-plan.
+- **Code patron oublié** : avec un serveur, l'hébergeur le réinitialise (`docs/PA.md`) ; sans serveur, il faut
+  réinitialiser l'app (les données de l'appareil sont effacées). Texte affiché dans Réglages.
+- **Anciennes sauvegardes** : `ownerCode` n'est plus repris, l'app demande un nouveau Code patron ; les codes salariés
+  à 4 chiffres sont désactivés, la fiche affiche « Code à renouveler » (« L'ancien code ne fonctionne plus. »).
+
+### 14.2 Clés de sauvegarde (`KEEP`)
+- Retirée : `ownerCode`. Ajoutées : `ownerHash`, `lkGuard` (blocage), `lockDelay` (minutes, 5 par défaut).
+- Salarié : `pin` retiré ; `code: { hash | srv, at }` (empreinte locale, ou code tenu par le serveur) ; `pinRenew`
+  après migration.
+- États non persistés : `lkStep` (`login`, `setup`, `setup2`, `old`, `new`, `new2`, `who`), `lkTmp`, `lkOld`, `lkWho`,
+  `lkBusy`, `lkChange`, `authMode` (`server` / `local`), `restored`, `rhPin` (code affiché une fois).
+
+### 14.3 À designer / à reporter dans le prototype
+- Les écrans ci-dessus n'ont pas de maquette : ils reprennent l'écran de code existant (titre en `<h1>`, 6 points) et
+  la carte « Accès pointage ». À valider : ton des textes, écran « C'est bien toi ? », carte « Nouveau code »
+  (code en grand, « Envoie-le maintenant : il ne sera plus affiché »), réglage du verrouillage automatique.
+- Retirer du prototype : `ownerCode` et la ligne « Code patron (démo) », les `pin` en clair des salariés de démo et
+  l'affichage du code sur la fiche, le contrôle `c === OWNER` et `slice(0, 4)` dans `lockVals()`.
+- Tests : `test/lock.spec.js` (app), `test/auth.spec.js` et `test/pa.spec.js` (serveur). Parcours vérifié dans le
+  navigateur, avec le serveur puis sans serveur : premier code, code salarié, « C'est bien toi ? », changement du
+  Code patron, rechargement ; aucun code en clair dans `localStorage`.

@@ -64,6 +64,8 @@ export const btpPA = {
   session: () => api('GET', '/api/session'),
   login: code => api('POST', '/api/session', { code }),
   logout: () => api('DELETE', '/api/session'),
+  changeOwnerCode: (old, code) => api('POST', '/api/session/owner-code', { old, code }),
+  newStaffCode: (id, name) => api('POST', '/api/session/staff-code', { id, name }),
   async status() {
     if (!navigator.onLine) return { state: 'hors_ligne', queued: (await all()).length };
     const cfg = await api('GET', '/api/pa/config');

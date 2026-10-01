@@ -730,14 +730,32 @@
                         </sc-if>
                       </div>
                     </sc-if>
-                    <sc-if value="{{ p.hasPin }}" hint-placeholder-val="{{ false }}">
+                    <sc-if value="{{ p.canCode }}" hint-placeholder-val="{{ false }}">
                       <div style="display:flex;flex-direction:column;gap:8px;border-radius:18px;background:var(--color-accent-2-200);color:var(--color-accent-2-900);padding:12px 14px">
-                        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:14px;font-weight:800">Accès pointage</span><span style="font:800 16px ui-monospace,Menlo,monospace;letter-spacing:.15em">{{ p.pin }}</span></div>
-                        <div style="font-size:13px;line-height:1.4">Ne voit que son pointage : chantier, heures, panier. Aucun prix ni devis.</div>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap">
-                          <button onClick="{{ p.share }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Envoyer l’accès</button>
-                          <button onClick="{{ p.preview }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-2-700);color:var(--color-accent-2-900)">Voir son écran</button>
-                        </div>
+                        <sc-if value="{{ p.codeShown }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:14px;font-weight:800">Nouveau code</span><span style="font:800 18px ui-monospace,Menlo,monospace;letter-spacing:.15em">{{ p.code }}</span></div>
+                          <div style="font-size:13px;line-height:1.4">Envoie-le maintenant : il ne sera plus affiché. L’ancien code ne fonctionne plus.</div>
+                          <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button onClick="{{ p.share }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Envoyer par WhatsApp</button>
+                            <button onClick="{{ p.hideCode }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-2-700);color:var(--color-accent-2-900)">C’est noté</button>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ p.codeOn }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:14px;font-weight:800">Accès pointage</span><span style="font-size:13px;font-weight:700">{{ p.codeSince }}</span></div>
+                          <div style="font-size:13px;line-height:1.4">Ne voit que son pointage : chantier, heures, panier. Aucun prix ni devis.</div>
+                          <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button onClick="{{ p.newCode }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">Nouveau code</button>
+                            <button onClick="{{ p.preview }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-2-700);color:var(--color-accent-2-900)">Voir son écran</button>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ p.codeOff }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:14px;font-weight:800">{{ p.codeOffTxt }}</span></div>
+                          <div style="font-size:13px;line-height:1.4">{{ p.codeOffSub }}</div>
+                          <div style="display:flex;gap:8px;flex-wrap:wrap">
+                            <button onClick="{{ p.newCode }}" class="btn btn-primary" style="flex:1;min-height:44px;font-size:14px">{{ p.codeBtn }}</button>
+                            <button onClick="{{ p.preview }}" class="btn btn-secondary" style="flex:1;min-height:44px;font-size:14px;border-width:2px;border-color:var(--color-accent-2-700);color:var(--color-accent-2-900)">Voir son écran</button>
+                          </div>
+                        </sc-if>
                       </div>
                     </sc-if>
                   </sc-if>
@@ -2165,11 +2183,16 @@
             <div id="set-lock" style="background:var(--color-neutral-100);border-radius:28px;padding:16px 18px 14px;display:flex;flex-direction:column;gap:8px">
               <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;padding-bottom:4px">Code d’accès</div>
               <div style="font-size:14px;line-height:1.45;color:var(--color-neutral-800)">Le code patron ouvre toute l’app. Le code d’un salarié n’ouvre que son pointage et ses notes de frais : ni réglages de la plateforme, ni transmission.</div>
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;border-top:1px solid var(--color-divider)">
-                  <span style="font-size:15px;font-weight:600">Code patron (démo)</span>
-                  <span style="font-size:15px;font-weight:700;text-align:right">{{ ownerCode }}</span>
+              <div style="font-size:14px;line-height:1.45;color:var(--color-neutral-800)">Le code protège l’accès à l’app, pas les données du téléphone : verrouille aussi ton téléphone.</div>
+                <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0 10px;border-top:1px solid var(--color-divider)">
+                  <div><div style="font-size:15px;font-weight:600;padding-top:4px">Verrouillage automatique</div><div style="font-size:13px;color:var(--color-neutral-700)">{{ lockSet.delayTxt }}</div></div>
+                  <div style="display:flex;background:var(--color-surface);border-radius:999px;padding:4px">
+                    <sc-for list="{{ lockSet.delayOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onPick }}" style="flex:1;min-height:40px;border:none;border-radius:999px;font:700 14px var(--font-body);cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</button></sc-for>
+                  </div>
                 </div>
+              <button style-active="transform:scale(0.97)" onClick="{{ lockSet.change }}" disabled="{{ lockSet.changeOff }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">{{ lockSet.changeTxt }}</button>
               <button style-active="transform:scale(0.97)" onClick="{{ lockNow }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:48px;font-size:15px;border-width:2px;border-color:var(--color-neutral-500)">Verrouiller maintenant</button>
+              <div style="font-size:13px;line-height:1.4;color:var(--color-neutral-700)">{{ lockSet.forgot }}</div>
             </div>
             <div id="set-aff" style="background:var(--color-neutral-100);border-radius:28px;padding:16px 18px 8px;display:flex;flex-direction:column;gap:8px">
               <div style="font-family:var(--font-heading);font-size:20px;letter-spacing:-.01em;padding-bottom:4px">Affichage et données</div>
@@ -2924,24 +2947,35 @@
       </sc-if>
 
       <sc-if value="{{ lk.open }}" hint-placeholder-val="{{ false }}">
-        <div role="dialog" aria-modal="true" aria-label="Code d’accès" data-screen-label="Code d’accès" style="position:absolute;inset:0;z-index:40;background:var(--color-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px 28px;animation:btpIn .24s ease">
+        <div role="dialog" aria-modal="true" aria-label="{{ lk.title }}" data-screen-label="Code d’accès" style="position:absolute;inset:0;z-index:40;background:var(--color-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px 28px;animation:btpIn .24s ease">
           <div style="width:64px;height:64px;border-radius:50%;background:var(--color-accent-200);color:var(--color-accent-900);display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="3"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
-            <div style="font-family:var(--font-heading);font-size:26px;letter-spacing:-.01em">Code d’accès</div>
-            <div style="font-size:14px;color:var(--color-neutral-700)">Patron ou salarié : saisis ton code à 4 chiffres</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;max-width:320px">
+            <h1 style="margin:0;font-weight:400;font-family:var(--font-heading);font-size:26px;letter-spacing:-.01em">{{ lk.title }}</h1>
+            <div style="font-size:14px;line-height:1.4;color:var(--color-neutral-700)">{{ lk.sub }}</div>
           </div>
-          <div style="display:flex;gap:14px">
-            <sc-for list="{{ lk.dots }}" as="o" hint-placeholder-count="4"><span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--color-neutral-900);background:{{ o.bg }}"></span></sc-for>
-          </div>
-          <div style="min-height:22px;font-size:14px;font-weight:700;color:var(--color-accent-800);text-align:center" aria-live="polite">{{ lk.err }}</div>
-          <div style="display:grid;grid-template-columns:repeat(3,72px);gap:14px;opacity:{{ lk.op }}">
-            <sc-for list="{{ lk.keys }}" as="k" hint-placeholder-count="12">
-              <sc-if value="{{ k.show }}" hint-placeholder-val="{{ true }}">
-                <button style-active="transform:scale(0.92)" onClick="{{ k.on }}" disabled="{{ lk.blocked }}" aria-label="{{ k.lbl }}" style="transition:transform .1s ease;width:72px;height:72px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;font:600 {{ k.fs }} var(--font-body);color:var(--color-text)">{{ k.l }}</button>
-              </sc-if>
-              <sc-if value="{{ k.blank }}" hint-placeholder-val="{{ false }}"><span></span></sc-if>
-            </sc-for>
-          </div>
+          <sc-if value="{{ lk.pad }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:12px" aria-hidden="true">
+              <sc-for list="{{ lk.dots }}" as="o" hint-placeholder-count="6"><span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--color-neutral-900);background:{{ o.bg }}"></span></sc-for>
+            </div>
+            <div style="min-height:22px;font-size:14px;font-weight:700;color:var(--color-accent-800);text-align:center" aria-live="polite">{{ lk.err }}</div>
+            <div style="display:grid;grid-template-columns:repeat(3,72px);gap:14px;opacity:{{ lk.op }}">
+              <sc-for list="{{ lk.keys }}" as="k" hint-placeholder-count="12">
+                <sc-if value="{{ k.show }}" hint-placeholder-val="{{ true }}">
+                  <button style-active="transform:scale(0.92)" onClick="{{ k.on }}" disabled="{{ lk.blocked }}" aria-label="{{ k.lbl }}" style="transition:transform .1s ease;width:72px;height:72px;border:none;border-radius:50%;background:var(--color-neutral-100);cursor:pointer;font:600 {{ k.fs }} var(--font-body);color:var(--color-text)">{{ k.l }}</button>
+                </sc-if>
+                <sc-if value="{{ k.blank }}" hint-placeholder-val="{{ false }}"><span></span></sc-if>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ lk.who }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px">
+              <button style-active="transform:scale(0.97)" onClick="{{ lk.yes }}" class="btn btn-primary" style="transition:transform .12s ease;min-height:52px;font-size:16px">{{ lk.yesTxt }}</button>
+              <button style-active="transform:scale(0.97)" onClick="{{ lk.no }}" class="btn btn-secondary" style="transition:transform .12s ease;min-height:52px;font-size:16px;border-width:2px;border-color:var(--color-neutral-500)">{{ lk.noTxt }}</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ lk.cancel }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ lk.onCancel }}" class="btn btn-ghost" style="min-height:44px;font-size:15px">Annuler</button>
+          </sc-if>
         </div>
       </sc-if>
       <sc-if value="{{ nfv.open }}" hint-placeholder-val="{{ false }}">

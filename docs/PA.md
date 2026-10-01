@@ -32,7 +32,8 @@ PWA ──HTTPS (cookie de session)──▶ server/ ──OAuth2 + TLS──▶
 
 | Variable | Rôle |
 | --- | --- |
-| `APP_OWNER_CODE`, `APP_STAFF_CODE` | Codes d'accès « patron » (tout) et « salarié » (aucun accès PA). Le pavé de l'app saisit **4 chiffres** : choisir un code non trivial (pas 1974, 0000, 1234…). Avec ces variables, l'app s'ouvre sur l'écran de code. |
+| `APP_OWNER_CODE` | Code patron **initial** : 6 chiffres, ni 000000 ni 123456 (sinon le serveur refuse de démarrer). Il ne sert qu'au premier démarrage : le patron le change ensuite dans l'app (Réglages → Code d'accès), et l'empreinte enregistrée prime sur la variable. Les codes salariés sont créés par le patron dans l'app (Équipe), un par salarié. `APP_STAFF_CODE` n'existe plus (ignoré, avec un avertissement). |
+| `AUTH_DATA_FILE` | Fichier des empreintes des codes d'accès (défaut `server/data/auth.json`, droits `0600`). Aucun code n'y est en clair. **Code patron oublié** : supprimer la clé `owner` de ce fichier, puis redémarrer avec un nouveau `APP_OWNER_CODE`. |
 | `PA_PROVIDER` | `xpz12` (vraie PA) ou `mock` (PA simulée). Absent : intégration désactivée (503). |
 | `PA_ENC_KEY` | Clé AES-256 en base64 (`openssl rand -base64 32`), depuis un coffre. **Sans elle, le serveur refuse de démarrer la PA.** |
 | `PA_NAME` | Nom affiché de la PA |
@@ -58,9 +59,12 @@ Démonstration locale : `APP_OWNER_CODE=… PA_PROVIDER=mock PA_ENC_KEY=$(openss
   (Node vérifie les certificats ; TLS 1.2 minimum par défaut).
 - Webhooks : HMAC-SHA256 sur le corps brut, comparaison à temps constant, horodatage à ± 5 min, identifiant
   d'événement mémorisé 24 h (rejeu refusé). Un webhook ne fait que déclencher une relève `getStatus()`.
-- Sessions : cookie `HttpOnly`, `SameSite=Strict`, `Secure` en HTTPS ; 5 essais de code par minute et par IP, et verrou
-  global progressif après 10 échecs d'affilée (15 min, 30 min… 24 h max) car le pavé de l'app saisit des codes courts ;
-  compte salarié → 403 sur toutes les routes PA. Requêtes `POST` d'une autre origine refusées.
+- Sessions : cookie `HttpOnly`, `SameSite=Strict`, `Secure` en HTTPS ; codes à 6 chiffres conservés sous forme d'empreintes
+  scrypt salées ; 5 essais de code par minute et par IP, et verrou global progressif après 10 échecs d'affilée (15 min,
+  30 min… 24 h max ; même règle dans l'app sans serveur, `src/auth/lockout.js`) ; la session d'un salarié porte son
+  identifiant ; nouveau code salarié → ses sessions sont fermées ; changement du Code patron → toutes les autres sessions
+  sont fermées ; compte salarié → 403 sur toutes les routes PA. L'app ferme la session à chaque verrouillage et
+  redemande le code à chaque ouverture. Requêtes `POST` d'une autre origine refusées.
 - Journaux : champs autorisés uniquement (locataire, numéro, `flowId`, `correlationId`, code HTTP, statut, durée).
 - CSP de l'app inchangée : l'app n'appelle que son propre serveur.
 

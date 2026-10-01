@@ -4,6 +4,8 @@ import React from 'react';
 import template from './template.html?raw';
 import { makeDCLogic } from '../dc/runtime.js';
 import { CAT_RAW, PROJETS, DTU, METIERS } from './data.js';
+import { CODE_LEN, weakCode, hashCode, verifyCode, newCode } from '../auth/code.js';
+import { admit, fail, pass, blockedMsg } from '../auth/lockout.js';
 
 const DCLogic = makeDCLogic(template, { regime: 'assujetti', acompte: 30, paName: 'FactuPro 974' });
 
@@ -303,7 +305,7 @@ class Component extends DCLogic {
     lines: demoLines(), client: 'M. et Mme Payet', chantier: '12 chemin des Filaos, Saint-Paul',
     acompte: this.props.acompte ?? 30, remiseTxt: '0',
     aiInput: '', aiState: 'idle', aiMsg: '', aiOk: true,
-    recapOpen: false, metierOpen: false, toast: '',
+    recapOpen: false, metierOpen: false, toast: '', locked: true, lkStep: 'login',
     q: '', fam: 'Tout', docTab: 'devis', devisSeq: 42, facSeq: 29,
     docs: [
       { no: LIVE_NO, type: 'devis', live: true, client: 'M. et Mme Payet — rénovation tableau, Saint-Paul', date: '24/09', st: 0 },
@@ -318,7 +320,7 @@ class Component extends DCLogic {
   scrollRef = React.createRef();
 
   static KEY = 'btp974-mobile-v1';
-  static KEEP = ['lines','client','cliSiren','cliAddr','paAcc','ownerCode','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
+  static KEEP = ['lines','client','cliSiren','cliAddr','paAcc','ownerHash','lkGuard','lockDelay','chantier','acompte','remiseTxt','docs','devisSeq','facSeq','metier','regime','events','co','tauxMO','targetM','seuil','coutMO','trRel','rh','puHidden','ordered','relances','acompteDef','formeInfo','planMode','plans','compta','aiHistory','lcShow','payTerm','clientType','retenue','reserve','projSteps','editNo','versionOf','baseCount','sun','paAgo','themePref','layout','account','userProj','orders','cmdSeq','catPref'];
   componentDidMount() {
     this._bipH = e => { e.preventDefault(); this._bip = e; }; window.addEventListener('beforeinstallprompt', this._bipH);
     if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) this.setState({ installed: true });
@@ -335,6 +337,13 @@ class Component extends DCLogic {
       if (k !== (this.state.fitK || 1)) this.setState({ fitK: k }); }); };
     this._fit(); window.addEventListener('resize', this._fit);
     setTimeout(() => this.initDrag(), 0);
+    // Verrouillage automatique : après lockDelay minutes en arrière-plan (0 : dès que l'app passe en arrière-plan).
+    this._vis = () => {
+      const st = this.state, ms = (st.lockDelay ?? 5) * 60000;
+      if (document.visibilityState === 'hidden') { this._hidAt = Date.now(); if (!ms && !st.locked) this.lock(); }
+      else if (this._hidAt && !st.locked && Date.now() - this._hidAt >= ms) this.lock();
+    };
+    document.addEventListener('visibilitychange', this._vis);
     // Sauvegarde locale : voir restore() / snapshot() et le hook usePersistence.
   }
   componentDidUpdate(pp, ps) {
@@ -351,6 +360,9 @@ class Component extends DCLogic {
     const ids = [];
     (d.lines || []).forEach(l => ids.push(l.id)); (d.docs || []).forEach(x => (x.lines || []).forEach(l => ids.push(l.id || 0))); (d.plans || []).forEach(p => (p.circuits || []).forEach(c => ids.push(+c.id || 0)));
     UID = Math.max(UID, ...ids.filter(Number.isFinite)) + 1;
+    // Anciennes sauvegardes : codes salariés à 4 chiffres en clair désactivés (Code à renouveler). L'ancien
+    // ownerCode n'est plus repris : l'écran de code demande un nouveau Code patron (ADR 0002).
+    if (d.rh && Array.isArray(d.rh.staff)) d = { ...d, rh: { ...d.rh, staff: d.rh.staff.map(({ pin, ...p }) => pin ? { ...p, pinRenew: true } : p) } };
     // Ne restaure que les clés attendues : une sauvegarde altérée ne doit pas piloter l'état d'interface.
     this.setState({ ...this.snapshot(d), savedAt: Date.now() });
   }
@@ -393,6 +405,7 @@ class Component extends DCLogic {
     cancelAnimationFrame(this._fitRaf);
     window.removeEventListener('keydown', this._esc);
     window.removeEventListener('resize', this._fit);
+    document.removeEventListener('visibilitychange', this._vis); clearTimeout(this._lkT);
     window.removeEventListener('pointermove', this._pm); window.removeEventListener('pointerup', this._pu); cancelAnimationFrame(this._spyRaf); clearTimeout(this._sv); clearTimeout(this._t); if (this._rec) this._rec.abort(); }
 
   go = tab => { this.setState(st => ({ rulesOpen: false, tab, prevTab: st.tab !== tab ? st.tab : st.prevTab, recapOpen: false })); const el = this.scrollRef.current; if (el) el.scrollTop = 0; };
@@ -552,22 +565,125 @@ class Component extends DCLogic {
       detail: nPlans + ' plan' + (nPlans > 1 ? 's' : '') + ' importé' + (nPlans > 1 ? 's' : '') + ' · ' + nPj + ' justificatif' + (nPj > 1 ? 's' : '') + (est ? ' · appareil : ' + mo(est.usage) + ' utilisés' : ''),
       warn: pct >= 85, warnTxt: 'Presque plein : supprime un plan importé pour continuer à enregistrer.', goPlans: () => { this.setState({ docTab: 'plans' }); this.go('docs'); } } };
   }
+  // ── Écran de verrouillage (ADR 0001 et 0002) ──
+  // Il protège l'usage de l'app, pas les données de l'appareil. Codes à 6 chiffres, jamais enregistrés en clair.
+  // Étapes : login ; setup / setup2 (premier Code patron) ; old / new / new2 (changer le Code patron) ;
+  // who (« C'est bien toi, Kévin ? »). Mode serveur : le serveur vérifie les codes (usePaBridge) ; sinon,
+  // empreintes locales et blocage après trop d'essais enregistré dans la sauvegarde (src/auth/lockout.js).
+  lock() { this.setState({ locked: true, lkChange: false, lkStep: 'login', lkCode: '', lkErr: '', lkTmp: '', lkOld: '', lkWho: null, lkBusy: false, role: null, rhEmp: null, rhPin: null }); }
+  lkStepOf(s = this.state) { return s.locked && (s.lkStep || 'login') === 'login' && s.authMode === 'local' && !s.ownerHash ? 'setup' : s.lkStep || 'login'; }
+  unlockAs(role, staffId) {
+    if (role === 'staff') {
+      const p = this.rhData().staff.find(x => x.id === staffId && x.kind !== 'dir');
+      if (!p) { if (globalThis.btpPA && globalThis.btpPA.logout) globalThis.btpPA.logout().catch(() => {}); return this.setState({ lkCode: '', lkBusy: false, lkErr: 'Salarié inconnu sur cet appareil' }); }
+      return this.setState({ lkStep: 'who', lkWho: p.id, lkCode: '', lkErr: '', lkBusy: false });
+    }
+    this.setState({ locked: false, lkChange: false, lkStep: 'login', lkCode: '', lkErr: '', lkTmp: '', lkOld: '', lkBusy: false, role: 'owner' });
+  }
+  lkBlocked(g, b) {
+    this.setState({ lkGuard: g, lkBusy: false, lkCode: '', lkErr: blockedMsg(b), lkUntil: b.until });
+    clearTimeout(this._lkT); this._lkT = setTimeout(() => { this._lkT = null; this.setState({ lkErr: '', lkUntil: 0 }); }, Math.min(2 ** 31 - 1, Math.max(0, b.until - Date.now())));
+  }
+  // Contrôle local d'un code, soumis au blocage : renvoie true si check(code) a réussi.
+  async lkGuarded(check, errTxt) {
+    const a = admit(this.state.lkGuard, Date.now());
+    if (a.blocked) { this.lkBlocked(a.g, a.blocked); return false; }
+    this.setState({ lkBusy: true, lkGuard: a.g });
+    const ok = await check();
+    if (ok) { this.setState({ lkGuard: pass(a.g), lkBusy: false }); return ok; }
+    const g = fail(a.g, Date.now());
+    if (g.until > Date.now()) this.lkBlocked(g, { until: g.until, global: true });
+    else this.setState({ lkGuard: g, lkBusy: false, lkCode: '', lkErr: errTxt });
+    return false;
+  }
+  async staffHas(c) { for (const p of this.rhData().staff) if (p.code && p.code.hash && await verifyCode(c, p.code.hash)) return p.id; return null; }
+  async lkSubmit(c) {
+    const s = this.state, step = this.lkStepOf(s), server = s.authMode === 'server';
+    const again = (lkStep, lkErr) => this.setState({ lkStep, lkErr, lkCode: '', lkBusy: false });
+    const done = () => ({ lkChange: false, lkStep: 'login', lkCode: '', lkErr: '', lkTmp: '', lkOld: '', lkBusy: false });
+    if (step === 'login') {
+      if (server) { if (!(globalThis.__btpLogin && globalThis.__btpLogin(c))) again('login', 'Serveur injoignable : réessaie'); return; }
+      const who = await this.lkGuarded(async () => (await verifyCode(c, s.ownerHash)) ? { role: 'owner' } : ((id) => id && { role: 'staff', id })(await this.staffHas(c)), 'Code incorrect');
+      if (who) this.unlockAs(who.role, who.id);
+      return;
+    }
+    if (step === 'old') {
+      if (server) return this.setState({ lkOld: c, lkStep: 'new', lkCode: '', lkErr: '' });
+      if (await this.lkGuarded(() => verifyCode(c, s.ownerHash), 'Code patron actuel incorrect')) this.setState({ lkStep: 'new', lkCode: '', lkErr: '' });
+      return;
+    }
+    if (step === 'setup' || step === 'new') {
+      if (weakCode(c)) return again(step, 'Code trop évident : choisis-en un autre');
+      return this.setState({ lkStep: step + '2', lkTmp: c, lkCode: '', lkErr: '' });
+    }
+    const first = step === 'setup2' ? 'setup' : 'new';
+    if (c !== s.lkTmp) return again(first, 'Les deux codes ne correspondent pas : recommence');
+    this.setState({ lkBusy: true });
+    if (server) {
+      const r = await (globalThis.__btpOwnerCode && globalThis.__btpOwnerCode(s.lkOld, c));
+      if (!r || r.status !== 200) return again(r && (r.status === 401 || r.status === 429) ? 'old' : 'new', String((r && r.data && r.data.error) || 'Serveur injoignable : réessaie').replace(/\.$/, ''));
+      this.setState(done()); return this.flash('Code patron changé. Les autres appareils devront le saisir.');
+    }
+    if (await this.staffHas(c)) return again(first, 'Ce code est déjà celui d’un salarié : choisis-en un autre');
+    const ownerHash = await hashCode(c);
+    if (step === 'setup2') { this.setState({ ownerHash }); this.unlockAs('owner'); return this.flash('Code patron enregistré'); }
+    this.setState({ ownerHash, ...done() }); this.flash('Code patron changé');
+  }
   lockVals() {
-    const s = this.state; if (!s.locked) return { lk: { open: false, dots: [], keys: [] } };
-    const code = s.lkCode || '', now = Date.now(), wait = s.lkUntil && s.lkUntil > now ? Math.ceil((s.lkUntil - now) / 1000) : 0;
-    const R = this.rhData(), OWNER = s.ownerCode || '1974';
-    const tryCode = c => {
-      if (globalThis.__btpLogin && globalThis.__btpLogin(c, R)) return;   // sessions du serveur (server/auth.mjs)
-      if (c === OWNER) return this.setState({ locked: false, lkCode: '', lkErr: '', lkTries: 0, role: 'owner' });
-      const p = R.staff.find(x => x.pin && x.kind !== 'dir' && String(x.pin) === c);
-      if (p) return this.setState({ locked: false, lkCode: '', lkErr: '', lkTries: 0, role: 'staff', rhEmp: { who: p.id, ch: 'filaos', h: 8, panier: true } });
-      const t = (s.lkTries || 0) + 1;
-      if (t >= 5) { this.setState({ lkCode: '', lkTries: 0, lkErr: 'Trop d’essais : patiente une minute', lkUntil: Date.now() + 60000 }); clearTimeout(this._lkT); this._lkT = setTimeout(() => this.setState({ lkErr: '', lkUntil: 0 }), 60000); }
-      else this.setState({ lkCode: '', lkTries: t, lkErr: 'Code incorrect' });
+    const s = this.state;
+    if (!s.locked && !s.lkChange) return { lk: { open: false, dots: [], keys: [], pad: false, who: false } };
+    const step = this.lkStepOf(s), code = s.lkCode || '', now = Date.now(), pending = s.locked && (!s.authMode || !s.restored);
+    const until = Math.max(s.lkUntil || 0, s.authMode === 'local' && s.lkGuard ? s.lkGuard.until || 0 : 0), wait = until > now;
+    if (wait && !this._lkT) this._lkT = setTimeout(() => { this._lkT = null; this.setState({ lkErr: '', lkUntil: 0 }); }, Math.min(2 ** 31 - 1, until - now));
+    const off = wait || pending || !!s.lkBusy;
+    const who = step === 'who' ? this.rhData().staff.find(x => x.id === s.lkWho) : null, firstName = who ? who.nom.split(' ')[0] : '';
+    const T = {
+      login: ['Code d’accès', 'Patron ou salarié : saisis ton code à 6 chiffres'],
+      setup: ['Choisis ton code patron', '6 chiffres, à garder pour toi : il ouvre toute l’app. Il protège l’accès à l’app, pas les données du téléphone.'],
+      setup2: ['Confirme ton code patron', 'Saisis-le une seconde fois'],
+      old: ['Changer le code patron', 'Saisis ton code actuel'],
+      new: ['Nouveau code patron', '6 chiffres, ni 123456 ni 000000'],
+      new2: ['Confirme le nouveau code', 'Saisis-le une seconde fois'],
+      who: ['C’est bien toi, ' + firstName + ' ?', 'Ton écran de pointage va s’ouvrir.'],
+    }[step] || ['Code d’accès', ''];
+    const press = k => () => {
+      if (off) return;
+      if (k === 'del') return this.setState({ lkCode: code.slice(0, -1), lkErr: '' });
+      const c = (code + k).slice(0, CODE_LEN); this.setState({ lkCode: c, lkErr: '' });
+      if (c.length === CODE_LEN) setTimeout(() => this.lkSubmit(c), 120);
     };
-    const press = k => () => { if (wait) return; if (k === 'del') return this.setState({ lkCode: code.slice(0, -1), lkErr: '' }); const c = (code + k).slice(0, 4); this.setState({ lkCode: c, lkErr: '' }); if (c.length === 4) setTimeout(() => tryCode(c), 120); };
-    return { lk: { open: true, dots: [0, 1, 2, 3].map(i => ({ bg: i < code.length ? 'var(--color-neutral-900)' : 'transparent' })), err: s.lkErr || '', blocked: !!wait, op: wait ? 0.45 : 1,
+    const yes = () => this.setState({ locked: false, lkStep: 'login', lkWho: null, lkCode: '', lkErr: '', role: 'staff', rhEmp: { who: s.lkWho, ch: 'filaos', h: 8, panier: true } });
+    const no = () => { if (s.authMode === 'server' && globalThis.btpPA && globalThis.btpPA.logout) globalThis.btpPA.logout().catch(() => {}); this.lock(); };
+    return { lk: { open: true, title: T[0], sub: pending ? 'Un instant…' : T[1], pad: step !== 'who', who: step === 'who', yes, no, yesTxt: 'Oui, c’est moi', noTxt: 'Non, ce n’est pas moi',
+      cancel: s.lkChange && !s.locked, onCancel: () => this.setState({ lkChange: false, lkStep: 'login', lkCode: '', lkErr: '', lkTmp: '', lkOld: '' }),
+      dots: Array.from({ length: CODE_LEN }, (_, i) => ({ bg: i < code.length ? 'var(--color-neutral-900)' : 'transparent' })),
+      err: s.lkErr || (wait ? blockedMsg({ until, global: until - now > 60000 }) : ''), blocked: off, op: off ? 0.45 : 1,
       keys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map(k => ({ l: k === 'del' ? 'Effacer' : k, show: k !== '', blank: k === '', on: press(k), fs: k === 'del' ? '15px' : '26px', lbl: k === 'del' ? 'Effacer le dernier chiffre' : k })) } };
+  }
+  // Réglages → Code d'accès : délai de verrouillage automatique et changement du Code patron.
+  lockSetVals() {
+    const s = this.state, server = s.authMode === 'server', cur = s.lockDelay ?? 5;
+    return { lockSet: {
+      delayOpts: [[0, 'Immédiat'], [1, '1 min'], [5, '5 min'], [15, '15 min']].map(([v, l]) => { const a = cur === v; return { l, bg: a ? 'var(--color-neutral-900)' : 'transparent', fg: a ? 'var(--color-neutral-100)' : 'var(--color-neutral-800)', onPick: () => this.setState({ lockDelay: v }) }; }),
+      delayTxt: cur ? `Après ${cur} min en arrière-plan, l’app redemande le code` : 'Dès que l’app passe en arrière-plan, elle redemande le code',
+      changeOff: server && !!s.offline, changeTxt: server && s.offline ? 'Connexion requise pour changer le code' : 'Changer le code patron',
+      change: () => { if (server && s.offline) return; this.setState({ lkChange: true, lkStep: 'old', lkCode: '', lkErr: '', lkTmp: '', lkOld: '' }); },
+      forgot: server ? 'Code patron oublié : l’hébergeur de l’app le réinitialise sur le serveur.' : 'Code patron oublié : sans serveur, il faut réinitialiser l’app, ce qui efface les données de cet appareil.',
+    } };
+  }
+  // Codes salariés : générés au hasard, affichés une seule fois (rhPin, non enregistré), puis seule l'empreinte reste.
+  async staffCode(id) {
+    const p = this.rhData().staff.find(x => x.id === id); if (!p || p.kind === 'dir') return;
+    if (this.state.authMode === 'server') {
+      const r = await (globalThis.__btpStaffCode && globalThis.__btpStaffCode(id, p.nom));
+      if (!r || r.status !== 200) return this.flash((r && r.data && r.data.error) || 'Serveur injoignable : réessaie');
+      return this.setStaffCode(id, { srv: true, at: TODAY() }, r.data.code);
+    }
+    const code = await newCode(async c => (await verifyCode(c, this.state.ownerHash)) || !!(await this.staffHas(c)));
+    this.setStaffCode(id, { hash: await hashCode(code), at: TODAY() }, code);
+  }
+  setStaffCode(id, rec, code) {
+    this.setState(st => { const R = st.rh || this.rhData(); return { rh: { ...R, staff: R.staff.map(x => { if (x.id !== id) return x; const { pin, pinRenew, ...y } = x; return { ...y, code: rec }; }) }, rhPin: { id, code } }; });
   }
   paVals(facs) {
     const s = this.state, conn = this.paConn(), ago = s.paAgo ?? 4, name = this.paName(), staff = s.role === 'staff';
@@ -1796,11 +1912,11 @@ class Component extends DCLogic {
     return {
       staff: [
         { id: 'j', nom: 'Julien Hoarau', role: 'Dirigeant', kind: 'dir' },
-        { id: 'k', nom: 'Kévin Payet', role: 'Électricien N2P2', kind: 'sal', contrat: 'CDI temps plein', entree: '03/03/2024', brut: 13.6, coef: 1.45, pin: '4821',
+        { id: 'k', nom: 'Kévin Payet', role: 'Électricien N2P2', kind: 'sal', contrat: 'CDI temps plein', entree: '03/03/2024', brut: 13.6, coef: 1.45,
           hab: [['B2V', '12/05/2024', 36], ['BR', '12/05/2024', 36], ['H0', '12/05/2024', 36]], visite: ['suivi renforcé', '18/10/2022', 48],
           epi: [['Chaussures de sécurité', '05/02/2025', 12], ['Gants isolants classe 0 (contrôle)', '20/04/2026', 6], ['VAT (vérificateur d’absence de tension)', '10/01/2024', 60], ['Casque et écran facial', '03/03/2024', 48]],
           outils: ['Perforateur SDS', 'Pince multifonction', 'Testeur VAT'] },
-        { id: 'm', nom: 'Mathis Rivière', role: 'Apprenti BP électricien', kind: 'app', contrat: 'Apprentissage', entree: '01/09/2025', fin: '31/08/2027', brut: 7.9, coef: 1.05, pin: '1937',
+        { id: 'm', nom: 'Mathis Rivière', role: 'Apprenti BP électricien', kind: 'app', contrat: 'Apprentissage', entree: '01/09/2025', fin: '31/08/2027', brut: 7.9, coef: 1.05,
           hab: [['B1V', '04/11/2023', 36], ['H0', '04/11/2023', 36]], visite: ['suivi renforcé', '12/08/2025', 48],
           epi: [['Chaussures de sécurité', '01/09/2025', 12], ['Lunettes de protection', '01/09/2025', 12]], outils: ['Caisse à outils apprenti'] },
       ],
@@ -1818,6 +1934,7 @@ class Component extends DCLogic {
     const RH_CH = this.rhChs();
     const s = this.state, R = this.rhData(), co = this.coData(), now = new Date(); now.setHours(0, 0, 0, 0);
     const setRh = f => this.setState(st => ({ rh: f(st.rh || this.rhData()) }));
+    const codeOn = p => !!p.code && (s.authMode === 'server' ? !!p.code.srv : !!p.code.hash);
     const tab = s.rhTab || 'team', people = [...R.staff, ...R.ext.filter(e => e.kind === 'int')];
     const byId = Object.fromEntries(people.map(p => [p.id, p])), first = p => (p ? p.nom : '?').split(' ')[0];
     const ini = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -1930,7 +2047,7 @@ class Component extends DCLogic {
       fl: E.fl || '', fm: E.fm || '', onFl: e => setE({ fl: e.target.value }), onFm: e => setE({ fm: e.target.value }), ...pre('f', pjVals(E.fpj, v => setE({ fpj: v }))),
       sendFrais: () => { const m = parseFloat(String(E.fm || '').replace(',', '.')); if (!(E.fl || '').trim() || !(m > 0)) return this.flash('Indique un libellé et un montant'); if (!E.fpj) return this.flash('Prends en photo le ticket ou la facture');
         setRh(r => ({ ...r, frais: [...r.frais, { id: 'f' + Date.now(), who: E.who, d: RH_D(new Date()), l: E.fl.trim(), m, pj: { ...E.fpj, by: 'sal' }, emp: true }] })); setE({ fl: '', fm: '', fpj: null }); this.flash('Note envoyée, à valider'); },
-      close: () => this.setState(s.role === 'staff' ? { rhEmp: null, role: null, locked: true } : { rhEmp: null }), closeTxt: s.role === 'staff' ? 'Se déconnecter' : 'Fermer l’aperçu', staffMode: s.role === 'staff',
+      close: () => s.role === 'staff' ? this.lock() : this.setState({ rhEmp: null }), closeTxt: s.role === 'staff' ? 'Se déconnecter' : 'Fermer l’aperçu', staffMode: s.role === 'staff',
       send: () => { setRh(r => ({ ...r, points: [...r.points, { id: 'pt' + Date.now(), who: E.who, d: RH_D(new Date()), ch: E.ch, h: E.h, panier: !!E.panier, emp: true }] }));
         this.setState({ rhEmp: null, rhTab: 'pt', rhWk: 0 }); this.flash(`Pointage de ${first(byId[E.who])} reçu, à valider`); } } : { open: false };
 
@@ -1952,7 +2069,7 @@ class Component extends DCLogic {
             st: ab ? 'Absent' : pts.length ? (pend ? hh(h) + ' à valider' : hh(h) + ' pointées') : p.kind === 'dir' ? 'Pas encore pointé' : 'Pas encore pointé aujourd’hui',
             stFg: ab ? 'var(--color-neutral-700)' : pts.length ? (pend ? 'var(--color-accent-800)' : 'var(--color-accent-2-800)') : 'var(--color-neutral-700)',
             dot: ab ? 'var(--color-neutral-400)' : pts.length ? (pend ? 'var(--color-accent-500)' : 'var(--color-accent-2-600)') : 'var(--color-neutral-400)',
-            need: !ab && !!c && !pts.length && !!p.pin,
+            need: !ab && !!c && !pts.length && codeOn(p),
             remind: () => this.draft({ title: 'Rappel pointage · ' + first(p), channel: 'wa', body: `Bonjour ${first(p)},\n\nPense à pointer tes heures d’aujourd’hui sur l’appli (chantier ${c ? c[0] : ''}). Merci !\n\n${first(R.staff[0])}` }) }; }) },
       add: (() => { const A = s.rhAdd, setA = p => this.setState(st => ({ rhAdd: { ...(st.rhAdd || {}), ...p } }));
         const base = { closed: !A, isOpen: !!A, open: () => this.setState({ rhAdd: { nom: '', poste: '', contrat: 'CDI', brut: '' } }), cancel: () => this.setState({ rhAdd: null }) };
@@ -1960,9 +2077,9 @@ class Component extends DCLogic {
         return { ...base, nom: A.nom, poste: A.poste, brut: A.brut, onNom: e => setA({ nom: e.target.value }), onPoste: e => setA({ poste: e.target.value }), onBrut: e => setA({ brut: e.target.value }),
           contrats: ['CDI', 'CDD', 'Apprentissage'].map(c => ({ l: c, on: A.contrat === c, ...chipC(A.contrat === c), onPick: () => setA({ contrat: c }) })),
           save: () => { const b = parseFloat(String(A.brut).replace(',', '.')); if (!A.nom.trim()) return this.flash('Indique le prénom et le nom'); if (!(b > 0)) return this.flash('Indique le taux horaire brut');
-            const app = A.contrat === 'Apprentissage', id = 'p' + Date.now(), pin = String(1000 + Math.floor(Math.random() * 9000));
-            setRh(r => ({ ...r, staff: [...r.staff, { id, nom: A.nom.trim(), role: A.poste.trim() || (app ? 'Apprenti' : 'Ouvrier'), kind: app ? 'app' : 'sal', contrat: A.contrat === 'CDI' ? 'CDI temps plein' : A.contrat, entree: todayS, brut: b, coef: app ? 1.05 : 1.45, pin, hab: [], visite: ['à planifier', todayS, 0], epi: [], outils: [] }] }));
-            this.setState({ rhAdd: null, rhOpen: id }); this.flash(`${A.nom.trim().split(' ')[0]} ajouté · DPAE à faire avant son premier jour`); } }; })(),
+            const app = A.contrat === 'Apprentissage', id = 'p' + Date.now();
+            setRh(r => ({ ...r, staff: [...r.staff, { id, nom: A.nom.trim(), role: A.poste.trim() || (app ? 'Apprenti' : 'Ouvrier'), kind: app ? 'app' : 'sal', contrat: A.contrat === 'CDI' ? 'CDI temps plein' : A.contrat, entree: todayS, brut: b, coef: app ? 1.05 : 1.45, hab: [], visite: ['à planifier', todayS, 0], epi: [], outils: [] }] }));
+            this.setState({ rhAdd: null, rhOpen: id }, () => this.staffCode(id)); this.flash(`${A.nom.trim().split(' ')[0]} ajouté · DPAE à faire avant son premier jour`); } }; })(),
       staff: R.staff.map(p => { const open = s.rhOpen === p.id, vis = p.visite ? due(p.visite[1], p.visite[2]) : null, warnN = alerts.filter(a => a.who === p.nom).length;
         const hab = (p.hab || []).map(([l, d, m]) => { const x = due(d, m), [bg, fg] = tone(x); return { l, due: dueTxt(x), bg, fg }; });
         const epi = (p.epi || []).map(([l, d, m]) => { const x = due(d, m); return { l, due: 'à renouveler ' + dueTxt(x), fg: x && x.n <= 60 ? 'var(--color-accent-800)' : 'var(--color-neutral-700)' }; });
@@ -1975,8 +2092,11 @@ class Component extends DCLogic {
           canEdit: p.kind === 'sal' || p.kind === 'app', brutTxt: e2(p.brut || 0),
           brutMinus: () => setRh(r => ({ ...r, staff: r.staff.map(y => y.id === p.id ? { ...y, brut: Math.max(1, Math.round((y.brut - 0.1) * 100) / 100) } : y) })),
           brutPlus: () => setRh(r => ({ ...r, staff: r.staff.map(y => y.id === p.id ? { ...y, brut: Math.round((y.brut + 0.1) * 100) / 100 } : y) })),
-          hasHab: hab.length > 0, hab, hasEpi: epi.length > 0, epi, outils: p.outils || [], hasOutils: !!(p.outils || []).length, hasPin: !!p.pin, pin: p.pin,
-          share: () => this.draft({ title: 'Accès pointage · ' + first(p), channel: 'wa', body: `Bonjour ${first(p)},\n\nVoici ton accès pour pointer tes heures sur l’application de ${co.name} :\ncode personnel ${p.pin}\n\nTu ne vois que ton pointage : chantier, heures et panier.\n\n${co.name}` }),
+          hasHab: hab.length > 0, hab, hasEpi: epi.length > 0, epi, outils: p.outils || [], hasOutils: !!(p.outils || []).length, canCode: p.kind !== 'dir', ...(() => { const shown = !!s.rhPin && s.rhPin.id === p.id, on = codeOn(p), had = !!(p.pinRenew || p.code);
+            return { codeShown: shown, code: shown ? s.rhPin.code : '', codeOn: !shown && on, codeOff: !shown && !on, codeSince: p.code && p.code.at ? 'code actif depuis le ' + p.code.at : 'code actif',
+              codeOffTxt: had ? 'Code à renouveler' : 'Aucun code d’accès', codeOffSub: had ? 'L’ancien code ne fonctionne plus.' : 'Crée son code pour qu’il pointe ses heures.', codeBtn: had ? 'Nouveau code' : 'Créer son code',
+              newCode: () => this.staffCode(p.id), hideCode: () => this.setState({ rhPin: null }) }; })(),
+          share: () => { if (!s.rhPin || s.rhPin.id !== p.id) return; this.draft({ title: 'Accès pointage · ' + first(p), channel: 'wa', body: `Bonjour ${first(p)},\n\nVoici ton accès pour pointer tes heures sur l’application de ${co.name} :\ncode personnel ${s.rhPin.code}\n\nTu ne vois que ton pointage : chantier, heures et panier.\n\n${co.name}` }); },
           preview: () => this.setState({ rhEmp: { who: p.id, h: 8, panier: true, ch: todayIdx < 5 && RH_CH[planOf(p.id, 0, todayIdx)] ? planOf(p.id, 0, todayIdx) : 'filaos' } }) }; }),
       ext: R.ext.map(e => ({ nom: e.nom, org: e.org, role: e.role, extra: e.kind === 'int' ? `Mission jusqu’au ${e.fin} · ${e2(e.cout)} / h facturé par l’agence` : 'Vigilance obligatoire dès 5 000 € HT de travaux sous-traités',
         docs: (e.docs || []).filter(d => d[1]).map(([l, d, m]) => { const x = due(d, m), [bg, fg] = tone(x); return { l, due: dueTxt(x), bg, fg }; }) })),
@@ -2489,7 +2609,7 @@ class Component extends DCLogic {
           apply: () => { this.setState(st => ({ lines: st.lines.map(l => l.kind === 'mo' ? { ...l, pu: t, puTxt: undefined } : l) })); this.flash(`Main d'œuvre passée à ${t} € / h`); } }; })(),
       newDevis: () => this.newDevis(),
       timeOpts: { h: Array.from({ length: 24 }, (_, i) => { const v = String(i).padStart(2, '0'); return { v, l: v + ' h' }; }), m: Array.from({ length: 12 }, (_, i) => { const v = String(i * 5).padStart(2, '0'); return { v, l: v }; }) },
-      ...this.frameVals(), ...this.storeVals(), ...this.lockVals(), lockNow: () => this.setState({ locked: true, lkCode: '', lkErr: '' }), ownerCode: this.state.ownerCode || '1974', ...this.dayVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.rhVals(), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
+      ...this.frameVals(), ...this.storeVals(), ...this.lockVals(), ...this.lockSetVals(), lockNow: () => this.lock(), ...this.dayVals(), ...this.accVals(), coName: (() => { const n = (this.coData().name || '').trim(); if (!n) return 'Mon entreprise'; const w = n.split(/\s+/); if (w.length < 2 || /^(SARL|SAS|SASU|EURL|SCI|SA|Société|Entreprise|Ets)$/i.test(w[0])) return n; return w[0][0].toUpperCase() + '. ' + w.slice(1).join(' '); })(), ...this.encVals(docs), ...this.rhVals(), ...this.trVals(docs), net: s.offline ? { dot: 'var(--color-accent-600)', txt: 'Hors ligne' } : { dot: 'var(--color-accent-2-600)', txt: 'En ligne' },
       fit: s.wideOn ? { w: '100vw', h: '100vh', t: 'none' } : (() => { const k = Math.max(0.5, s.fitK || 1); return { w: Math.round(390 * k) + 'px', h: Math.round(844 * k) + 'px', t: k < 1 ? `scale(${k.toFixed(3)})` : 'none' }; })(),
       pp: (() => { const hist = (s.aiHistory || []).filter(t => !m.ex.includes(t)), open = !!s.ppOpen;
         const pick = t => () => this.setState({ aiInput: t, aiMsg: '', ppOpen: false });

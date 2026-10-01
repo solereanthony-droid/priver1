@@ -1,4 +1,4 @@
-// Routes HTTP de l'intégration PA : /api/session et /api/pa/*.
+// Routes HTTP de l'intégration PA : /api/session (et ses codes d'accès) et /api/pa/*.
 // Toutes les routes PA exigent une session « patron » (salarié → 403), sauf le retour OAuth et les webhooks,
 // protégés respectivement par le paramètre state (lié au vérificateur PKCE) et par la signature HMAC.
 import { PaError } from './service.mjs';
@@ -30,6 +30,9 @@ export function createPaRoutes({ service, sessions, send, sameOrigin, secureCook
     return s;
   }
 
+  const hhmm = t => new Date(t).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const tooMany = r => r.retryAt ? `Trop d’essais : accès bloqué jusqu’à ${hhmm(r.retryAt)}.` : 'Trop d’essais : patiente une minute.';
+
   const idemKey = req => {
     const k = String(req.headers['idempotency-key'] || '');
     if (k && !/^[A-Za-z0-9_-]{16,100}$/.test(k)) throw new PaError(400, 'Clé d’idempotence invalide.');
@@ -41,17 +44,33 @@ export function createPaRoutes({ service, sessions, send, sameOrigin, secureCook
     try {
       if (m === 'POST' && !sameOrigin(req) && p !== '/api/pa/webhook') throw new PaError(403, 'origine refusée');
 
-      // ── Session ──
+      // ── Session et codes d'accès (server/auth.mjs) ──
       if (p === '/api/session') {
         if (m === 'POST') {
           if (!sessions.enabled) throw new PaError(503, 'Codes d’accès non configurés sur le serveur.');
-          const { code } = await readJson(req), r = sessions.login(String(code || ''), clientIp(req));
-          if (r.status !== 200) throw new PaError(r.status, r.status === 429 ? (r.retryAt ? `Trop d’essais : accès bloqué jusqu’à ${new Date(r.retryAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.` : 'Trop d’essais : patiente une minute.') : 'Code incorrect.');
-          return out(res, 200, { role: r.role }, { 'Set-Cookie': sessions.cookie(r.id, secureCookie(req)) });
+          const { code } = await readJson(req), r = await sessions.login(String(code || ''), clientIp(req));
+          if (r.status !== 200) throw new PaError(r.status, r.status === 429 ? tooMany(r) : 'Code incorrect.');
+          return out(res, 200, { role: r.role, staffId: r.staffId }, { 'Set-Cookie': sessions.cookie(r.id, secureCookie(req)) });
         }
-        if (m === 'GET') { const s = sessions.get(req); return s ? out(res, 200, { role: s.role }) : out(res, 401, { error: 'non connecté' }); }
+        if (m === 'GET') { const s = sessions.get(req); return s ? out(res, 200, { role: s.role, staffId: s.staffId }) : out(res, 401, { error: 'non connecté' }); }
         if (m === 'DELETE') { sessions.logout(req); return out(res, 200, {}, { 'Set-Cookie': sessions.cookie('x', secureCookie(req), 0) }); }
         throw new PaError(405, 'méthode');
+      }
+      // Changer le Code patron : { old, code }. Les autres sessions sont fermées.
+      if (p === '/api/session/owner-code') {
+        if (m !== 'POST') throw new PaError(405, 'méthode');
+        const s = owner(req), { old, code } = await readJson(req);
+        const r = await sessions.changeOwner(s, String(old || ''), String(code || ''), clientIp(req));
+        if (r.status !== 200) throw new PaError(r.status, r.status === 429 ? tooMany(r) : r.error);
+        return out(res, 200, { ok: true });
+      }
+      // Nouveau Code salarié : { id, name } → { code }, affiché une seule fois par l'app.
+      if (p === '/api/session/staff-code') {
+        if (m !== 'POST') throw new PaError(405, 'méthode');
+        owner(req);
+        const { id, name } = await readJson(req);
+        if (!/^[A-Za-z0-9_-]{1,40}$/.test(String(id || ''))) throw new PaError(400, 'Salarié inconnu.');
+        return out(res, 200, { code: await sessions.newStaffCode(String(id), String(name || '')) });
       }
 
       // ── Webhook de la PA (signé) ──
@@ -76,7 +95,7 @@ export function createPaRoutes({ service, sessions, send, sameOrigin, secureCook
 
       if (!p.startsWith('/api/pa/')) throw new PaError(404, 'introuvable');
       // Public : l'app sait si une plateforme est configurée (sinon, mode démo) et si une session est ouverte.
-      if (p === '/api/pa/config' && m === 'GET') { const ss = sessions.get(req); return out(res, 200, { configured: !!service, sessions: sessions.enabled, role: ss ? ss.role : null }); }
+      if (p === '/api/pa/config' && m === 'GET') { const ss = sessions.get(req); return out(res, 200, { configured: !!service, sessions: sessions.enabled, role: ss ? ss.role : null, staffId: ss ? ss.staffId : null }); }
       const s = owner(req);
       if (!service) throw new PaError(503, 'Plateforme agréée non configurée sur le serveur.');
       const t = s.tenantId;

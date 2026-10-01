@@ -55,7 +55,7 @@ Connexion réelle à une plateforme agréée (API XP Z12-013, OAuth2) côté ser
 Configuration, sécurité et reste à faire : [`docs/PA.md`](docs/PA.md). Démonstration locale avec la PA simulée :
 
 ```bash
-APP_OWNER_CODE=<code long> PA_PROVIDER=mock PA_ENC_KEY=$(openssl rand -base64 32) npm start
+APP_OWNER_CODE=<6 chiffres> PA_PROVIDER=mock PA_ENC_KEY=$(openssl rand -base64 32) npm start
 ```
 
 ## Hooks Claude Code
