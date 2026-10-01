@@ -75,6 +75,11 @@ js = sub(js, "if (!window.claude || !window.claude.complete) throw new Error('x'
          "if (!window.btpAI) throw new Error('x');\n      const raw = await window.btpAI('rdv', { text: txt, today, clients });", label='appel IA RDV')
 if 'window.claude' in js: sys.exit('Nouvel appel window.claude dans le prototype : ajouter la tâche dans server/prompts.mjs et ici')
 
+# Écran de verrouillage : les utilitaires du prototype (blocage, empreintes) viennent de src/auth/, partagé avec le
+# serveur ; « sauvegarde lue » et mode d'accès sont posés par usePersistence (onLoad) et usePaBridge (config serveur).
+js = sub(js, r"// ── Blocage après trop d'essais \(src/auth/lockout\.js\) ──\n.*?// ── Fin des utilitaires d'accès ──\n", '', regex=True, label='utilitaires d’accès')
+js = sub(js, "    this.setState({ restored: true, authMode: this.state.authMode || 'local' });\n", '', label='mode d’accès local')
+
 # Sauvegarde locale : gérée par usePersistence (restauration limitée aux clés de KEEP).
 js = sub(js, r"\n    try \{\n      const raw = localStorage\.getItem\(Component\.KEY\);.*?\n    \} catch \(e\) \{\}\n  \}\n  componentDidUpdate",
          "\n    // Sauvegarde locale : voir restore() / snapshot() et le hook usePersistence.\n  }\n  componentDidUpdate", regex=True, label='restauration')
@@ -89,6 +94,9 @@ js = sub(js, "\n  spy() {", """
     const ids = [];
     (d.lines || []).forEach(l => ids.push(l.id)); (d.docs || []).forEach(x => (x.lines || []).forEach(l => ids.push(l.id || 0))); (d.plans || []).forEach(p => (p.circuits || []).forEach(c => ids.push(+c.id || 0)));
     UID = Math.max(UID, ...ids.filter(Number.isFinite)) + 1;
+    // Anciennes sauvegardes : codes salariés à 4 chiffres en clair désactivés (Code à renouveler). L'ancien
+    // ownerCode n'est plus repris : l'écran de code demande un nouveau Code patron (ADR 0002).
+    if (d.rh && Array.isArray(d.rh.staff)) d = { ...d, rh: { ...d.rh, staff: d.rh.staff.map(({ pin, ...p }) => pin ? { ...p, pinRenew: true } : p) } };
     // Ne restaure que les clés attendues : une sauvegarde altérée ne doit pas piloter l'état d'interface.
     this.setState({ ...this.snapshot(d), savedAt: Date.now() });
   }
@@ -138,7 +146,6 @@ js = sub(js, "const left = r2(rest - amt), q = !!d.pro && !!s.offline;",
 js = sub(js, "markPaid: () => { this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ?",
          "markPaid: () => { if (d.pro && globalThis.__btpPaSend && globalThis.__btpPaSend('pay', d, { amount: d.paRemaining ?? d.ttc, date: TODAY() })) return; this.setState(st => ({ docs: st.docs.map(x => x.no === d.no ?", label='Marquer encaissée')
 js = sub(js, "  paFlush() {", "  paFlush() {\n    if (globalThis.__btpPaLive) return;                 // file réelle rejouée par l'app (src/pa/paClient.js)", label='paFlush')
-js = sub(js, "const tryCode = c => {", "const tryCode = c => {\n      if (globalThis.__btpLogin && globalThis.__btpLogin(c, R)) return;   // sessions du serveur (server/auth.mjs)", label='code d’accès')
 # Jauge d'espace : localStorage (5 Mo) et IndexedDB rapporté au quota de l'appareil ; on montre la contrainte la plus serrée.
 js = sub(js, "    const Q = 5 * 1024 * 1024, pct = Math.min(100, Math.round(used / Q * 100)),",
          "    const E = s.storeEst, lsR = used / (5 * 1024 * 1024), dbR = E && E.quota ? E.usage / E.quota : 0, useDb = dbR > lsR; if (useDb) used = E.usage;\n    const Q = useDb ? E.quota : 5 * 1024 * 1024, pct = Math.min(100, Math.round(used / Q * 100)),", label='jauge d’espace')
@@ -153,6 +160,8 @@ import React from 'react';
 import template from './template.html?raw';
 import { makeDCLogic } from '../dc/runtime.js';
 import { CAT_RAW, PROJETS, DTU, METIERS } from './data.js';
+import { CODE_LEN, weakCode, hashCode, verifyCode, newCode } from '../auth/code.js';
+import { admit, fail, pass, blockedMsg } from '../auth/lockout.js';
 
 const DCLogic = makeDCLogic(template, { regime: 'assujetti', acompte: 30, paName: 'FactuPro 974' });
 

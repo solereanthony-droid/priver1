@@ -426,6 +426,7 @@ le serveur). « Code maître » n'est plus employé : on dit **Code patron**.
   `lkBusy`, `lkChange`, `authMode` (`server` / `local`), `restored`, `rhPin` (code affiché une fois).
 
 ### 14.3 À designer / à reporter dans le prototype
+- **Fiche à appliquer : `MISE_A_JOUR_VERROU.md`** (code, gabarit, textes et tests, copiés de l'app).
 - Les écrans ci-dessus n'ont pas de maquette : ils reprennent l'écran de code existant (titre en `<h1>`, 6 points) et
   la carte « Accès pointage ». À valider : ton des textes, écran « C'est bien toi ? », carte « Nouveau code »
   (code en grand, « Envoie-le maintenant : il ne sera plus affiché »), réglage du verrouillage automatique.
